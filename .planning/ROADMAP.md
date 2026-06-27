@@ -30,7 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A user who clicks "Esqueci a senha" receives a reset link by email and can set a new password before the link expires
   4. An inactive user who attempts to log in is blocked and sees an appropriate Portuguese error message
   5. The admin layout renders the full Portuguese sidebar navigation and the client layout renders minimal Portuguese navigation — both are fully responsive on mobile
-**Plans**: TBD
+**Plans**: 6 plans
+- [ ] 01-01-PLAN.md — Install Laravel Breeze (Blade) auth scaffold; reconcile Tailwind v4 pipeline
+- [ ] 01-02-PLAN.md — Complete DB schema (10 tables) + extended User model (roles, soft deletes)
+- [ ] 01-03-PLAN.md — Admin + client layout shells and reusable UI components (badge, nav-item, data-table, flash)
+- [ ] 01-04-PLAN.md — Portuguese auth, role-based redirects, inactive-user blocking, role middleware + Gates
+- [ ] 01-05-PLAN.md — Admin-only user management CRUD (paginated list, forms, activate/deactivate, soft delete)
+- [ ] 01-06-PLAN.md — Full-suite run + human verification checkpoint
 **UI hint**: yes
 
 ### Phase 2: Admin Core
