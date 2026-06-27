@@ -172,94 +172,94 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| USR-01 | — | Pending |
-| USR-02 | — | Pending |
-| USR-03 | — | Pending |
-| USR-04 | — | Pending |
-| USR-05 | — | Pending |
-| CLI-01 | — | Pending |
-| CLI-02 | — | Pending |
-| CLI-03 | — | Pending |
-| CLI-04 | — | Pending |
-| CLI-05 | — | Pending |
-| PROJ-01 | — | Pending |
-| PROJ-02 | — | Pending |
-| PROJ-03 | — | Pending |
-| PROJ-04 | — | Pending |
-| PROJ-05 | — | Pending |
-| PROJ-06 | — | Pending |
-| FASE-01 | — | Pending |
-| FASE-02 | — | Pending |
-| FASE-03 | — | Pending |
-| FASE-04 | — | Pending |
-| FASE-05 | — | Pending |
-| FOTO-01 | — | Pending |
-| FOTO-02 | — | Pending |
-| FOTO-03 | — | Pending |
-| FOTO-04 | — | Pending |
-| FOTO-05 | — | Pending |
-| FOTO-06 | — | Pending |
-| DESP-01 | — | Pending |
-| DESP-02 | — | Pending |
-| DESP-03 | — | Pending |
-| DESP-04 | — | Pending |
-| DESP-05 | — | Pending |
-| FIN-01 | — | Pending |
-| FIN-02 | — | Pending |
-| FIN-03 | — | Pending |
-| FIN-04 | — | Pending |
-| FIN-05 | — | Pending |
-| FIN-06 | — | Pending |
-| UPD-01 | — | Pending |
-| UPD-02 | — | Pending |
-| UPD-03 | — | Pending |
-| UPD-04 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
-| DOC-04 | — | Pending |
-| DOC-05 | — | Pending |
-| MSG-01 | — | Pending |
-| MSG-02 | — | Pending |
-| MSG-03 | — | Pending |
-| MSG-04 | — | Pending |
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| DASH-04 | — | Pending |
-| NOTF-01 | — | Pending |
-| NOTF-02 | — | Pending |
-| NOTF-03 | — | Pending |
-| REL-01 | — | Pending |
-| REL-02 | — | Pending |
-| REL-03 | — | Pending |
-| REL-04 | — | Pending |
-| CONF-01 | — | Pending |
-| CONF-02 | — | Pending |
-| CONF-03 | — | Pending |
-| CONF-04 | — | Pending |
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
-| SEC-04 | — | Pending |
-| SEC-05 | — | Pending |
-| SEC-06 | — | Pending |
-| SEC-07 | — | Pending |
-| UX-01 | — | Pending |
-| UX-02 | — | Pending |
-| UX-03 | — | Pending |
-| UX-04 | — | Pending |
-| UX-05 | — | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| USR-01 | Phase 1 | Pending |
+| USR-02 | Phase 1 | Pending |
+| USR-03 | Phase 1 | Pending |
+| USR-04 | Phase 1 | Pending |
+| USR-05 | Phase 1 | Pending |
+| CLI-01 | Phase 2 | Pending |
+| CLI-02 | Phase 2 | Pending |
+| CLI-03 | Phase 2 | Pending |
+| CLI-04 | Phase 2 | Pending |
+| CLI-05 | Phase 4 | Pending |
+| PROJ-01 | Phase 2 | Pending |
+| PROJ-02 | Phase 2 | Pending |
+| PROJ-03 | Phase 2 | Pending |
+| PROJ-04 | Phase 2 | Pending |
+| PROJ-05 | Phase 2 | Pending |
+| PROJ-06 | Phase 2 | Pending |
+| FASE-01 | Phase 2 | Pending |
+| FASE-02 | Phase 2 | Pending |
+| FASE-03 | Phase 2 | Pending |
+| FASE-04 | Phase 2 | Pending |
+| FASE-05 | Phase 2 | Pending |
+| FOTO-01 | Phase 3 | Pending |
+| FOTO-02 | Phase 3 | Pending |
+| FOTO-03 | Phase 3 | Pending |
+| FOTO-04 | Phase 3 | Pending |
+| FOTO-05 | Phase 3 | Pending |
+| FOTO-06 | Phase 3 | Pending |
+| DESP-01 | Phase 3 | Pending |
+| DESP-02 | Phase 3 | Pending |
+| DESP-03 | Phase 3 | Pending |
+| DESP-04 | Phase 3 | Pending |
+| DESP-05 | Phase 3 | Pending |
+| FIN-01 | Phase 3 | Pending |
+| FIN-02 | Phase 3 | Pending |
+| FIN-03 | Phase 3 | Pending |
+| FIN-04 | Phase 3 | Pending |
+| FIN-05 | Phase 3 | Pending |
+| FIN-06 | Phase 3 | Pending |
+| UPD-01 | Phase 3 | Pending |
+| UPD-02 | Phase 3 | Pending |
+| UPD-03 | Phase 3 | Pending |
+| UPD-04 | Phase 3 | Pending |
+| DOC-01 | Phase 3 | Pending |
+| DOC-02 | Phase 3 | Pending |
+| DOC-03 | Phase 3 | Pending |
+| DOC-04 | Phase 3 | Pending |
+| DOC-05 | Phase 3 | Pending |
+| MSG-01 | Phase 4 | Pending |
+| MSG-02 | Phase 4 | Pending |
+| MSG-03 | Phase 4 | Pending |
+| MSG-04 | Phase 4 | Pending |
+| DASH-01 | Phase 2 | Pending |
+| DASH-02 | Phase 2 | Pending |
+| DASH-03 | Phase 4 | Pending |
+| DASH-04 | Phase 4 | Pending |
+| NOTF-01 | Phase 4 | Pending |
+| NOTF-02 | Phase 4 | Pending |
+| NOTF-03 | Phase 4 | Pending |
+| REL-01 | Phase 5 | Pending |
+| REL-02 | Phase 5 | Pending |
+| REL-03 | Phase 5 | Pending |
+| REL-04 | Phase 5 | Pending |
+| CONF-01 | Phase 5 | Pending |
+| CONF-02 | Phase 5 | Pending |
+| CONF-03 | Phase 5 | Pending |
+| CONF-04 | Phase 5 | Pending |
+| SEC-01 | Phase 1 | Pending |
+| SEC-02 | Phase 4 | Pending |
+| SEC-03 | Phase 1 | Pending |
+| SEC-04 | Phase 3 | Pending |
+| SEC-05 | Phase 5 | Pending |
+| SEC-06 | Phase 1 | Pending |
+| SEC-07 | Phase 2 | Pending |
+| UX-01 | Phase 1 | Pending |
+| UX-02 | Phase 1 | Pending |
+| UX-03 | Phase 1 | Pending |
+| UX-04 | Phase 1 | Pending |
+| UX-05 | Phase 1 | Pending |
 
 **Coverage:**
-- v1 requirements: 79 total
-- Mapped to phases: 0 (roadmapper will fill)
-- Unmapped: 79 ⚠️
+- v1 requirements: 83 total
+- Mapped to phases: 83 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-27*
