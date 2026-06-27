@@ -36,6 +36,8 @@ class LoginRequest extends FormRequest
     /**
      * Attempt to authenticate the request's credentials.
      *
+     * Blocks inactive users before a session is established (AUTH-04 / T-04-02).
+     *
      * @throws ValidationException
      */
     public function authenticate(): void
@@ -46,7 +48,18 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => 'E-mail ou senha incorretos.',
+            ]);
+        }
+
+        // Block inactive users — log out immediately so no session is persisted.
+        if (! Auth::user()->active) {
+            Auth::logout();
+
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Sua conta está inativa. Entre em contato com o administrador.',
             ]);
         }
 

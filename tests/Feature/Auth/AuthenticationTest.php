@@ -19,6 +19,7 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
+        // Default factory creates a client role user; clients redirect to portal.dashboard.
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
@@ -27,7 +28,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('portal.dashboard', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
