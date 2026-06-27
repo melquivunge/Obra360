@@ -30,13 +30,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A user who clicks "Esqueci a senha" receives a reset link by email and can set a new password before the link expires
   4. An inactive user who attempts to log in is blocked and sees an appropriate Portuguese error message
   5. The admin layout renders the full Portuguese sidebar navigation and the client layout renders minimal Portuguese navigation — both are fully responsive on mobile
-**Plans**: 6 plans
-- [ ] 01-01-PLAN.md — Install Laravel Breeze (Blade) auth scaffold; reconcile Tailwind v4 pipeline
-- [ ] 01-02-PLAN.md — Complete DB schema (10 tables) + extended User model (roles, soft deletes)
-- [ ] 01-03-PLAN.md — Admin + client layout shells and reusable UI components (badge, nav-item, data-table, flash)
-- [ ] 01-04-PLAN.md — Portuguese auth, role-based redirects, inactive-user blocking, role middleware + Gates
-- [ ] 01-05-PLAN.md — Admin-only user management CRUD (paginated list, forms, activate/deactivate, soft delete)
-- [ ] 01-06-PLAN.md — Full-suite run + human verification checkpoint
+**Plans**: 8 plans
+- [x] 01-01-PLAN.md — Install Laravel Breeze (Blade) auth scaffold; reconcile Tailwind v4 pipeline
+- [x] 01-02-PLAN.md — Complete DB schema (10 tables) + extended User model (roles, soft deletes)
+- [x] 01-03-PLAN.md — Admin + client layout shells and reusable UI components (badge, nav-item, data-table, flash)
+- [x] 01-04-PLAN.md — Portuguese auth, role-based redirects, inactive-user blocking, role middleware + Gates
+- [x] 01-05-PLAN.md — Admin-only user management CRUD (paginated list, forms, activate/deactivate, soft delete)
+- [x] 01-06-PLAN.md — Full-suite run + human verification checkpoint (gaps found)
+- [ ] 01-07-PLAN.md — Eliminate remaining English Breeze surfaces and complete auth identity
+- [ ] 01-08-PLAN.md — Polish the Obra360 design system, admin sidebar, and user-management UI; repeat human sign-off
 **UI hint**: yes
 
 ### Phase 2: Admin Core
@@ -97,7 +99,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 5/6 | In Progress|  |
 | 2. Admin Core | 0/? | Not started | - |
 | 3. Project Content | 0/? | Not started | - |
 | 4. Client Portal | 0/? | Not started | - |
