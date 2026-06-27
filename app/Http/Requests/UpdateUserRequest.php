@@ -33,6 +33,7 @@ class UpdateUserRequest extends FormRequest
                 User::ROLE_CLIENT,
             ])],
             'password' => ['nullable', 'confirmed', 'min:8'],
+            'active'   => ['boolean'],
         ];
     }
 

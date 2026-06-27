@@ -1,96 +1,165 @@
 <x-admin-layout>
-    <x-slot name="title">Usuários</x-slot>
-
-    <div class="p-8">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Usuários</h1>
-            <a href="{{ route('users.create') }}"
-               class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition">
-                Novo Usuário
-            </a>
+<div class="space-y-6 p-6 md:p-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 style="font-size:1.5rem;font-weight:700;">Usuários</h1>
+            <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Gerencie os acessos ao sistema.</p>
         </div>
+        <button type="button" onclick="openUserModal()" class="btn-primary">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            Novo usuário
+        </button>
+    </div>
 
-        <x-flash-message />
+    @if(session('success'))
+    <div style="background-color:oklch(0.6 0.18 145 / 0.12);border:1px solid oklch(0.6 0.18 145 / 0.4);color:oklch(0.7 0.15 145);border-radius:0.5rem;padding:0.75rem 1rem;font-size:0.875rem;">
+        {{ session('success') }}
+    </div>
+    @endif
 
-        <x-data-table>
-            <x-slot name="head">
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome</th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">E-mail</th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Telefone</th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Perfil</th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Ações</th>
-            </x-slot>
-
-            @forelse ($users as $user)
-                @php
-                    $roleLabel = match($user->role) {
-                        'admin'     => 'Administrador',
-                        'manager'   => 'Gestor da Obra',
-                        'financial' => 'Financeiro',
-                        'client'    => 'Cliente',
-                        default     => $user->role,
-                    };
-                    $roleColor = match($user->role) {
-                        'admin'     => 'purple',
-                        'manager'   => 'blue',
-                        'financial' => 'yellow',
-                        'client'    => 'gray',
-                        default     => 'gray',
-                    };
-                @endphp
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 text-sm text-gray-900">{{ $user->name }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ $user->email }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ $user->phone ?? '—' }}</td>
-                    <td class="px-6 py-4">
-                        <x-badge :color="$roleColor">{{ $roleLabel }}</x-badge>
-                    </td>
-                    <td class="px-6 py-4">
-                        @if ($user->active)
-                            <x-badge color="green">Ativo</x-badge>
-                        @else
-                            <x-badge color="red">Inativo</x-badge>
-                        @endif
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <div class="flex items-center justify-end gap-2">
-                            <a href="{{ route('users.edit', $user) }}"
-                               class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                                Editar
-                            </a>
-
-                            <form method="POST" action="{{ route('users.toggle-active', $user) }}">
-                                @csrf
-                                <button type="submit"
-                                        class="text-sm font-medium {{ $user->active ? 'text-gray-500 hover:text-gray-700' : 'text-green-600 hover:text-green-800' }}">
-                                    {{ $user->active ? 'Desativar' : 'Ativar' }}
-                                </button>
-                            </form>
-
-                            <form method="POST" action="{{ route('users.destroy', $user) }}"
-                                  onsubmit="return confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                        class="text-sm font-medium text-red-600 hover:text-red-800">
-                                    Excluir
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">
-                        Nenhum usuário cadastrado ainda. Crie o primeiro usuário.
-                    </td>
-                </tr>
-            @endforelse
-        </x-data-table>
-
-        <div class="mt-4">
-            {{ $users->links() }}
+    <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;overflow:hidden;">
+        <div style="overflow-x:auto;">
+            <table class="data-table">
+                <thead style="background-color:var(--surface)">
+                    <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Telefone</th>
+                        <th>Perfil</th>
+                        <th>Status</th>
+                        <th style="text-align:right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($users as $user)
+                    @php
+                        $roleBadge = match($user->role) {
+                            'admin'     => ['Administrador', 'background:oklch(0.6 0.18 280 / 0.15);color:oklch(0.7 0.18 280)'],
+                            'manager'   => ['Gestor', 'background:oklch(0.6 0.18 220 / 0.15);color:oklch(0.65 0.18 220)'],
+                            'financial' => ['Financeiro', 'background:oklch(0.78 0.15 75 / 0.15);color:oklch(0.78 0.15 75)'],
+                            'client'    => ['Cliente', 'background:oklch(0.6 0.005 90 / 0.15);color:var(--muted-foreground)'],
+                            default     => [$user->role, 'background:var(--surface);color:var(--muted-foreground)'],
+                        };
+                    @endphp
+                    <tr>
+                        <td style="font-weight:500;">{{ $user->name }}</td>
+                        <td style="color:var(--muted-foreground)">{{ $user->email }}</td>
+                        <td style="color:var(--muted-foreground)">{{ $user->phone ?? '—' }}</td>
+                        <td>
+                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;{{ $roleBadge[1] }}">{{ $roleBadge[0] }}</span>
+                        </td>
+                        <td>
+                            @if($user->active)
+                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.6 0.18 145 / 0.15);color:oklch(0.65 0.16 145)">Ativo</span>
+                            @else
+                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.62 0.21 25 / 0.15);color:var(--destructive)">Inativo</span>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            <div style="display:inline-flex;align-items:center;gap:0.75rem;">
+                                <a href="{{ route('users.edit', $user) }}" style="font-size:0.875rem;color:var(--primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Editar</a>
+                                <form method="POST" action="{{ route('users.toggle-active', $user) }}" style="display:inline;">
+                                    @csrf
+                                    <button type="submit" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.color='var(--foreground)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                                        {{ $user->active ? 'Desativar' : 'Ativar' }}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('users.destroy', $user) }}" style="display:inline;" onsubmit="return confirm('Excluir este usuário?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--destructive);" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Excluir</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted-foreground);">Nenhum usuário cadastrado.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
+
+    {{ $users->links() }}
+</div>
+
+{{-- Create User Modal --}}
+<div id="modal-create-user"
+     style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;background:rgb(0 0 0 / 0.7);padding:1rem;"
+     onclick="if(event.target===this)closeUserModal()">
+    <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.875rem;width:100%;max-width:36rem;max-height:90vh;overflow-y:auto;padding:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+            <h2 style="font-size:1.125rem;font-weight:700;margin:0;">Novo usuário</h2>
+            <button type="button" onclick="closeUserModal()"
+                    style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"
+                    onmouseover="this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)'"
+                    onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'"
+                    aria-label="Fechar">
+                <svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ route('users.store') }}" class="space-y-4">
+            @csrf
+            <input type="hidden" name="_form" value="create_user">
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label class="field-label">Nome completo <span style="color:var(--destructive)">*</span></label>
+                    <input type="text" name="name" value="{{ old('name') }}" required>
+                    @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="field-label">E-mail <span style="color:var(--destructive)">*</span></label>
+                    <input type="email" name="email" value="{{ old('email') }}" required>
+                    @error('email')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="field-label">Telefone</label>
+                    <input type="text" name="phone" value="{{ old('phone') }}">
+                </div>
+                <div>
+                    <label class="field-label">Perfil <span style="color:var(--destructive)">*</span></label>
+                    <select name="role" required>
+                        <option value="">Selecione…</option>
+                        <option value="admin"     @selected(old('role')==='admin')>Administrador</option>
+                        <option value="manager"   @selected(old('role')==='manager')>Gestor da Obra</option>
+                        <option value="financial" @selected(old('role')==='financial')>Financeiro</option>
+                        <option value="client"    @selected(old('role')==='client')>Cliente</option>
+                    </select>
+                    @error('role')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="field-label">Senha <span style="color:var(--destructive)">*</span></label>
+                    <input type="password" name="password" required>
+                    @error('password')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="field-label">Confirmar senha <span style="color:var(--destructive)">*</span></label>
+                    <input type="password" name="password_confirmation" required>
+                </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;padding-top:0.5rem;">
+                <button type="submit" class="btn-primary">Criar usuário</button>
+                <button type="button" onclick="closeUserModal()" class="btn-secondary">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openUserModal() {
+    var m = document.getElementById('modal-create-user');
+    m.style.display = 'flex';
+    setTimeout(function(){ m.querySelector('input[name="name"]').focus(); }, 50);
+}
+function closeUserModal() {
+    document.getElementById('modal-create-user').style.display = 'none';
+}
+document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeUserModal();
+});
+@if(old('_form') === 'create_user')
+document.addEventListener('DOMContentLoaded', function(){ openUserModal(); });
+@endif
+</script>
 </x-admin-layout>

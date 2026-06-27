@@ -6,9 +6,7 @@
     <title>{{ config('app.name', 'Obra360') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="font-sans bg-slate-800 min-h-screen flex items-center justify-center p-4">
-
+<body style="background-color:var(--background);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;">
     {{ $slot }}
-
 </body>
 </html>

@@ -1,54 +1,65 @@
 <section>
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
-        </p>
-    </header>
-
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" style="display:flex;flex-direction:column;gap:1.25rem;">
         @csrf
         @method('patch')
 
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+            <label for="name" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Nome</label>
+            <input id="name" name="name" type="text" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name"
+                   style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
+                   onfocus="this.style.borderColor='var(--color-primary)'"
+                   onblur="this.style.borderColor='var(--color-border)'">
+            @error('name')
+                <p style="font-size:0.75rem;color:oklch(0.62 0.21 25);margin-top:0.375rem;">{{ $message }}</p>
+            @enderror
         </div>
 
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
+            <label for="email" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Email</label>
+            <input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" required autocomplete="username"
+                   style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
+                   onfocus="this.style.borderColor='var(--color-primary)'"
+                   onblur="this.style.borderColor='var(--color-border)'">
+            @error('email')
+                <p style="font-size:0.75rem;color:oklch(0.62 0.21 25);margin-top:0.375rem;">{{ $message }}</p>
+            @enderror
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800">
-                        {{ __('Your email address is unverified.') }}
-
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {{ __('Click here to re-send the verification email.') }}
+                <div style="margin-top:0.5rem;">
+                    <p style="font-size:0.8125rem;color:var(--color-muted-foreground);">
+                        O teu endereço de email não está verificado.
+                        <button form="send-verification"
+                                style="background:none;border:none;padding:0;font-size:0.8125rem;color:var(--color-primary);cursor:pointer;text-decoration:underline;">
+                            Clica aqui para reenviar o email de verificação.
                         </button>
                     </p>
-
                     @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
+                        <p style="margin-top:0.375rem;font-size:0.8125rem;color:var(--color-primary);">
+                            Um novo link de verificação foi enviado para o teu email.
                         </p>
                     @endif
                 </div>
             @endif
         </div>
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+        <div>
+            <label for="phone" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Telemóvel</label>
+            <input id="phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}" autocomplete="tel"
+                   style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
+                   onfocus="this.style.borderColor='var(--color-primary)'"
+                   onblur="this.style.borderColor='var(--color-border)'"
+                   placeholder="+351 9XX XXX XXX">
+            @error('phone')
+                <p style="font-size:0.75rem;color:oklch(0.62 0.21 25);margin-top:0.375rem;">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div style="display:flex;align-items:center;gap:1rem;">
+            <button type="submit" class="btn-primary">Guardar</button>
 
             @if (session('status') === 'profile-updated')
                 <p
@@ -56,8 +67,8 @@
                     x-show="show"
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
+                    style="font-size:0.8125rem;color:var(--color-primary);"
+                >Guardado.</p>
             @endif
         </div>
     </form>

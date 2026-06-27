@@ -1,8 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MessageController;
+use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
+use App\Http\Controllers\Client\ProjectController as ClientProjectController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -11,23 +18,74 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
-// Legacy /dashboard route — redirect to the role-appropriate dashboard.
 Route::get('/dashboard', function () {
     if (auth()->user()->isClient()) {
         return redirect()->route('portal.dashboard');
     }
-
     return redirect()->route('admin.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Admin dashboard + future Phase 2 admin routes — restricted to admin/manager/financial.
-Route::middleware(['auth', 'role:admin,manager,financial'])->group(function () {
-    Route::get('/admin', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+// ── Admin routes ─────────────────────────────────────────────────────────────
+Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Clients
+    Route::get('/clientes', [ClientController::class, 'index'])->name('clients.index');
+    Route::get('/clientes/novo', [ClientController::class, 'create'])->name('clients.create');
+    Route::post('/clientes', [ClientController::class, 'store'])->name('clients.store');
+    Route::get('/clientes/{client}/editar', [ClientController::class, 'edit'])->name('clients.edit');
+    Route::put('/clientes/{client}', [ClientController::class, 'update'])->name('clients.update');
+    Route::delete('/clientes/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
+    Route::post('/clientes/{client}/vincular-usuario', [ClientController::class, 'linkUser'])->name('clients.link-user');
+    Route::delete('/clientes/{client}/desvincular/{user}', [ClientController::class, 'unlinkUser'])->name('clients.unlink-user');
+
+    // Projects
+    Route::get('/obras', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/obras/nova', [ProjectController::class, 'create'])->name('projects.create');
+    Route::post('/obras', [ProjectController::class, 'store'])->name('projects.store');
+    Route::get('/obras/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/obras/{project}/editar', [ProjectController::class, 'edit'])->name('projects.edit');
+    Route::put('/obras/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::delete('/obras/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+
+    // Phases (nested under project)
+    Route::post('/obras/{project}/fases', [ProjectController::class, 'storePhase'])->name('projects.phases.store');
+    Route::put('/obras/{project}/fases/{phase}', [ProjectController::class, 'updatePhase'])->name('projects.phases.update');
+    Route::delete('/obras/{project}/fases/{phase}', [ProjectController::class, 'destroyPhase'])->name('projects.phases.destroy');
+
+    // Photos
+    Route::post('/obras/{project}/fotos', [ProjectController::class, 'storePhoto'])->name('projects.photos.store');
+    Route::delete('/obras/{project}/fotos/{photo}', [ProjectController::class, 'destroyPhoto'])->name('projects.photos.destroy');
+
+    // Expenses
+    Route::post('/obras/{project}/despesas', [ProjectController::class, 'storeExpense'])->name('projects.expenses.store');
+    Route::delete('/obras/{project}/despesas/{expense}', [ProjectController::class, 'destroyExpense'])->name('projects.expenses.destroy');
+
+    // Documents
+    Route::post('/obras/{project}/documentos', [ProjectController::class, 'storeDocument'])->name('projects.documents.store');
+    Route::delete('/obras/{project}/documentos/{document}', [ProjectController::class, 'destroyDocument'])->name('projects.documents.destroy');
+
+    // Updates
+    Route::post('/obras/{project}/atualizacoes', [ProjectController::class, 'storeUpdate'])->name('projects.updates.store');
+
+    // Payments
+    Route::post('/obras/{project}/pagamentos', [PaymentController::class, 'store'])->name('projects.payments.store');
+    Route::put('/obras/{project}/pagamentos/{payment}', [PaymentController::class, 'update'])->name('projects.payments.update');
+    Route::post('/obras/{project}/pagamentos/{payment}/pago', [PaymentController::class, 'markPaid'])->name('projects.payments.mark-paid');
+    Route::delete('/obras/{project}/pagamentos/{payment}', [PaymentController::class, 'destroy'])->name('projects.payments.destroy');
+
+    // Messages (JSON API + page)
+    Route::get('/mensagens', [MessageController::class, 'index'])->name('messages.index');
+    Route::get('/obras/{project}/mensagens', [MessageController::class, 'messages'])->name('projects.messages.index');
+    Route::post('/obras/{project}/mensagens', [MessageController::class, 'store'])->name('projects.messages.store');
+
+    // Settings (admin only guarded inside controller for write)
+    Route::get('/configuracoes', [SettingController::class, 'index'])->name('settings.index');
+    Route::put('/configuracoes', [SettingController::class, 'update'])->name('settings.update');
 });
 
-// User management — admin only.
+// User management — admin only
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('usuarios', UserController::class)
         ->parameters(['usuarios' => 'user'])
@@ -36,13 +94,19 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('users.toggle-active');
 });
 
-// Client portal dashboard + future Phase 4 client routes — restricted to client.
-Route::middleware(['auth', 'role:client'])->group(function () {
-    Route::get('/portal', function () {
-        return view('client.dashboard');
-    })->name('portal.dashboard');
+// ── Client portal ─────────────────────────────────────────────────────────────
+Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->group(function () {
+    Route::get('/', [ClientDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/obras/{project}', [ClientProjectController::class, 'show'])->name('projects.show');
+    Route::get('/obras/{project}/mensagens', [ClientProjectController::class, 'messages'])->name('projects.messages');
+    Route::post('/obras/{project}/mensagens', [ClientProjectController::class, 'storeMessage'])->name('projects.messages.store');
+    Route::post('/mensagens/marcar-lidas', function () {
+        session(['messages_last_viewed_at' => now()->timestamp]);
+        return response()->json(['ok' => true]);
+    })->name('messages.mark-read');
 });
 
+// Profile (all authenticated)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

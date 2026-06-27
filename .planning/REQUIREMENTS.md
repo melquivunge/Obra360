@@ -168,7 +168,7 @@
 
 ## Traceability
 
-*To be filled by roadmapper agent.*
+*Filled by roadmapper agent — 2026-06-27*
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -257,10 +257,17 @@
 | UX-05 | Phase 1 | Pending |
 
 **Coverage:**
-- v1 requirements: 83 total
-- Mapped to phases: 83 ✓
-- Unmapped: 0 ✓
+- v1 requirements: 83 total (traceability table has 83 entries; initial estimate in file header was 79)
+- Mapped to phases: 83
+- Unmapped: 0
+
+Phase breakdown:
+- Phase 1 — Foundation: 18 requirements (AUTH-01-05, USR-01-05, SEC-01, SEC-03, SEC-06, UX-01-05)
+- Phase 2 — Admin Core: 18 requirements (CLI-01-04, PROJ-01-06, FASE-01-05, DASH-01-02, SEC-07)
+- Phase 3 — Project Content: 27 requirements (FOTO-01-06, DESP-01-05, FIN-01-06, UPD-01-04, DOC-01-05, SEC-04)
+- Phase 4 — Client Portal: 11 requirements (DASH-03-04, MSG-01-04, NOTF-01-03, CLI-05, SEC-02)
+- Phase 5 — Reports & Settings: 9 requirements (REL-01-04, CONF-01-04, SEC-05)
 
 ---
 *Requirements defined: 2026-06-27*
-*Last updated: 2026-06-27 after initial definition from requisitos_portal_acompanhamento_obras.docx*
+*Last updated: 2026-06-27 — traceability table filled by roadmapper agent; 83/83 requirements mapped*

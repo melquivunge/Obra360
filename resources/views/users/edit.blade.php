@@ -1,76 +1,60 @@
 <x-admin-layout>
-    <x-slot name="title">Editar Usuário</x-slot>
-
-    <div class="p-8">
-        <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-8">
-            <h1 class="text-2xl font-bold text-gray-900 mb-6">Editar Usuário</h1>
-
-            <form method="POST" action="{{ route('users.update', $user) }}">
-                @csrf
-                @method('PUT')
-
-                <div class="space-y-5">
-                    <div>
-                        <x-input-label for="name" :value="'Nome completo'" />
-                        <x-text-input id="name" name="name" type="text"
-                                      class="mt-1 block w-full"
-                                      :value="old('name', $user->name)" required autofocus />
-                        <x-input-error :messages="$errors->get('name')" class="mt-1" />
-                    </div>
-
-                    <div>
-                        <x-input-label for="email" :value="'E-mail'" />
-                        <x-text-input id="email" name="email" type="email"
-                                      class="mt-1 block w-full"
-                                      :value="old('email', $user->email)" required />
-                        <x-input-error :messages="$errors->get('email')" class="mt-1" />
-                    </div>
-
-                    <div>
-                        <x-input-label for="phone" :value="'Telefone'" />
-                        <x-text-input id="phone" name="phone" type="text"
-                                      class="mt-1 block w-full"
-                                      :value="old('phone', $user->phone)" />
-                        <x-input-error :messages="$errors->get('phone')" class="mt-1" />
-                    </div>
-
-                    <div>
-                        <x-input-label for="role" :value="'Perfil'" />
-                        <select id="role" name="role"
-                                class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
-                            <option value="">Selecione um perfil</option>
-                            <option value="admin"     @selected(old('role', $user->role) === 'admin')>Administrador</option>
-                            <option value="manager"   @selected(old('role', $user->role) === 'manager')>Gestor da Obra</option>
-                            <option value="financial" @selected(old('role', $user->role) === 'financial')>Financeiro</option>
-                            <option value="client"    @selected(old('role', $user->role) === 'client')>Cliente</option>
-                        </select>
-                        <x-input-error :messages="$errors->get('role')" class="mt-1" />
-                    </div>
-
-                    <div>
-                        <x-input-label for="password" :value="'Nova senha'" />
-                        <x-text-input id="password" name="password" type="password"
-                                      class="mt-1 block w-full" />
-                        <p class="mt-1 text-xs text-gray-500">Deixe em branco para manter a senha atual.</p>
-                        <x-input-error :messages="$errors->get('password')" class="mt-1" />
-                    </div>
-
-                    <div>
-                        <x-input-label for="password_confirmation" :value="'Confirmar nova senha'" />
-                        <x-text-input id="password_confirmation" name="password_confirmation"
-                                      type="password" class="mt-1 block w-full" />
-                        <x-input-error :messages="$errors->get('password_confirmation')" class="mt-1" />
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3 mt-8">
-                    <x-primary-button>Salvar</x-primary-button>
-                    <a href="{{ route('users.index') }}"
-                       class="text-sm font-medium text-gray-500 hover:text-gray-700">
-                        Cancelar
-                    </a>
-                </div>
-            </form>
-        </div>
+<div class="p-6 md:p-8 max-w-2xl">
+    <div class="mb-6">
+        <a href="{{ route('users.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Usuários</a>
+        <h1 style="font-size:1.5rem;font-weight:700;margin-top:0.5rem;">Editar usuário</h1>
     </div>
+    <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;">
+        <form method="POST" action="{{ route('users.update', $user) }}" class="space-y-4">
+            @csrf @method('PUT')
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label class="field-label">Nome completo <span style="color:var(--destructive)">*</span></label>
+                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required autofocus>
+                    @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="field-label">E-mail <span style="color:var(--destructive)">*</span></label>
+                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required>
+                    @error('email')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="field-label">Telefone</label>
+                    <input type="text" name="phone" value="{{ old('phone', $user->phone) }}">
+                </div>
+                <div>
+                    <label class="field-label">Perfil <span style="color:var(--destructive)">*</span></label>
+                    <select name="role" required>
+                        <option value="admin"     @selected(old('role',$user->role)==='admin')>Administrador</option>
+                        <option value="manager"   @selected(old('role',$user->role)==='manager')>Gestor da Obra</option>
+                        <option value="financial" @selected(old('role',$user->role)==='financial')>Financeiro</option>
+                        <option value="client"    @selected(old('role',$user->role)==='client')>Cliente</option>
+                    </select>
+                    @error('role')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="field-label">Nova senha</label>
+                    <input type="password" name="password">
+                    <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">Deixe em branco para manter a senha atual.</p>
+                    @error('password')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="field-label">Confirmar nova senha</label>
+                    <input type="password" name="password_confirmation">
+                </div>
+            </div>
+            <div style="padding-top:0.5rem;border-top:1px solid var(--border);margin-top:0.5rem;display:flex;align-items:center;gap:0.75rem;">
+                <input type="hidden" name="active" value="0">
+                <input type="checkbox" name="active" value="1" id="user_active"
+                       @checked(old('active', $user->active))
+                       style="width:1rem;height:1rem;border-radius:0.25rem;cursor:pointer;">
+                <label for="user_active" style="font-size:0.875rem;color:var(--foreground);cursor:pointer;">Utilizador ativo</label>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button type="submit" class="btn-primary">Salvar alterações</button>
+                <a href="{{ route('users.index') }}" class="btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
 </x-admin-layout>

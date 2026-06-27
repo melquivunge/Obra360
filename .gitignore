@@ -1,5 +1,10 @@
 # Ficheiro de requisitos
 requisitos_portal_acompanhamento_obras.docx
+~$*.docx
+
+# Ficheiros locais de agentes
+.claude/
+AGENTS.md
 
 # Docker override local
 docker-compose.override.yml

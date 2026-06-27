@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Client;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -31,7 +33,17 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        User::create($request->validated() + ['active' => true]);
+        $user = User::create($request->validated() + ['active' => true]);
+
+        if ($user->role === User::ROLE_CLIENT) {
+            $client = Client::create([
+                'name'   => $user->name,
+                'email'  => $user->email,
+                'phone'  => $user->phone,
+                'active' => true,
+            ]);
+            $user->update(['client_id' => $client->id]);
+        }
 
         return redirect()->route('users.index')
             ->with('success', 'Usuário criado com sucesso.');
@@ -52,7 +64,23 @@ class UserController extends Controller
             unset($data['password']);
         }
 
+        $wasClient = $user->role === User::ROLE_CLIENT;
         $user->update($data);
+        $user->refresh();
+
+        if (! $user->active) {
+            $this->invalidateUserSessions($user);
+        }
+
+        if ($user->role === User::ROLE_CLIENT && ! $wasClient && ! $user->client_id) {
+            $client = Client::create([
+                'name'   => $user->name,
+                'email'  => $user->email,
+                'phone'  => $user->phone,
+                'active' => true,
+            ]);
+            $user->update(['client_id' => $client->id]);
+        }
 
         return redirect()->route('users.index')
             ->with('success', 'Usuário atualizado com sucesso.');
@@ -74,10 +102,25 @@ class UserController extends Controller
 
         $user->update(['active' => ! $user->active]);
 
+        if (! $user->fresh()->active) {
+            $this->invalidateUserSessions($user);
+        }
+
         $message = $user->fresh()->active
             ? 'Usuário ativado.'
             : 'Usuário desativado.';
 
         return redirect()->back()->with('success', $message);
+    }
+
+    private function invalidateUserSessions(User $user): void
+    {
+        if (config('session.driver') !== 'database') {
+            return;
+        }
+
+        DB::table(config('session.table', 'sessions'))
+            ->where('user_id', $user->id)
+            ->delete();
     }
 }
