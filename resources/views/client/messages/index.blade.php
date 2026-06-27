@@ -44,7 +44,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/>
                 </svg>
                 <p style="font-size:0.9375rem;font-weight:500;">Nenhuma mensagem ainda.</p>
-                <p style="font-size:0.8125rem;">Seja o primeiro a escrever!</p>
+                <p style="font-size:0.8125rem;">{{ $allowComments ? 'Seja o primeiro a escrever!' : 'As mensagens estão desativadas no momento.' }}</p>
             </div>
 
             {{-- Loading state --}}
@@ -83,6 +83,7 @@
         </div>
 
         {{-- Input area --}}
+        @if($allowComments)
         <div style="border-top:1px solid var(--color-border);padding:0.875rem;display:flex;flex-direction:column;gap:0.375rem;flex-shrink:0;">
             <div style="display:flex;gap:0.625rem;align-items:flex-end;">
                 <textarea x-model="newMsg"
@@ -109,6 +110,11 @@
                 <span x-text="newMsg.length"></span>/1000
             </p>
         </div>
+        @else
+        <div style="border-top:1px solid var(--color-border);padding:0.875rem;color:var(--color-muted-foreground);font-size:0.875rem;text-align:center;">
+            As mensagens estão desativadas pela equipa.
+        </div>
+        @endif
     </div>
 </div>
 

@@ -32,8 +32,8 @@ WORKDIR /var/www
 # Copiar ficheiros do projecto
 COPY . .
 
-# Instalar dependências PHP
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+# Instalar dependências PHP de produção
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 # Permissões de storage e bootstrap
 RUN chown -R www-data:www-data /var/www \

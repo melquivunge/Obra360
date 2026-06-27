@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Document;
 use App\Models\Expense;
-use App\Models\Message;
 use App\Models\Photo;
 use App\Models\Project;
 use App\Models\ProjectPhase;
@@ -30,8 +29,9 @@ class ProjectController extends Controller
             $query->where('status', $request->status);
         }
         $projects = $query->paginate(20)->withQueryString();
-        $clients  = Client::orderBy('name')->get();
+        $clients = Client::orderBy('name')->get();
         $managers = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_MANAGER])->orderBy('name')->get();
+
         return view('admin.projects.index', compact('projects', 'clients', 'managers'));
     }
 
@@ -39,6 +39,7 @@ class ProjectController extends Controller
     {
         $clients = Client::orderBy('name')->get();
         $managers = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_MANAGER])->orderBy('name')->get();
+
         return view('admin.projects.create', compact('clients', 'managers'));
     }
 
@@ -53,7 +54,7 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'expected_end_date' => 'nullable|date',
             'budget' => 'nullable|numeric|min:0',
-            'status' => 'required|in:' . implode(',', array_keys(Project::STATUSES)),
+            'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
             'manager_id' => 'nullable|exists:users,id',
             'show_financials' => 'boolean',
             'notes' => 'nullable|string|max:2000',
@@ -66,7 +67,7 @@ class ProjectController extends Controller
         }
 
         if ($request->hasFile('cover_image')) {
-            $data['cover_image_path'] = $request->file('cover_image')->store('covers', 'public');
+            $data['cover_image_path'] = $request->file('cover_image')->store('covers', 'local');
         }
 
         $project = Project::create($data);
@@ -84,6 +85,7 @@ class ProjectController extends Controller
         $phases = $project->phases;
         $totalSpent = $project->totalSpent();
         $payments = $project->payments;
+
         return view('admin.projects.show', compact('project', 'phases', 'totalSpent', 'payments'));
     }
 
@@ -93,6 +95,7 @@ class ProjectController extends Controller
 
         $clients = Client::orderBy('name')->get();
         $managers = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_MANAGER])->orderBy('name')->get();
+
         return view('admin.projects.edit', compact('project', 'clients', 'managers'));
     }
 
@@ -109,7 +112,7 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'expected_end_date' => 'nullable|date',
             'budget' => 'nullable|numeric|min:0',
-            'status' => 'required|in:' . implode(',', array_keys(Project::STATUSES)),
+            'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
             'manager_id' => 'nullable|exists:users,id',
             'show_financials' => 'boolean',
             'notes' => 'nullable|string|max:2000',
@@ -124,15 +127,16 @@ class ProjectController extends Controller
 
         if ($request->hasFile('cover_image')) {
             if ($project->cover_image_path) {
+                Storage::disk('local')->delete($project->cover_image_path);
                 Storage::disk('public')->delete($project->cover_image_path);
             }
-            $data['cover_image_path'] = $request->file('cover_image')->store('covers', 'public');
+            $data['cover_image_path'] = $request->file('cover_image')->store('covers', 'local');
         }
 
         $project->update($data);
 
         if ($data['status'] !== $oldStatus) {
-            ProjectUpdate::log($project->id, 'Status alterado para: ' . Project::STATUSES[$data['status']], 'status');
+            ProjectUpdate::log($project->id, 'Status alterado para: '.Project::STATUSES[$data['status']], 'status');
         }
 
         return redirect()->route('admin.projects.show', $project)->with('success', 'Obra atualizada.');
@@ -142,8 +146,8 @@ class ProjectController extends Controller
     {
         $this->authorizeProjectAccess($project);
 
-        $this->deleteProjectFiles($project);
         $project->delete();
+
         return redirect()->route('admin.projects.index')->with('success', 'Obra removida.');
     }
 
@@ -156,7 +160,7 @@ class ProjectController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:200',
             'description' => 'nullable|string|max:2000',
-            'status' => 'required|in:' . implode(',', array_keys(ProjectPhase::STATUSES)),
+            'status' => 'required|in:'.implode(',', array_keys(ProjectPhase::STATUSES)),
             'percentage' => 'required|integer|min:0|max:100',
             'sort_order' => 'nullable|integer|min:0',
             'start_date' => 'nullable|date',
@@ -165,7 +169,8 @@ class ProjectController extends Controller
         $data['project_id'] = $project->id;
         $data['sort_order'] = $data['sort_order'] ?? $project->phases()->count();
         ProjectPhase::create($data);
-        ProjectUpdate::log($project->id, 'Nova fase: ' . $data['name'], 'fase');
+        ProjectUpdate::log($project->id, 'Nova fase: '.$data['name'], 'fase');
+
         return back()->with('success', 'Fase adicionada.');
     }
 
@@ -177,14 +182,15 @@ class ProjectController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:200',
             'description' => 'nullable|string|max:2000',
-            'status' => 'required|in:' . implode(',', array_keys(ProjectPhase::STATUSES)),
+            'status' => 'required|in:'.implode(',', array_keys(ProjectPhase::STATUSES)),
             'percentage' => 'required|integer|min:0|max:100',
             'sort_order' => 'nullable|integer|min:0',
             'start_date' => 'nullable|date',
             'expected_end_date' => 'nullable|date',
         ]);
         $phase->update($data);
-        ProjectUpdate::log($project->id, 'Fase atualizada: ' . $phase->name . ' — ' . $data['percentage'] . '%', 'fase');
+        ProjectUpdate::log($project->id, 'Fase atualizada: '.$phase->name.' — '.$data['percentage'].'%', 'fase');
+
         return back()->with('success', 'Fase atualizada.');
     }
 
@@ -194,6 +200,7 @@ class ProjectController extends Controller
         $this->assertBelongsToProject($project, $phase);
 
         $phase->delete();
+
         return back()->with('success', 'Fase removida.');
     }
 
@@ -214,7 +221,7 @@ class ProjectController extends Controller
         foreach ($request->file('photos') as $file) {
             $mime = $file->getMimeType();
             $isVideo = str_starts_with($mime, 'video/');
-            $path = $file->store("projects/{$project->id}/photos", 'public');
+            $path = $file->store("projects/{$project->id}/photos", 'local');
             Photo::create([
                 'project_id' => $project->id,
                 'phase_id' => $request->phase_id,
@@ -227,6 +234,7 @@ class ProjectController extends Controller
         }
 
         ProjectUpdate::log($project->id, 'Fotos adicionadas', 'foto');
+
         return back()->with('success', 'Fotos enviadas com sucesso.');
     }
 
@@ -236,10 +244,32 @@ class ProjectController extends Controller
         $this->assertBelongsToProject($project, $photo);
 
         if ($photo->path) {
+            Storage::disk('local')->delete($photo->path);
             Storage::disk('public')->delete($photo->path);
         }
         $photo->delete();
+
         return back()->with('success', 'Foto removida.');
+    }
+
+    public function cover(Project $project)
+    {
+        $this->authorizeProjectAccess($project);
+        abort_unless($project->cover_image_path, 404);
+
+        $disk = $this->mediaDisk($project->cover_image_path);
+
+        return Storage::disk($disk)->response($project->cover_image_path);
+    }
+
+    public function photo(Project $project, Photo $photo)
+    {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $photo);
+
+        $disk = $this->mediaDisk($photo->path);
+
+        return Storage::disk($disk)->response($photo->path);
     }
 
     // ── Expenses ─────────────────────────────────────────────
@@ -249,7 +279,7 @@ class ProjectController extends Controller
         $this->authorizeProjectAccess($project);
 
         $data = $request->validate([
-            'category' => 'required|in:' . implode(',', array_keys(Expense::CATEGORIES)),
+            'category' => 'required|in:'.implode(',', array_keys(Expense::CATEGORIES)),
             'description' => 'required|string|max:500',
             'amount' => 'required|numeric|min:0',
             'spent_at' => 'required|date',
@@ -265,7 +295,8 @@ class ProjectController extends Controller
         }
 
         Expense::create($data);
-        ProjectUpdate::log($project->id, 'Despesa: ' . $data['description'] . ' — R$ ' . number_format($data['amount'], 2, ',', '.'), 'despesa');
+        ProjectUpdate::log($project->id, 'Despesa: '.$data['description'].' — R$ '.number_format($data['amount'], 2, ',', '.'), 'despesa');
+
         return back()->with('success', 'Despesa registrada.');
     }
 
@@ -280,6 +311,7 @@ class ProjectController extends Controller
         }
 
         $expense->delete();
+
         return back()->with('success', 'Despesa removida.');
     }
 
@@ -292,7 +324,7 @@ class ProjectController extends Controller
         $request->validate([
             'file' => 'required|file|mimes:pdf,docx,xlsx,xls,doc,jpg,jpeg,png,webp|max:51200',
             'name' => 'required|string|max:200',
-            'type' => 'required|in:' . implode(',', array_keys(Document::TYPES)),
+            'type' => 'required|in:'.implode(',', array_keys(Document::TYPES)),
             'visibility' => 'required|in:interno,cliente',
             'notes' => 'nullable|string|max:500',
         ]);
@@ -310,7 +342,7 @@ class ProjectController extends Controller
         ]);
 
         if ($doc->isClientVisible()) {
-            ProjectUpdate::log($project->id, 'Documento liberado: ' . $doc->name, 'documento');
+            ProjectUpdate::log($project->id, 'Documento liberado: '.$doc->name, 'documento');
         }
 
         return back()->with('success', 'Documento enviado.');
@@ -324,6 +356,7 @@ class ProjectController extends Controller
         Storage::disk('local')->delete($document->path);
         Storage::disk('public')->delete($document->path);
         $document->delete();
+
         return back()->with('success', 'Documento removido.');
     }
 
@@ -348,6 +381,7 @@ class ProjectController extends Controller
             'description' => 'nullable|string|max:2000',
         ]);
         ProjectUpdate::log($project->id, $request->title, 'geral', $request->description);
+
         return back()->with('success', 'Atualização registrada.');
     }
 
@@ -363,28 +397,8 @@ class ProjectController extends Controller
         }
     }
 
-    private function deleteProjectFiles(Project $project): void
+    private function mediaDisk(string $path): string
     {
-        if ($project->cover_image_path) {
-            Storage::disk('public')->delete($project->cover_image_path);
-        }
-
-        foreach ($project->photos as $photo) {
-            if ($photo->path) {
-                Storage::disk('public')->delete($photo->path);
-            }
-        }
-
-        foreach ($project->documents as $document) {
-            Storage::disk('local')->delete($document->path);
-            Storage::disk('public')->delete($document->path);
-        }
-
-        foreach ($project->expenses as $expense) {
-            if ($expense->receipt_path) {
-                Storage::disk('local')->delete($expense->receipt_path);
-                Storage::disk('public')->delete($expense->receipt_path);
-            }
-        }
+        return Storage::disk('local')->exists($path) ? 'local' : 'public';
     }
 }

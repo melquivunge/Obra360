@@ -37,9 +37,9 @@ class UserController extends Controller
 
         if ($user->role === User::ROLE_CLIENT) {
             $client = Client::create([
-                'name'   => $user->name,
-                'email'  => $user->email,
-                'phone'  => $user->phone,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
                 'active' => true,
             ]);
             $user->update(['client_id' => $client->id]);
@@ -76,9 +76,9 @@ class UserController extends Controller
 
         if ($user->role === User::ROLE_CLIENT && ! $wasClient && ! $user->client_id) {
             $client = Client::create([
-                'name'   => $user->name,
-                'email'  => $user->email,
-                'phone'  => $user->phone,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
                 'active' => true,
             ]);
             $user->update(['client_id' => $client->id]);

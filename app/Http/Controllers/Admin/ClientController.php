@@ -18,11 +18,12 @@ class ClientController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%")
-                  ->orWhere('document', 'like', "%{$request->search}%");
+                    ->orWhere('email', 'like', "%{$request->search}%")
+                    ->orWhere('document', 'like', "%{$request->search}%");
             });
         }
         $clients = $query->paginate(20)->withQueryString();
+
         return view('admin.clients.index', compact('clients'));
     }
 
@@ -34,30 +35,30 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'                  => 'required|string|max:160',
-            'email'                 => 'nullable|email|max:255|unique:users,email|unique:clients,email',
-            'phone'                 => 'nullable|string|max:40',
-            'document'              => 'nullable|string|max:40',
-            'address'               => 'nullable|string|max:255',
-            'city'                  => 'nullable|string|max:120',
-            'country'               => 'nullable|string|max:80',
-            'notes'                 => 'nullable|string|max:2000',
-            'active'                => 'boolean',
-            'password'              => 'nullable|string|min:8|confirmed',
+            'name' => 'required|string|max:160',
+            'email' => 'nullable|email|max:255|unique:users,email|unique:clients,email',
+            'phone' => 'nullable|string|max:40',
+            'document' => 'nullable|string|max:40',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:120',
+            'country' => 'nullable|string|max:80',
+            'notes' => 'nullable|string|max:2000',
+            'active' => 'boolean',
+            'password' => 'nullable|string|min:8|confirmed',
             'password_confirmation' => 'nullable|string',
         ]);
 
         $data['active'] = $request->boolean('active', true);
         $client = Client::create($data);
 
-        if (!empty($data['email']) && !empty($data['password'])) {
+        if (! empty($data['email']) && ! empty($data['password'])) {
             $user = User::create([
-                'name'      => $client->name,
-                'email'     => $client->email,
-                'phone'     => $client->phone,
-                'role'      => User::ROLE_CLIENT,
-                'password'  => Hash::make($data['password']),
-                'active'    => $client->active,
+                'name' => $client->name,
+                'email' => $client->email,
+                'phone' => $client->phone,
+                'role' => User::ROLE_CLIENT,
+                'password' => Hash::make($data['password']),
+                'active' => $client->active,
                 'client_id' => $client->id,
             ]);
         }
@@ -69,6 +70,7 @@ class ClientController extends Controller
     {
         $linkedUsers = User::where('client_id', $client->id)->get();
         $availableUsers = User::where('role', User::ROLE_CLIENT)->whereNull('client_id')->get();
+
         return view('admin.clients.edit', compact('client', 'linkedUsers', 'availableUsers'));
     }
 
@@ -106,6 +108,7 @@ class ClientController extends Controller
     public function destroy(Client $client)
     {
         $client->delete();
+
         return redirect()->route('admin.clients.index')->with('success', 'Cliente removido.');
     }
 
@@ -120,6 +123,7 @@ class ClientController extends Controller
             ],
         ]);
         User::where('id', $request->user_id)->update(['client_id' => $client->id]);
+
         return back()->with('success', 'Usuário vinculado ao cliente.');
     }
 
@@ -128,6 +132,7 @@ class ClientController extends Controller
         abort_unless((int) $user->client_id === (int) $client->id, 404);
 
         $user->update(['client_id' => null]);
+
         return back()->with('success', 'Vínculo removido.');
     }
 

@@ -15,13 +15,14 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
-            'amount'  => 'decimal:2',
+            'amount' => 'decimal:2',
             'due_date' => 'date',
             'paid_at' => 'datetime',
         ];
     }
 
     public const TYPES = ['boleto' => 'Boleto Bancário', 'pix' => 'PIX'];
+
     public const STATUSES = ['pending' => 'Pendente', 'paid' => 'Pago', 'cancelled' => 'Cancelado'];
 
     public function project()

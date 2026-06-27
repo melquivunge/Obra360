@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\Document;
-use App\Models\Expense;
 use App\Models\Message;
+use App\Models\Photo;
 use App\Models\Project;
 use App\Models\Setting;
 use Illuminate\Http\Request;
@@ -22,17 +23,19 @@ class ProjectController extends Controller
         $project->load(['client', 'phases', 'updates.user', 'messages.user']);
         $photos = $project->photos()->get();
         $canViewFinancials = $this->canViewFinancials($project);
+        $allowComments = Setting::get('allow_comments', '1') === '1';
         $expenses = $canViewFinancials ? $project->expenses()->get() : collect();
         $documents = $project->documents()->where('visibility', 'cliente')->get();
         $payments = $canViewFinancials ? $project->payments()->get() : collect();
         $totalSpent = $expenses->sum('amount');
 
-        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials'));
+        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials', 'allowComments'));
     }
 
     public function messages(Request $request, Project $project)
     {
         abort_if($project->client_id !== auth()->user()->client_id, 403);
+        $allowComments = Setting::get('allow_comments', '1') === '1';
 
         $messages = $project->messages()
             ->with('user')
@@ -41,31 +44,34 @@ class ProjectController extends Controller
             ->get()
             ->sortBy('created_at')
             ->map(fn ($m) => [
-            'id' => $m->id,
-            'body' => $m->body,
-            'created_at' => $m->created_at->format('d/m/Y H:i'),
-            'user_name' => $m->user?->name ?? 'Equipa',
-            'user_id' => $m->user_id,
-            'is_mine' => $m->user_id === auth()->id(),
-        ])->values()->toArray();
+                'id' => $m->id,
+                'body' => $m->body,
+                'created_at' => $m->created_at->format('d/m/Y H:i'),
+                'user_name' => $m->user?->name ?? 'Equipa',
+                'user_id' => $m->user_id,
+                'is_mine' => $m->user_id === auth()->id(),
+            ])->values()->toArray();
 
         if ($request->wantsJson() || $request->expectsJson()) {
             return response()->json($messages);
         }
 
-        return view('client.messages.index', compact('project', 'messages'));
+        return view('client.messages.index', compact('project', 'messages', 'allowComments'));
     }
 
     public function storeMessage(Request $request, Project $project)
     {
         abort_if($project->client_id !== auth()->user()->client_id, 403);
+        abort_unless(Setting::get('allow_comments', '1') === '1', 403);
+
         $request->validate(['body' => 'required|string|max:1000']);
         $msg = Message::create([
             'project_id' => $project->id,
             'user_id' => auth()->id(),
             'body' => $request->body,
         ]);
-        broadcast(new \App\Events\MessageSent($msg))->toOthers();
+        broadcast(new MessageSent($msg))->toOthers();
+
         return response()->json(['ok' => true, 'id' => $msg->id]);
     }
 
@@ -80,9 +86,39 @@ class ProjectController extends Controller
         return Storage::disk($disk)->download($document->path, $document->name);
     }
 
+    public function cover(Project $project)
+    {
+        $this->authorizeClientProject($project);
+        abort_unless($project->cover_image_path, 404);
+
+        $disk = $this->mediaDisk($project->cover_image_path);
+
+        return Storage::disk($disk)->response($project->cover_image_path);
+    }
+
+    public function photo(Project $project, Photo $photo)
+    {
+        $this->authorizeClientProject($project);
+        abort_unless((int) $photo->project_id === (int) $project->id, 404);
+
+        $disk = $this->mediaDisk($photo->path);
+
+        return Storage::disk($disk)->response($photo->path);
+    }
+
     private function canViewFinancials(Project $project): bool
     {
         return $project->show_financials
             && Setting::get('show_client_financials', '1') === '1';
+    }
+
+    private function authorizeClientProject(Project $project): void
+    {
+        abort_if($project->client_id !== auth()->user()->client_id, 403);
+    }
+
+    private function mediaDisk(string $path): string
+    {
+        return Storage::disk('local')->exists($path) ? 'local' : 'public';
     }
 }

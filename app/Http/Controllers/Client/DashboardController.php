@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\Setting;
 
 class DashboardController extends Controller
 {
     public function index()
     {
         $clientId = auth()->user()->client_id;
+        $canViewFinancials = Setting::get('show_client_financials', '1') === '1';
 
         $projects = Project::with(['client', 'latestImage'])
             ->where('client_id', $clientId)
@@ -17,11 +19,12 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($project) {
                 $project->cover_url = $project->latestImage
-                    ? asset('storage/' . $project->latestImage->path)
-                    : ($project->cover_image_path ? asset('storage/' . $project->cover_image_path) : null);
+                    ? route('portal.projects.photos.show', [$project, $project->latestImage])
+                    : ($project->cover_image_path ? route('portal.projects.cover', $project) : null);
+
                 return $project;
             });
 
-        return view('client.dashboard', compact('projects'));
+        return view('client.dashboard', compact('projects', 'canViewFinancials'));
     }
 }

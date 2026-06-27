@@ -72,7 +72,7 @@
             <div>
                 <label class="field-label">Nova imagem de capa (opcional)</label>
                 @if($project->cover_image_path)
-                <img src="{{ asset('storage/'.$project->cover_image_path) }}" alt="Capa atual" style="height:80px;border-radius:0.5rem;margin-bottom:0.5rem;object-fit:cover;">
+                <img src="{{ route('admin.projects.cover', $project) }}" alt="Capa atual" style="height:80px;border-radius:0.5rem;margin-bottom:0.5rem;object-fit:cover;">
                 @endif
                 <input type="file" name="cover_image" accept="image/*" style="padding:0.375rem;">
             </div>

@@ -12,15 +12,15 @@ class PaymentController extends Controller
     public function store(Request $request, Project $project)
     {
         $data = $request->validate([
-            'title'       => 'required|string|max:200',
+            'title' => 'required|string|max:200',
             'description' => 'nullable|string|max:2000',
-            'amount'      => 'required|numeric|min:0.01',
-            'type'        => 'required|in:boleto,pix',
-            'status'      => 'required|in:pending,paid,cancelled',
-            'due_date'    => 'nullable|date',
-            'barcode'     => 'nullable|string|max:60',
-            'pix_key'     => 'nullable|string|max:100',
-            'pix_qrcode'  => 'nullable|string',
+            'amount' => 'required|numeric|min:0.01',
+            'type' => 'required|in:boleto,pix',
+            'status' => 'required|in:pending,paid,cancelled',
+            'due_date' => 'nullable|date',
+            'barcode' => 'nullable|string|max:60',
+            'pix_key' => 'nullable|string|max:100',
+            'pix_qrcode' => 'nullable|string',
         ]);
 
         $data['client_id'] = $project->client_id;
@@ -39,15 +39,15 @@ class PaymentController extends Controller
         $this->assertBelongsToProject($project, $payment);
 
         $data = $request->validate([
-            'title'       => 'required|string|max:200',
+            'title' => 'required|string|max:200',
             'description' => 'nullable|string|max:2000',
-            'amount'      => 'required|numeric|min:0.01',
-            'type'        => 'required|in:boleto,pix',
-            'status'      => 'required|in:pending,paid,cancelled',
-            'due_date'    => 'nullable|date',
-            'barcode'     => 'nullable|string|max:60',
-            'pix_key'     => 'nullable|string|max:100',
-            'pix_qrcode'  => 'nullable|string',
+            'amount' => 'required|numeric|min:0.01',
+            'type' => 'required|in:boleto,pix',
+            'status' => 'required|in:pending,paid,cancelled',
+            'due_date' => 'nullable|date',
+            'barcode' => 'nullable|string|max:60',
+            'pix_key' => 'nullable|string|max:100',
+            'pix_qrcode' => 'nullable|string',
         ]);
 
         if ($data['status'] === 'paid' && ! $payment->paid_at) {
@@ -66,6 +66,7 @@ class PaymentController extends Controller
         $this->assertBelongsToProject($project, $payment);
 
         $payment->update(['status' => 'paid', 'paid_at' => now()]);
+
         return back()->with('success', 'Cobrança marcada como paga.');
     }
 
@@ -74,6 +75,7 @@ class PaymentController extends Controller
         $this->assertBelongsToProject($project, $payment);
 
         $payment->delete();
+
         return back()->with('success', 'Cobrança removida.');
     }
 

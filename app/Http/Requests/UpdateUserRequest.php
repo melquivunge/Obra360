@@ -19,21 +19,21 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
                 'required',
                 'email',
                 Rule::unique('users', 'email')->ignore($this->route('user')),
             ],
-            'phone'    => ['nullable', 'string', 'max:30'],
-            'role'     => ['required', Rule::in([
+            'phone' => ['nullable', 'string', 'max:30'],
+            'role' => ['required', Rule::in([
                 User::ROLE_ADMIN,
                 User::ROLE_MANAGER,
                 User::ROLE_FINANCIAL,
                 User::ROLE_CLIENT,
             ])],
             'password' => ['nullable', 'confirmed', 'min:8'],
-            'active'   => ['boolean'],
+            'active' => ['boolean'],
         ];
     }
 
@@ -43,13 +43,13 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'      => 'Este campo é obrigatório.',
-            'email.required'     => 'Este campo é obrigatório.',
-            'email.email'        => 'Insira um e-mail válido.',
-            'email.unique'       => 'Este e-mail já está em uso.',
-            'role.required'      => 'Este campo é obrigatório.',
-            'role.in'            => 'Perfil inválido selecionado.',
-            'password.min'       => 'A senha deve ter no mínimo 8 caracteres.',
+            'name.required' => 'Este campo é obrigatório.',
+            'email.required' => 'Este campo é obrigatório.',
+            'email.email' => 'Insira um e-mail válido.',
+            'email.unique' => 'Este e-mail já está em uso.',
+            'role.required' => 'Este campo é obrigatório.',
+            'role.in' => 'Perfil inválido selecionado.',
+            'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
             'password.confirmed' => 'As senhas não coincidem.',
         ];
     }

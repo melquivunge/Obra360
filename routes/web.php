@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\ClientController;
-use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
@@ -22,6 +22,7 @@ Route::get('/dashboard', function () {
     if (auth()->user()->isClient()) {
         return redirect()->route('portal.dashboard');
     }
+
     return redirect()->route('admin.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -33,6 +34,8 @@ Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->na
     // Read project data + messages: all internal roles.
     Route::get('/obras', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/obras/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/obras/{project}/capa', [ProjectController::class, 'cover'])->name('projects.cover');
+    Route::get('/obras/{project}/fotos/{photo}', [ProjectController::class, 'photo'])->name('projects.photos.show');
     Route::get('/mensagens', [MessageController::class, 'index'])->name('messages.index');
     Route::get('/obras/{project}/mensagens', [MessageController::class, 'messages'])->name('projects.messages.index');
     Route::post('/obras/{project}/mensagens', [MessageController::class, 'store'])->name('projects.messages.store');
@@ -106,11 +109,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/', [ClientDashboardController::class, 'index'])->name('dashboard');
     Route::get('/obras/{project}', [ClientProjectController::class, 'show'])->name('projects.show');
+    Route::get('/obras/{project}/capa', [ClientProjectController::class, 'cover'])->name('projects.cover');
+    Route::get('/obras/{project}/fotos/{photo}', [ClientProjectController::class, 'photo'])->name('projects.photos.show');
     Route::get('/obras/{project}/mensagens', [ClientProjectController::class, 'messages'])->name('projects.messages');
     Route::post('/obras/{project}/mensagens', [ClientProjectController::class, 'storeMessage'])->name('projects.messages.store');
     Route::get('/obras/{project}/documentos/{document}/download', [ClientProjectController::class, 'downloadDocument'])->name('projects.documents.download');
     Route::post('/mensagens/marcar-lidas', function () {
         session(['messages_last_viewed_at' => now()->timestamp]);
+
         return response()->json(['ok' => true]);
     })->name('messages.mark-read');
 });

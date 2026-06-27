@@ -28,11 +28,11 @@ class UserManagementTest extends TestCase
     private function validCreatePayload(array $overrides = []): array
     {
         return array_merge([
-            'name'                  => 'João Silva',
-            'email'                 => 'joao@example.com',
-            'phone'                 => '11999990000',
-            'role'                  => User::ROLE_MANAGER,
-            'password'              => 'secret1234',
+            'name' => 'João Silva',
+            'email' => 'joao@example.com',
+            'phone' => '11999990000',
+            'role' => User::ROLE_MANAGER,
+            'password' => 'secret1234',
             'password_confirmation' => 'secret1234',
         ], $overrides);
     }
@@ -51,7 +51,7 @@ class UserManagementTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'joao@example.com',
-            'role'  => User::ROLE_MANAGER,
+            'role' => User::ROLE_MANAGER,
         ]);
     }
 
@@ -65,7 +65,7 @@ class UserManagementTest extends TestCase
         $plain = 'secret1234';
 
         $this->actingAs($admin)->post(route('users.store'), $this->validCreatePayload([
-            'password'              => $plain,
+            'password' => $plain,
             'password_confirmation' => $plain,
         ]));
 
@@ -111,18 +111,18 @@ class UserManagementTest extends TestCase
     public function test_admin_can_update_user_name_and_role(): void
     {
         $admin = $this->adminUser();
-        $user  = User::factory()->create(['name' => 'Old Name', 'role' => User::ROLE_CLIENT]);
+        $user = User::factory()->create(['name' => 'Old Name', 'role' => User::ROLE_CLIENT]);
 
         $this->actingAs($admin)
             ->put(route('users.update', $user), [
-                'name'  => 'New Name',
+                'name' => 'New Name',
                 'email' => $user->email,
-                'role'  => User::ROLE_FINANCIAL,
+                'role' => User::ROLE_FINANCIAL,
             ])
             ->assertRedirect(route('users.index'));
 
         $this->assertDatabaseHas('users', [
-            'id'   => $user->id,
+            'id' => $user->id,
             'name' => 'New Name',
             'role' => User::ROLE_FINANCIAL,
         ]);
@@ -135,7 +135,7 @@ class UserManagementTest extends TestCase
     public function test_toggle_active_flips_active_flag(): void
     {
         $admin = $this->adminUser();
-        $user  = User::factory()->create(['active' => true]);
+        $user = User::factory()->create(['active' => true]);
 
         $this->actingAs($admin)
             ->post(route('users.toggle-active', $user))
@@ -157,7 +157,7 @@ class UserManagementTest extends TestCase
     public function test_delete_soft_deletes_user(): void
     {
         $admin = $this->adminUser();
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
 
         $this->actingAs($admin)
             ->delete(route('users.destroy', $user))

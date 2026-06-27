@@ -72,7 +72,9 @@
             </button>
             @endif
             <button class="tab-btn" :class="{ active: tab === 'documentos' }" @click="tab = 'documentos'">Documentos</button>
+            @if($allowComments)
             <button class="tab-btn" :class="{ active: tab === 'mensagens' }" @click="tab = 'mensagens'">Mensagens</button>
+            @endif
         </div>
 
         {{-- Tab: Resumo --}}
@@ -143,11 +145,12 @@
                             </h4>
                             <div class="photo-grid">
                                 @foreach($byPhase[$phase->id] as $photo)
+                                @php $photoUrl = route('portal.projects.photos.show', [$project, $photo]); @endphp
                                 <div class="photo-item">
                                     @if($photo->media_type === 'video')
-                                        <video src="{{ asset('storage/' . $photo->path) }}" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>
+                                        <video src="{{ $photoUrl }}" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>
                                     @else
-                                        <img src="{{ asset('storage/' . $photo->path) }}" alt="{{ $photo->caption ?: $photo->title }}"
+                                        <img src="{{ $photoUrl }}" alt="{{ $photo->caption ?: $photo->title }}"
                                              style="width:100%;height:100%;object-fit:cover;transition:transform 0.2s;"
                                              onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                     @endif
@@ -164,13 +167,14 @@
                         </h4>
                         <div class="photo-grid">
                             @foreach($noPhase as $photo)
+                            @php $photoUrl = route('portal.projects.photos.show', [$project, $photo]); @endphp
                             <div class="photo-item">
                                 @if($photo->media_type === 'video')
-                                    <video src="{{ asset('storage/' . $photo->path) }}" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>
+                                    <video src="{{ $photoUrl }}" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>
                                 @else
-                                    <img src="{{ asset('storage/' . $photo->path) }}" alt="{{ $photo->caption ?: $photo->title }}"
+                                    <img src="{{ $photoUrl }}" alt="{{ $photo->caption ?: $photo->title }}"
                                          style="width:100%;height:100%;object-fit:cover;transition:transform 0.2s;cursor:pointer;"
-                                         onclick="openLightbox(@js(asset('storage/' . $photo->path)), @js($photo->caption ?: $photo->title ?? ''))"
+                                         onclick="openLightbox(@js($photoUrl), @js($photo->caption ?: $photo->title ?? ''))"
                                          onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                 @endif
                             </div>
@@ -402,6 +406,7 @@
         </div>
 
         {{-- Tab: Mensagens --}}
+        @if($allowComments)
         <div x-show="tab === 'mensagens'" style="display:none;">
             <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;overflow:hidden;"
                  x-data="chatClient({{ $project->id }})" x-init="init()">
@@ -449,6 +454,7 @@
                 </p>
             </div>
         </div>
+        @endif
     </div>
 </div>
 

@@ -20,6 +20,7 @@ class SettingController extends Controller
             'currency' => Setting::get('currency', 'BRL'),
             'logo_url' => Setting::get('logo_url'),
         ];
+
         return view('admin.settings.index', compact('settings'));
     }
 
@@ -42,7 +43,9 @@ class SettingController extends Controller
 
         if ($request->hasFile('logo')) {
             $old = Setting::get('logo_url');
-            if ($old) Storage::disk('public')->delete($old);
+            if ($old) {
+                Storage::disk('public')->delete($old);
+            }
             $path = $request->file('logo')->store('branding', 'public');
             Setting::set('logo_url', $path);
         }

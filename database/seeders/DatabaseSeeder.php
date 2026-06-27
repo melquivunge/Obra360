@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -36,11 +37,11 @@ class DatabaseSeeder extends Seeder
             'active' => true,
         ]);
 
-        \App\Models\Setting::set('company_name', 'Obra360');
-        \App\Models\Setting::set('company_email', 'contato@obra360.com.br');
-        \App\Models\Setting::set('company_phone', '');
-        \App\Models\Setting::set('allow_comments', '1');
-        \App\Models\Setting::set('show_client_financials', '1');
-        \App\Models\Setting::set('currency', 'BRL');
+        Setting::set('company_name', 'Obra360');
+        Setting::set('company_email', 'contato@obra360.com.br');
+        Setting::set('company_phone', '');
+        Setting::set('allow_comments', '1');
+        Setting::set('show_client_financials', '1');
+        Setting::set('currency', 'BRL');
     }
 }

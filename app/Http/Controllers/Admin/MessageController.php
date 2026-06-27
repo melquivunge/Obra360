@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\Project;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class MessageController extends Controller
@@ -36,6 +38,7 @@ class MessageController extends Controller
             ->get()
             ->sortBy('created_at')
             ->values();
+
         return response()->json($messages->map(fn ($m) => [
             'id' => $m->id,
             'body' => $m->body,
@@ -49,6 +52,7 @@ class MessageController extends Controller
     public function store(Request $request, Project $project)
     {
         $this->authorizeProjectAccess($project);
+        abort_unless(Setting::get('allow_comments', '1') === '1', 403);
 
         $request->validate(['body' => 'required|string|max:1000']);
         $msg = Message::create([
@@ -56,7 +60,8 @@ class MessageController extends Controller
             'user_id' => auth()->id(),
             'body' => $request->body,
         ]);
-        broadcast(new \App\Events\MessageSent($msg))->toOthers();
+        broadcast(new MessageSent($msg))->toOthers();
+
         return response()->json(['ok' => true, 'id' => $msg->id]);
     }
 

@@ -156,11 +156,12 @@
         </div>
         <div class="photo-grid">
             @forelse($project->photos as $photo)
+            @php $photoUrl = route('admin.projects.photos.show', [$project, $photo]); @endphp
             <div class="photo-item" style="position:relative;">
                 @if($photo->media_type === 'video')
-                <video src="{{ asset('storage/'.$photo->path) }}" style="width:100%;height:100%;object-fit:cover;" muted></video>
+                <video src="{{ $photoUrl }}" style="width:100%;height:100%;object-fit:cover;" muted></video>
                 @else
-                <img src="{{ asset('storage/'.$photo->path) }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js(asset('storage/'.$photo->path)), @js($photo->caption ?? ''))">
+                <img src="{{ $photoUrl }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js($photoUrl), @js($photo->caption ?? ''))">
                 @endif
                 @if($photo->caption)<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:0.5rem;font-size:0.75rem;color:#fff;">{{ $photo->caption }}</div>@endif
                 <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" onsubmit="return confirm('Remover foto?')" style="position:absolute;top:4px;right:4px;">

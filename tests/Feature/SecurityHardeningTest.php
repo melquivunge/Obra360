@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Client;
 use App\Models\Document;
 use App\Models\Payment;
+use App\Models\Photo;
 use App\Models\Project;
 use App\Models\ProjectPhase;
 use App\Models\Setting;
@@ -45,6 +46,22 @@ class SecurityHardeningTest extends TestCase
             ->assertOk()
             ->assertSee($ownProject->name)
             ->assertDontSee('Other manager project');
+    }
+
+    public function test_manager_dashboard_is_scoped_to_assigned_projects(): void
+    {
+        $manager = User::factory()->manager()->create();
+        $ownProject = Project::factory()->create([
+            'name' => 'Manager visible dashboard project',
+            'manager_id' => $manager->id,
+        ]);
+        Project::factory()->create(['name' => 'Hidden dashboard project']);
+
+        $this->actingAs($manager)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee($ownProject->name)
+            ->assertDontSee('Hidden dashboard project');
     }
 
     public function test_nested_phase_cannot_be_updated_through_another_project(): void
@@ -121,6 +138,31 @@ class SecurityHardeningTest extends TestCase
         Storage::disk('public')->assertMissing($document->path);
     }
 
+    public function test_photos_are_stored_on_private_disk_and_served_through_authorized_route(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $admin = User::factory()->admin()->create();
+        $project = Project::factory()->create();
+
+        $this->actingAs($admin)
+            ->post(route('admin.projects.photos.store', $project), [
+                'photos' => [
+                    UploadedFile::fake()->image('progress.jpg'),
+                ],
+            ])
+            ->assertRedirect();
+
+        $photo = Photo::firstOrFail();
+        Storage::disk('local')->assertExists($photo->path);
+        Storage::disk('public')->assertMissing($photo->path);
+
+        $this->actingAs($admin)
+            ->get(route('admin.projects.photos.show', [$project, $photo]))
+            ->assertOk();
+    }
+
     public function test_client_cannot_download_internal_document(): void
     {
         $client = Client::factory()->create();
@@ -162,5 +204,48 @@ class SecurityHardeningTest extends TestCase
             ->assertOk()
             ->assertDontSee('Financeiro')
             ->assertDontSee('Cobranças');
+    }
+
+    public function test_client_dashboard_hides_budget_when_global_financials_are_disabled(): void
+    {
+        Setting::set('show_client_financials', '0');
+
+        $client = Client::factory()->create();
+        $user = User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'client_id' => $client->id,
+        ]);
+        Project::factory()->create([
+            'client_id' => $client->id,
+            'show_financials' => true,
+            'budget' => 12345,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Orçamento')
+            ->assertDontSee('12.345');
+    }
+
+    public function test_allow_comments_setting_blocks_client_and_admin_message_posts(): void
+    {
+        Setting::set('allow_comments', '0');
+
+        $admin = User::factory()->admin()->create();
+        $client = Client::factory()->create();
+        $clientUser = User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'client_id' => $client->id,
+        ]);
+        $project = Project::factory()->create(['client_id' => $client->id]);
+
+        $this->actingAs($clientUser)
+            ->postJson(route('portal.projects.messages.store', $project), ['body' => 'Blocked'])
+            ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.projects.messages.store', $project), ['body' => 'Blocked'])
+            ->assertForbidden();
     }
 }
