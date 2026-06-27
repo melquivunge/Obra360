@@ -20,6 +20,9 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $query = Project::with('client')->latest();
+        if (auth()->user()->isManager()) {
+            $query->where('manager_id', auth()->id());
+        }
         if ($request->filled('client_id')) {
             $query->where('client_id', $request->client_id);
         }
@@ -54,9 +57,13 @@ class ProjectController extends Controller
             'manager_id' => 'nullable|exists:users,id',
             'show_financials' => 'boolean',
             'notes' => 'nullable|string|max:2000',
+            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
         $data['show_financials'] = $request->boolean('show_financials', true);
         $data['progress'] = 0;
+        if (auth()->user()->isManager()) {
+            $data['manager_id'] = auth()->id();
+        }
 
         if ($request->hasFile('cover_image')) {
             $data['cover_image_path'] = $request->file('cover_image')->store('covers', 'public');
@@ -71,6 +78,8 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $project->load(['client', 'manager', 'phases', 'photos.phase', 'expenses', 'documents', 'updates.user', 'messages.user', 'payments']);
         $phases = $project->phases;
         $totalSpent = $project->totalSpent();
@@ -80,6 +89,8 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $clients = Client::orderBy('name')->get();
         $managers = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_MANAGER])->orderBy('name')->get();
         return view('admin.projects.edit', compact('project', 'clients', 'managers'));
@@ -87,6 +98,8 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $data = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'name' => 'required|string|max:200',
@@ -100,8 +113,12 @@ class ProjectController extends Controller
             'manager_id' => 'nullable|exists:users,id',
             'show_financials' => 'boolean',
             'notes' => 'nullable|string|max:2000',
+            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
         $data['show_financials'] = $request->boolean('show_financials');
+        if (auth()->user()->isManager()) {
+            $data['manager_id'] = auth()->id();
+        }
 
         $oldStatus = $project->status;
 
@@ -123,6 +140,9 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
+        $this->deleteProjectFiles($project);
         $project->delete();
         return redirect()->route('admin.projects.index')->with('success', 'Obra removida.');
     }
@@ -131,6 +151,8 @@ class ProjectController extends Controller
 
     public function storePhase(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $data = $request->validate([
             'name' => 'required|string|max:200',
             'description' => 'nullable|string|max:2000',
@@ -149,6 +171,9 @@ class ProjectController extends Controller
 
     public function updatePhase(Request $request, Project $project, ProjectPhase $phase)
     {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $phase);
+
         $data = $request->validate([
             'name' => 'required|string|max:200',
             'description' => 'nullable|string|max:2000',
@@ -165,6 +190,9 @@ class ProjectController extends Controller
 
     public function destroyPhase(Project $project, ProjectPhase $phase)
     {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $phase);
+
         $phase->delete();
         return back()->with('success', 'Fase removida.');
     }
@@ -173,10 +201,12 @@ class ProjectController extends Controller
 
     public function storePhoto(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $request->validate([
             'photos' => 'required|array|min:1',
             'photos.*' => 'required|file|mimes:jpeg,jpg,png,webp,gif,mp4,mov,avi|max:51200',
-            'phase_id' => 'nullable|exists:project_phases,id',
+            'phase_id' => 'nullable|exists:project_phases,id,project_id,'.$project->id,
             'caption' => 'nullable|string|max:500',
             'taken_at' => 'nullable|date',
         ]);
@@ -202,6 +232,9 @@ class ProjectController extends Controller
 
     public function destroyPhoto(Project $project, Photo $photo)
     {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $photo);
+
         if ($photo->path) {
             Storage::disk('public')->delete($photo->path);
         }
@@ -213,6 +246,8 @@ class ProjectController extends Controller
 
     public function storeExpense(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $data = $request->validate([
             'category' => 'required|in:' . implode(',', array_keys(Expense::CATEGORIES)),
             'description' => 'required|string|max:500',
@@ -220,12 +255,13 @@ class ProjectController extends Controller
             'spent_at' => 'required|date',
             'supplier' => 'nullable|string|max:200',
             'notes' => 'nullable|string|max:1000',
+            'receipt' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:10240',
         ]);
         $data['project_id'] = $project->id;
         $data['created_by'] = auth()->id();
 
         if ($request->hasFile('receipt')) {
-            $data['receipt_path'] = $request->file('receipt')->store("projects/{$project->id}/receipts", 'public');
+            $data['receipt_path'] = $request->file('receipt')->store("projects/{$project->id}/receipts", 'local');
         }
 
         Expense::create($data);
@@ -235,6 +271,14 @@ class ProjectController extends Controller
 
     public function destroyExpense(Project $project, Expense $expense)
     {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $expense);
+
+        if ($expense->receipt_path) {
+            Storage::disk('local')->delete($expense->receipt_path);
+            Storage::disk('public')->delete($expense->receipt_path);
+        }
+
         $expense->delete();
         return back()->with('success', 'Despesa removida.');
     }
@@ -243,6 +287,8 @@ class ProjectController extends Controller
 
     public function storeDocument(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $request->validate([
             'file' => 'required|file|mimes:pdf,docx,xlsx,xls,doc,jpg,jpeg,png,webp|max:51200',
             'name' => 'required|string|max:200',
@@ -251,7 +297,7 @@ class ProjectController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $path = $request->file('file')->store("projects/{$project->id}/documents", 'public');
+        $path = $request->file('file')->store("projects/{$project->id}/documents", 'local');
 
         $doc = Document::create([
             'project_id' => $project->id,
@@ -272,20 +318,73 @@ class ProjectController extends Controller
 
     public function destroyDocument(Project $project, Document $document)
     {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $document);
+
+        Storage::disk('local')->delete($document->path);
         Storage::disk('public')->delete($document->path);
         $document->delete();
         return back()->with('success', 'Documento removido.');
+    }
+
+    public function downloadDocument(Project $project, Document $document)
+    {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $document);
+
+        $disk = Storage::disk('local')->exists($document->path) ? 'local' : 'public';
+
+        return Storage::disk($disk)->download($document->path, $document->name);
     }
 
     // ── Manual Updates ────────────────────────────────────────
 
     public function storeUpdate(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $request->validate([
             'title' => 'required|string|max:300',
             'description' => 'nullable|string|max:2000',
         ]);
         ProjectUpdate::log($project->id, $request->title, 'geral', $request->description);
         return back()->with('success', 'Atualização registrada.');
+    }
+
+    private function assertBelongsToProject(Project $project, object $child): void
+    {
+        abort_unless((int) $child->project_id === (int) $project->id, 404);
+    }
+
+    private function authorizeProjectAccess(Project $project): void
+    {
+        if (auth()->user()->isManager()) {
+            abort_unless((int) $project->manager_id === auth()->id(), 403);
+        }
+    }
+
+    private function deleteProjectFiles(Project $project): void
+    {
+        if ($project->cover_image_path) {
+            Storage::disk('public')->delete($project->cover_image_path);
+        }
+
+        foreach ($project->photos as $photo) {
+            if ($photo->path) {
+                Storage::disk('public')->delete($photo->path);
+            }
+        }
+
+        foreach ($project->documents as $document) {
+            Storage::disk('local')->delete($document->path);
+            Storage::disk('public')->delete($document->path);
+        }
+
+        foreach ($project->expenses as $expense) {
+            if ($expense->receipt_path) {
+                Storage::disk('local')->delete($expense->receipt_path);
+                Storage::disk('public')->delete($expense->receipt_path);
+            }
+        }
     }
 }

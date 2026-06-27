@@ -11,14 +11,13 @@ class DashboardController extends Controller
     {
         $clientId = auth()->user()->client_id;
 
-        $projects = Project::with('client')
+        $projects = Project::with(['client', 'latestImage'])
             ->where('client_id', $clientId)
             ->latest('updated_at')
             ->get()
             ->map(function ($project) {
-                $cover = $project->photos()->whereIn('media_type', ['image'])->latest()->first();
-                $project->cover_url = $cover
-                    ? asset('storage/' . $cover->path)
+                $project->cover_url = $project->latestImage
+                    ? asset('storage/' . $project->latestImage->path)
                     : ($project->cover_image_path ? asset('storage/' . $project->cover_image_path) : null);
                 return $project;
             });

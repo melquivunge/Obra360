@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
@@ -53,6 +54,13 @@ class Project extends Model
     public function photos(): HasMany
     {
         return $this->hasMany(Photo::class)->latest();
+    }
+
+    public function latestImage(): HasOne
+    {
+        return $this->hasOne(Photo::class)
+            ->where('media_type', 'image')
+            ->latestOfMany();
     }
 
     public function expenses(): HasMany

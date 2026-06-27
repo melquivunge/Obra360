@@ -9,7 +9,7 @@
             @forelse($projects as $project)
             @php $last = $project->messages->first(); @endphp
             <button type="button"
-                onclick="openConversation({{ $project->id }}, '{{ addslashes($project->name) }}')"
+                onclick="openConversation({{ $project->id }}, @js($project->name))"
                 id="proj-btn-{{ $project->id }}"
                 style="width:100%;text-align:left;padding:0.875rem 1rem;border:none;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;display:block;color:var(--foreground);"
                 onmouseover="if(currentProjectId!={{ $project->id }})this.style.backgroundColor='var(--surface)'"
@@ -67,11 +67,23 @@ function appendMsg(body, userName, isMine, time){
     const list = document.getElementById('chat-messages');
     const d = document.createElement('div');
     d.style.cssText = `display:flex;justify-content:${isMine?'flex-end':'flex-start'}`;
-    d.innerHTML = `<div style="max-width:80%;border-radius:1rem;padding:0.625rem 0.875rem;font-size:0.875rem;background:${isMine?'var(--primary)':'var(--surface)'};color:${isMine?'var(--primary-foreground)':'var(--foreground)'};">
-        ${!isMine?`<p style="font-size:0.75rem;font-weight:600;opacity:0.8;margin-bottom:0.125rem;">${userName}</p>`:''}
-        <p style="white-space:pre-wrap;">${body.replace(/</g,'&lt;')}</p>
-        <p style="font-size:0.7rem;margin-top:0.25rem;opacity:0.7;">${time}</p>
-    </div>`;
+    const bubble = document.createElement('div');
+    bubble.style.cssText = `max-width:80%;border-radius:1rem;padding:0.625rem 0.875rem;font-size:0.875rem;background:${isMine?'var(--primary)':'var(--surface)'};color:${isMine?'var(--primary-foreground)':'var(--foreground)'}`;
+    if (!isMine) {
+        const name = document.createElement('p');
+        name.style.cssText = 'font-size:0.75rem;font-weight:600;opacity:0.8;margin-bottom:0.125rem;';
+        name.textContent = userName || 'Usuário';
+        bubble.appendChild(name);
+    }
+    const text = document.createElement('p');
+    text.style.whiteSpace = 'pre-wrap';
+    text.textContent = body;
+    bubble.appendChild(text);
+    const sentAt = document.createElement('p');
+    sentAt.style.cssText = 'font-size:0.7rem;margin-top:0.25rem;opacity:0.7;';
+    sentAt.textContent = time;
+    bubble.appendChild(sentAt);
+    d.appendChild(bubble);
     list.appendChild(d);
     list.scrollTop = list.scrollHeight;
 }

@@ -11,7 +11,13 @@ class MessageController extends Controller
 {
     public function index()
     {
-        $projects = Project::with(['messages' => function ($q) {
+        $query = Project::query();
+
+        if (auth()->user()->isManager()) {
+            $query->where('manager_id', auth()->id());
+        }
+
+        $projects = $query->with(['messages' => function ($q) {
             $q->latest()->limit(1);
         }, 'messages.user'])->latest()->get()
             ->sortByDesc(fn ($p) => $p->messages->first()?->created_at);
@@ -21,7 +27,15 @@ class MessageController extends Controller
 
     public function messages(Project $project)
     {
-        $messages = $project->messages()->with('user')->get();
+        $this->authorizeProjectAccess($project);
+
+        $messages = $project->messages()
+            ->with('user')
+            ->latest()
+            ->limit(200)
+            ->get()
+            ->sortBy('created_at')
+            ->values();
         return response()->json($messages->map(fn ($m) => [
             'id' => $m->id,
             'body' => $m->body,
@@ -34,6 +48,8 @@ class MessageController extends Controller
 
     public function store(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $request->validate(['body' => 'required|string|max:1000']);
         $msg = Message::create([
             'project_id' => $project->id,
@@ -42,5 +58,12 @@ class MessageController extends Controller
         ]);
         broadcast(new \App\Events\MessageSent($msg))->toOthers();
         return response()->json(['ok' => true, 'id' => $msg->id]);
+    }
+
+    private function authorizeProjectAccess(Project $project): void
+    {
+        if (auth()->user()->isManager()) {
+            abort_unless((int) $project->manager_id === auth()->id(), 403);
+        }
     }
 }

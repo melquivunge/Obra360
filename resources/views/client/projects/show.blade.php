@@ -61,7 +61,7 @@
                 @if($photos->count()) <span style="font-size:0.7rem;margin-left:0.25rem;opacity:0.7;">({{ $photos->count() }})</span> @endif
             </button>
             <button class="tab-btn" :class="{ active: tab === 'fases' }" @click="tab = 'fases'">Fases</button>
-            @if($project->show_financials)
+            @if($canViewFinancials)
             <button class="tab-btn" :class="{ active: tab === 'financeiro' }" @click="tab = 'financeiro'">Financeiro</button>
             @endif
             @if($payments->isNotEmpty())
@@ -170,7 +170,7 @@
                                 @else
                                     <img src="{{ asset('storage/' . $photo->path) }}" alt="{{ $photo->caption ?: $photo->title }}"
                                          style="width:100%;height:100%;object-fit:cover;transition:transform 0.2s;cursor:pointer;"
-                                         onclick="openLightbox('{{ asset('storage/' . $photo->path) }}', '{{ addslashes($photo->caption ?: $photo->title ?? '') }}')"
+                                         onclick="openLightbox(@js(asset('storage/' . $photo->path)), @js($photo->caption ?: $photo->title ?? ''))"
                                          onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                 @endif
                             </div>
@@ -239,7 +239,7 @@
         </div>
 
         {{-- Tab: Financeiro --}}
-        @if($project->show_financials)
+        @if($canViewFinancials)
         <div x-show="tab === 'financeiro'" style="display:none;">
             <div class="space-y-4">
                 {{-- Summary cards --}}
@@ -386,7 +386,7 @@
                                 {{ \App\Models\Document::TYPES[$doc->type] ?? $doc->type }} · {{ $doc->created_at->format('d/m/Y') }}
                             </p>
                         </div>
-                        <a href="{{ asset('storage/' . $doc->path) }}" target="_blank" rel="noopener"
+                        <a href="{{ route('portal.projects.documents.download', [$project, $doc]) }}" target="_blank" rel="noopener"
                            style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.375rem 0.75rem;border:1px solid var(--color-border);border-radius:0.375rem;font-size:0.8125rem;color:var(--color-primary);text-decoration:none;flex-shrink:0;transition:border-color 0.15s;"
                            onmouseover="this.style.borderColor='var(--color-primary)'" onmouseout="this.style.borderColor='var(--color-border)'">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">

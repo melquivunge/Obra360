@@ -34,7 +34,7 @@
             <div>
                 <label for="email" class="field-label">E-mail</label>
                 <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email"
-                       placeholder="admin@obra360.test">
+                       placeholder="seu@email.com">
             </div>
 
             <div>

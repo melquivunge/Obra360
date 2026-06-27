@@ -7,7 +7,9 @@ use App\Models\Document;
 use App\Models\Expense;
 use App\Models\Message;
 use App\Models\Project;
+use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -19,19 +21,26 @@ class ProjectController extends Controller
 
         $project->load(['client', 'phases', 'updates.user', 'messages.user']);
         $photos = $project->photos()->get();
-        $expenses = $project->expenses()->get();
+        $canViewFinancials = $this->canViewFinancials($project);
+        $expenses = $canViewFinancials ? $project->expenses()->get() : collect();
         $documents = $project->documents()->where('visibility', 'cliente')->get();
-        $payments = $project->payments()->get();
+        $payments = $canViewFinancials ? $project->payments()->get() : collect();
         $totalSpent = $expenses->sum('amount');
 
-        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent'));
+        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials'));
     }
 
     public function messages(Request $request, Project $project)
     {
         abort_if($project->client_id !== auth()->user()->client_id, 403);
 
-        $messages = $project->messages()->with('user')->get()->map(fn ($m) => [
+        $messages = $project->messages()
+            ->with('user')
+            ->latest()
+            ->limit(200)
+            ->get()
+            ->sortBy('created_at')
+            ->map(fn ($m) => [
             'id' => $m->id,
             'body' => $m->body,
             'created_at' => $m->created_at->format('d/m/Y H:i'),
@@ -58,5 +67,22 @@ class ProjectController extends Controller
         ]);
         broadcast(new \App\Events\MessageSent($msg))->toOthers();
         return response()->json(['ok' => true, 'id' => $msg->id]);
+    }
+
+    public function downloadDocument(Project $project, Document $document)
+    {
+        abort_if($project->client_id !== auth()->user()->client_id, 403);
+        abort_if((int) $document->project_id !== (int) $project->id, 404);
+        abort_unless($document->isClientVisible(), 403);
+
+        $disk = Storage::disk('local')->exists($document->path) ? 'local' : 'public';
+
+        return Storage::disk($disk)->download($document->path, $document->name);
+    }
+
+    private function canViewFinancials(Project $project): bool
+    {
+        return $project->show_financials
+            && Setting::get('show_client_financials', '1') === '1';
     }
 }

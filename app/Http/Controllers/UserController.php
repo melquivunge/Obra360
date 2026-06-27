@@ -64,6 +64,8 @@ class UserController extends Controller
             unset($data['password']);
         }
 
+        $this->guardCriticalAdminChange($user, $data);
+
         $wasClient = $user->role === User::ROLE_CLIENT;
         $user->update($data);
         $user->refresh();
@@ -89,6 +91,7 @@ class UserController extends Controller
     public function destroy(User $user): RedirectResponse
     {
         $this->authorize('delete', $user);
+        $this->guardCriticalAdminChange($user, ['active' => false, 'role' => null]);
 
         $user->delete();
 
@@ -99,6 +102,8 @@ class UserController extends Controller
     public function toggleActive(User $user): RedirectResponse
     {
         $this->authorize('update', $user);
+
+        $this->guardCriticalAdminChange($user, ['active' => ! $user->active]);
 
         $user->update(['active' => ! $user->active]);
 
@@ -122,5 +127,28 @@ class UserController extends Controller
         DB::table(config('session.table', 'sessions'))
             ->where('user_id', $user->id)
             ->delete();
+    }
+
+    private function guardCriticalAdminChange(User $user, array $data): void
+    {
+        if (! $user->isAdmin()) {
+            return;
+        }
+
+        $wouldDeactivate = array_key_exists('active', $data) && ! (bool) $data['active'];
+        $wouldDemote = array_key_exists('role', $data) && $data['role'] !== User::ROLE_ADMIN;
+        $isSelfChange = auth()->id() === $user->id;
+        $isLastActiveAdmin = User::where('role', User::ROLE_ADMIN)
+            ->where('active', true)
+            ->whereKeyNot($user->id)
+            ->doesntExist();
+
+        if ($isSelfChange && ($wouldDeactivate || $wouldDemote)) {
+            abort(422, 'Você não pode remover seu próprio acesso de administrador.');
+        }
+
+        if ($isLastActiveAdmin && ($wouldDeactivate || $wouldDemote)) {
+            abort(422, 'É necessário manter pelo menos um administrador ativo.');
+        }
     }
 }

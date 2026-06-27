@@ -160,7 +160,7 @@
                 @if($photo->media_type === 'video')
                 <video src="{{ asset('storage/'.$photo->path) }}" style="width:100%;height:100%;object-fit:cover;" muted></video>
                 @else
-                <img src="{{ asset('storage/'.$photo->path) }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox('{{ asset('storage/'.$photo->path) }}', '{{ addslashes($photo->caption ?? '') }}')">
+                <img src="{{ asset('storage/'.$photo->path) }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js(asset('storage/'.$photo->path)), @js($photo->caption ?? ''))">
                 @endif
                 @if($photo->caption)<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:0.5rem;font-size:0.75rem;color:#fff;">{{ $photo->caption }}</div>@endif
                 <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" onsubmit="return confirm('Remover foto?')" style="position:absolute;top:4px;right:4px;">
@@ -313,7 +313,7 @@
                         · {{ $doc->created_at->format('d/m/Y') }}
                     </p>
                 </div>
-                <a href="{{ asset('storage/'.$doc->path) }}" target="_blank" style="padding:0.5rem;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                <a href="{{ route('admin.projects.documents.download', [$project, $doc]) }}" target="_blank" rel="noopener" style="padding:0.5rem;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                 </a>
                 <form method="POST" action="{{ route('admin.projects.documents.destroy', [$project, $doc]) }}" onsubmit="return confirm('Remover documento?')">
@@ -397,11 +397,23 @@
             function appendMsg(body, userName, isMine, time){
                 const d = document.createElement('div');
                 d.style.cssText = `display:flex;justify-content:${isMine?'flex-end':'flex-start'}`;
-                d.innerHTML = `<div style="max-width:80%;border-radius:1rem;padding:0.625rem 0.875rem;font-size:0.875rem;background:${isMine?'var(--primary)':'var(--surface)'};color:${isMine?'var(--primary-foreground)':'var(--foreground)'};">
-                    ${!isMine?`<p style="font-size:0.75rem;font-weight:600;opacity:0.8;margin-bottom:0.125rem;">${userName}</p>`:''}
-                    <p style="white-space:pre-wrap;">${body.replace(/</g,'&lt;')}</p>
-                    <p style="font-size:0.7rem;margin-top:0.25rem;opacity:0.7;">${time}</p>
-                </div>`;
+                const bubble = document.createElement('div');
+                bubble.style.cssText = `max-width:80%;border-radius:1rem;padding:0.625rem 0.875rem;font-size:0.875rem;background:${isMine?'var(--primary)':'var(--surface)'};color:${isMine?'var(--primary-foreground)':'var(--foreground)'}`;
+                if (!isMine) {
+                    const name = document.createElement('p');
+                    name.style.cssText = 'font-size:0.75rem;font-weight:600;opacity:0.8;margin-bottom:0.125rem;';
+                    name.textContent = userName || 'Usuário';
+                    bubble.appendChild(name);
+                }
+                const text = document.createElement('p');
+                text.style.whiteSpace = 'pre-wrap';
+                text.textContent = body;
+                bubble.appendChild(text);
+                const sentAt = document.createElement('p');
+                sentAt.style.cssText = 'font-size:0.7rem;margin-top:0.25rem;opacity:0.7;';
+                sentAt.textContent = time;
+                bubble.appendChild(sentAt);
+                d.appendChild(bubble);
                 list.appendChild(d);
                 scrollBottom();
             }

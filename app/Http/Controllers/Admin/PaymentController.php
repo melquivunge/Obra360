@@ -36,6 +36,8 @@ class PaymentController extends Controller
 
     public function update(Request $request, Project $project, Payment $payment)
     {
+        $this->assertBelongsToProject($project, $payment);
+
         $data = $request->validate([
             'title'       => 'required|string|max:200',
             'description' => 'nullable|string|max:2000',
@@ -61,13 +63,22 @@ class PaymentController extends Controller
 
     public function markPaid(Project $project, Payment $payment)
     {
+        $this->assertBelongsToProject($project, $payment);
+
         $payment->update(['status' => 'paid', 'paid_at' => now()]);
         return back()->with('success', 'Cobrança marcada como paga.');
     }
 
     public function destroy(Project $project, Payment $payment)
     {
+        $this->assertBelongsToProject($project, $payment);
+
         $payment->delete();
         return back()->with('success', 'Cobrança removida.');
+    }
+
+    private function assertBelongsToProject(Project $project, Payment $payment): void
+    {
+        abort_unless((int) $payment->project_id === (int) $project->id, 404);
     }
 }

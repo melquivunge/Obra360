@@ -3,9 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,10 +23,15 @@ class DatabaseSeeder extends Seeder
             throw new \RuntimeException('SEED_ADMIN_PASSWORD must be set before seeding the production admin user.');
         }
 
+        if (empty($adminPassword)) {
+            $adminPassword = Str::password(20);
+            $this->command?->warn('Generated temporary admin password for local seed: '.$adminPassword);
+        }
+
         User::factory()->create([
             'name' => 'Administrador',
-            'email' => 'admin@obra360.test',
-            'password' => Hash::make($adminPassword ?: 'password'),
+            'email' => env('SEED_ADMIN_EMAIL', 'admin+'.Str::lower(Str::random(8)).'@obra360.test'),
+            'password' => Hash::make($adminPassword),
             'role' => User::ROLE_ADMIN,
             'active' => true,
         ]);

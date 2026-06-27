@@ -34,12 +34,10 @@ services:
     container_name: obra360_db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-obra360}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
-      MYSQL_USER: ${DB_USERNAME:-obra360_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-obra360_pass}
-    ports:
-      - "3306:3306"
+      MYSQL_DATABASE: ${DB_DATABASE:?Set DB_DATABASE in .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+      MYSQL_USER: ${DB_USERNAME:?Set DB_USERNAME in .env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - db_data:/var/lib/mysql
     networks:
@@ -50,12 +48,12 @@ services:
     container_name: obra360_phpmyadmin
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
       PMA_USER: root
-      PMA_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+      PMA_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
       UPLOAD_LIMIT: 64M
     networks:
       - obra360_network

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
@@ -74,7 +76,13 @@ class ClientController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:160',
-            'email' => 'nullable|email|max:255',
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('clients', 'email')->ignore($client),
+                Rule::unique('users', 'email')->ignore($client->users()->value('id')),
+            ],
             'phone' => 'nullable|string|max:40',
             'document' => 'nullable|string|max:40',
             'address' => 'nullable|string|max:255',
@@ -88,6 +96,9 @@ class ClientController extends Controller
 
         // Sync active status to linked users
         User::where('client_id', $client->id)->update(['active' => $client->active]);
+        if (! $client->active) {
+            $this->invalidateClientUserSessions($client);
+        }
 
         return redirect()->route('admin.clients.index')->with('success', 'Cliente atualizado.');
     }
@@ -100,14 +111,34 @@ class ClientController extends Controller
 
     public function linkUser(Request $request, Client $client)
     {
-        $request->validate(['user_id' => 'required|exists:users,id']);
+        $request->validate([
+            'user_id' => [
+                'required',
+                Rule::exists('users', 'id')
+                    ->where('role', User::ROLE_CLIENT)
+                    ->whereNull('client_id'),
+            ],
+        ]);
         User::where('id', $request->user_id)->update(['client_id' => $client->id]);
         return back()->with('success', 'Usuário vinculado ao cliente.');
     }
 
     public function unlinkUser(Client $client, User $user)
     {
+        abort_unless((int) $user->client_id === (int) $client->id, 404);
+
         $user->update(['client_id' => null]);
         return back()->with('success', 'Vínculo removido.');
+    }
+
+    private function invalidateClientUserSessions(Client $client): void
+    {
+        if (config('session.driver') !== 'database') {
+            return;
+        }
+
+        DB::table(config('session.table', 'sessions'))
+            ->whereIn('user_id', $client->users()->pluck('id'))
+            ->delete();
     }
 }
