@@ -1,0 +1,21 @@
+{
+    "These credentials do not match our records.": "E-mail ou senha incorretos.",
+    "The provided password is incorrect.": "A senha informada está incorreta.",
+    "The provided password does not match your current password.": "A senha não corresponde à senha atual.",
+    "Too many login attempts. Please try again in :seconds seconds.": "Muitas tentativas de login. Por favor, tente novamente em :seconds segundos.",
+    "Too many login attempts. Please try again in :minutes minutes.": "Muitas tentativas de login. Por favor, tente novamente em :minutes minutos.",
+    "We have emailed your password reset link.": "Enviamos o link de redefinição para o seu e-mail.",
+    "This password reset token is invalid.": "Este token de redefinição de senha é inválido.",
+    "This password reset link will expire in :count minutes.": "Este link de redefinição expirará em :count minutos.",
+    "E-mail ou senha incorretos.": "E-mail ou senha incorretos.",
+    "Sua conta está inativa. Entre em contato com o administrador.": "Sua conta está inativa. Entre em contato com o administrador.",
+    "Link enviado! Verifique seu e-mail.": "Link enviado! Verifique seu e-mail.",
+    "The :attribute field is required.": "Este campo é obrigatório.",
+    "The :attribute field must be a valid email address.": "Insira um e-mail válido.",
+    "The :attribute field must be at least :min characters.": "Este campo deve ter pelo menos :min caracteres.",
+    "The :attribute field confirmation does not match.": "A confirmação de senha não corresponde.",
+    "E-mail": "E-mail",
+    "Senha": "Senha",
+    "Nova senha": "Nova senha",
+    "Confirmar senha": "Confirmar senha"
+}
