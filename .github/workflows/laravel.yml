@@ -156,9 +156,7 @@ jobs:
             mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/framework/testing storage/logs bootstrap/cache
             chmod -R 755 storage bootstrap/cache
 
-            # cPanel MultiPHP só muda o PHP web; o CLI continua no sistema.
-            # Usar o binário ea-php84 directamente para os comandos artisan.
-            PHP=/opt/cpanel/ea-php84/root/usr/bin/php
+            PHP=/opt/cpanel/ea-php85/root/usr/bin/php
 
             $PHP artisan optimize:clear
             $PHP artisan migrate --force
@@ -167,17 +165,6 @@ jobs:
             $PHP artisan view:cache
             $PHP artisan event:cache
             $PHP artisan storage:link --force
-
-            echo "=== Apache vhost config para o domínio ==="
-            cat /etc/apache2/conf.d/userdata/ssl/2_4/hgwebm57/obra360app.com/*.conf 2>/dev/null || echo "(ssl conf não encontrado)"
-            cat /etc/apache2/conf.d/userdata/std/2_4/hgwebm57/obra360app.com/*.conf 2>/dev/null || echo "(std conf não encontrado)"
-
-            echo "=== PHP binários disponíveis ==="
-            ls /opt/cpanel/ea-php*/root/usr/bin/php 2>/dev/null
-            ls /usr/local/cpanel/cgi-sys/ea-php* 2>/dev/null || echo "(sem cgi php)"
-
-            echo "=== Todos sockets PHP ==="
-            find /opt/cpanel /var/cpanel /tmp -name "*.sock" 2>/dev/null | grep -i php | head -20 || echo "nenhum"
 
             echo "Deploy concluído!"
           REMOTE
