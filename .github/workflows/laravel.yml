@@ -168,9 +168,14 @@ jobs:
             $PHP artisan event:cache
             $PHP artisan storage:link --force
 
-            echo "=== Laravel log (último erro) ==="
-            grep -a "\[20[0-9][0-9]" storage/logs/laravel.log 2>/dev/null | grep "local\." | tail -5 || echo "(sem entradas de erro)"
-            echo "--- stack trace (primeiras 20 linhas do último erro) ---"
-            tac storage/logs/laravel.log 2>/dev/null | grep -m1 -B999 "^\[20" | tac | head -20 || echo "(sem log)"
+            echo "=== PHP web version ==="
+            php -r "echo PHP_VERSION . PHP_EOL;" 2>/dev/null || echo "system php indisponível"
+
+            echo "=== PHP-FPM sockets ea-php84 ==="
+            find /opt/cpanel/ea-php84 /var/cpanel -name "*.sock" 2>/dev/null | head -10 || echo "nenhum socket encontrado"
+
+            echo "=== PHP-FPM pool configs ==="
+            ls /opt/cpanel/ea-php84/root/etc/php-fpm.d/ 2>/dev/null || echo "sem pool configs"
+
             echo "Deploy concluído!"
           REMOTE
