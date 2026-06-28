@@ -76,6 +76,9 @@ class ClientController extends Controller
 
     public function update(Request $request, Client $client)
     {
+        // Collect all user IDs linked to this client so the unique rule ignores all of them
+        $userIds = $client->users()->pluck('id');
+
         $data = $request->validate([
             'name' => 'required|string|max:160',
             'email' => [
@@ -83,7 +86,7 @@ class ClientController extends Controller
                 'email',
                 'max:255',
                 Rule::unique('clients', 'email')->ignore($client),
-                Rule::unique('users', 'email')->ignore($client->users()->value('id')),
+                Rule::unique('users', 'email')->whereNotIn('id', $userIds->isEmpty() ? [0] : $userIds->toArray()),
             ],
             'phone' => 'nullable|string|max:40',
             'document' => 'nullable|string|max:40',
@@ -94,13 +97,14 @@ class ClientController extends Controller
             'active' => 'boolean',
         ]);
         $data['active'] = $request->boolean('active');
-        $client->update($data);
 
-        // Sync active status to linked users
-        User::where('client_id', $client->id)->update(['active' => $client->active]);
-        if (! $client->active) {
-            $this->invalidateClientUserSessions($client);
-        }
+        DB::transaction(function () use ($client, $data): void {
+            $client->update($data);
+            User::where('client_id', $client->id)->update(['active' => $client->active]);
+            if (! $client->active) {
+                $this->invalidateClientUserSessions($client);
+            }
+        });
 
         return redirect()->route('admin.clients.index')->with('success', 'Cliente atualizado.');
     }

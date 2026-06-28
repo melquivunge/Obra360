@@ -12,6 +12,7 @@ use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -247,5 +248,50 @@ class SecurityHardeningTest extends TestCase
         $this->actingAs($admin)
             ->postJson(route('admin.projects.messages.store', $project), ['body' => 'Blocked'])
             ->assertForbidden();
+    }
+
+    public function test_public_media_migration_dry_run_does_not_copy_or_delete_files(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $project = Project::factory()->create(['cover_image_path' => 'covers/legacy.jpg']);
+        Photo::factory()->create([
+            'project_id' => $project->id,
+            'path' => 'projects/'.$project->id.'/photos/legacy.jpg',
+        ]);
+
+        Storage::disk('public')->put('covers/legacy.jpg', 'cover');
+        Storage::disk('public')->put('projects/'.$project->id.'/photos/legacy.jpg', 'photo');
+
+        $exitCode = Artisan::call('obra360:media:migrate-public');
+
+        $this->assertSame(0, $exitCode);
+        Storage::disk('local')->assertMissing('covers/legacy.jpg');
+        Storage::disk('public')->assertExists('covers/legacy.jpg');
+    }
+
+    public function test_public_media_migration_commit_copies_files_without_deleting_sources(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $project = Project::factory()->create(['cover_image_path' => 'covers/legacy.jpg']);
+        $photoPath = 'projects/'.$project->id.'/photos/legacy.jpg';
+        Photo::factory()->create([
+            'project_id' => $project->id,
+            'path' => $photoPath,
+        ]);
+
+        Storage::disk('public')->put('covers/legacy.jpg', 'cover');
+        Storage::disk('public')->put($photoPath, 'photo');
+
+        $exitCode = Artisan::call('obra360:media:migrate-public', ['--commit' => true]);
+
+        $this->assertSame(0, $exitCode);
+        Storage::disk('local')->assertExists('covers/legacy.jpg');
+        Storage::disk('local')->assertExists($photoPath);
+        Storage::disk('public')->assertExists('covers/legacy.jpg');
+        Storage::disk('public')->assertExists($photoPath);
     }
 }

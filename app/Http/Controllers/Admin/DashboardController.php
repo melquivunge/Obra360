@@ -12,23 +12,32 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $projectsScope = Project::query();
+        $isManager = auth()->user()->isManager();
 
-        if (auth()->user()->isManager()) {
-            $projectsScope->where('manager_id', auth()->id());
-        }
+        $statsQuery = Project::query()
+            ->when($isManager, fn ($q) => $q->where('manager_id', auth()->id()));
 
-        $totalProjects = (clone $projectsScope)->count();
-        $inProgress = (clone $projectsScope)->where('status', 'em_andamento')->count();
-        $completed = (clone $projectsScope)->where('status', 'concluida')->count();
-        $paused = (clone $projectsScope)->where('status', 'pausada')->count();
-        $totalClients = auth()->user()->isManager()
-            ? (clone $projectsScope)->distinct('client_id')->count('client_id')
+        // Single aggregation replaces 6 sequential COUNT/SUM queries
+        $stats = (clone $statsQuery)->selectRaw("
+            COUNT(*) AS total,
+            SUM(status = 'em_andamento') AS ongoing,
+            SUM(status = 'concluida') AS completed,
+            SUM(status = 'pausada') AS paused,
+            COUNT(DISTINCT client_id) AS client_count,
+            COALESCE(SUM(budget), 0) AS total_budget
+        ")->first();
+
+        $totalProjects = (int) $stats->total;
+        $inProgress = (int) $stats->ongoing;
+        $completed = (int) $stats->completed;
+        $paused = (int) $stats->paused;
+        $totalBudget = (float) $stats->total_budget;
+        $totalClients = $isManager
+            ? (int) $stats->client_count
             : Client::count();
-        $totalBudget = (clone $projectsScope)->sum('budget');
-        $totalSpent = Expense::whereIn('project_id', (clone $projectsScope)->select('id'))->sum('amount');
+        $totalSpent = Expense::whereIn('project_id', (clone $statsQuery)->select('id'))->sum('amount');
 
-        $recentProjects = (clone $projectsScope)->with('client')
+        $recentProjects = (clone $statsQuery)->with('client')
             ->latest()
             ->limit(5)
             ->get();

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\ProjectController as ClientProjectController;
+use App\Http\Controllers\Portal\PushSubscriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -119,6 +120,14 @@ Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->g
 
         return response()->json(['ok' => true]);
     })->name('messages.mark-read');
+
+    // PWA push subscriptions
+    Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('push.subscribe');
+    Route::delete('/push/unsubscribe', [PushSubscriptionController::class, 'destroy'])
+        ->middleware('throttle:30,1')
+        ->name('push.unsubscribe');
 });
 
 // Profile (all authenticated)

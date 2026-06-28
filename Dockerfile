@@ -1,3 +1,15 @@
+FROM node:24-alpine AS frontend
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY resources ./resources
+COPY vite.config.js ./
+COPY public ./public
+RUN npm run build
+
 FROM php:8.4-fpm
 
 # Instalar dependências do sistema
@@ -31,6 +43,7 @@ WORKDIR /var/www
 
 # Copiar ficheiros do projecto
 COPY . .
+COPY --from=frontend /app/public/build ./public/build
 
 # Instalar dependências PHP de produção
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader

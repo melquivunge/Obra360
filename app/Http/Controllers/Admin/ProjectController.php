@@ -11,11 +11,14 @@ use App\Models\Project;
 use App\Models\ProjectPhase;
 use App\Models\ProjectUpdate;
 use App\Models\User;
+use App\Traits\AuthorizesProjectAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
+    use AuthorizesProjectAccess;
+
     public function index(Request $request)
     {
         $query = Project::with('client')->latest();
@@ -388,13 +391,6 @@ class ProjectController extends Controller
     private function assertBelongsToProject(Project $project, object $child): void
     {
         abort_unless((int) $child->project_id === (int) $project->id, 404);
-    }
-
-    private function authorizeProjectAccess(Project $project): void
-    {
-        if (auth()->user()->isManager()) {
-            abort_unless((int) $project->manager_id === auth()->id(), 403);
-        }
     }
 
     private function mediaDisk(string $path): string

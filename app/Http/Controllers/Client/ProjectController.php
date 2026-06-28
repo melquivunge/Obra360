@@ -20,8 +20,11 @@ class ProjectController extends Controller
         $clientId = auth()->user()->client_id;
         abort_if($project->client_id !== $clientId, 403);
 
-        $project->load(['client', 'phases', 'updates.user', 'messages.user']);
-        $photos = $project->photos()->get();
+        $project->load(['client', 'phases', 'updates.user']);
+        // Load messages with a hard limit to prevent OOM on large projects
+        $messages = $project->messages()->with('user')->latest()->limit(100)->get()->reverse()->values();
+        $project->setRelation('messages', $messages);
+        $photos = $project->photos()->latest()->limit(200)->get();
         $canViewFinancials = $this->canViewFinancials($project);
         $allowComments = Setting::get('allow_comments', '1') === '1';
         $expenses = $canViewFinancials ? $project->expenses()->get() : collect();
@@ -39,10 +42,9 @@ class ProjectController extends Controller
 
         $messages = $project->messages()
             ->with('user')
-            ->latest()
+            ->oldest()
             ->limit(200)
             ->get()
-            ->sortBy('created_at')
             ->map(fn ($m) => [
                 'id' => $m->id,
                 'body' => $m->body,

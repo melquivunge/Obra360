@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Http\View\Composers\ClientLayoutComposer;
+use App\Models\ProjectUpdate;
 use App\Models\User;
+use App\Observers\ProjectUpdateObserver;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        ProjectUpdate::observe(ProjectUpdateObserver::class);
+
+        View::composer('components.layouts.client', ClientLayoutComposer::class);
+
         // Grants access to the admin panel (admin, manager, financial roles).
         Gate::define('access-admin', fn (User $u) => in_array($u->role, [
             User::ROLE_ADMIN,

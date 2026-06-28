@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\MigratePublicProjectMedia;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserRole;
 use Illuminate\Foundation\Application;
@@ -14,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
+    ->withCommands([
+        MigratePublicProjectMedia::class,
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->appendToGroup('web', [
             EnsureUserIsActive::class,

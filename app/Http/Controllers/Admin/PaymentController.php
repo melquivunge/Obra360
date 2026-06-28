@@ -5,12 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\Project;
+use App\Traits\AuthorizesProjectAccess;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
+    use AuthorizesProjectAccess;
+
     public function store(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $data = $request->validate([
             'title' => 'required|string|max:200',
             'description' => 'nullable|string|max:2000',
@@ -20,7 +25,7 @@ class PaymentController extends Controller
             'due_date' => 'nullable|date',
             'barcode' => 'nullable|string|max:60',
             'pix_key' => 'nullable|string|max:100',
-            'pix_qrcode' => 'nullable|string',
+            'pix_qrcode' => 'nullable|string|max:2000',
         ]);
 
         $data['client_id'] = $project->client_id;
@@ -36,6 +41,7 @@ class PaymentController extends Controller
 
     public function update(Request $request, Project $project, Payment $payment)
     {
+        $this->authorizeProjectAccess($project);
         $this->assertBelongsToProject($project, $payment);
 
         $data = $request->validate([
@@ -47,7 +53,7 @@ class PaymentController extends Controller
             'due_date' => 'nullable|date',
             'barcode' => 'nullable|string|max:60',
             'pix_key' => 'nullable|string|max:100',
-            'pix_qrcode' => 'nullable|string',
+            'pix_qrcode' => 'nullable|string|max:2000',
         ]);
 
         if ($data['status'] === 'paid' && ! $payment->paid_at) {
@@ -63,6 +69,7 @@ class PaymentController extends Controller
 
     public function markPaid(Project $project, Payment $payment)
     {
+        $this->authorizeProjectAccess($project);
         $this->assertBelongsToProject($project, $payment);
 
         $payment->update(['status' => 'paid', 'paid_at' => now()]);
@@ -72,6 +79,7 @@ class PaymentController extends Controller
 
     public function destroy(Project $project, Payment $payment)
     {
+        $this->authorizeProjectAccess($project);
         $this->assertBelongsToProject($project, $payment);
 
         $payment->delete();
