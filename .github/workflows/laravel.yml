@@ -119,7 +119,7 @@ jobs:
             --exclude='storage/app' \
             --exclude='storage/logs' \
             --exclude='*.docx' \
-            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -q -o StrictHostKeyChecking=no -o BatchMode=yes" \
             ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/obra360app.com/
 
       - name: Instalar dependências e optimizar no servidor
