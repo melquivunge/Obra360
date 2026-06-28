@@ -133,39 +133,39 @@ jobs:
           target: "~/"
 
       - name: Extrair, instalar e optimizar no servidor
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            set -e
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              -q \
+              ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} 'bash -s' << 'ENDSSH'
+          set -e
 
-            echo "--- Extrair pacote ---"
-            mkdir -p ~/obra360app.com
-            tar -xzf ~/obra360-deploy.tar.gz -C ~/obra360app.com
-            rm ~/obra360-deploy.tar.gz
+          echo "--- Extrair pacote ---"
+          mkdir -p ~/obra360app.com
+          tar -xzf ~/obra360-deploy.tar.gz -C ~/obra360app.com
+          rm -f ~/obra360-deploy.tar.gz
 
-            cd ~/obra360app.com
+          cd ~/obra360app.com
 
-            echo "--- Garantir estrutura de storage ---"
-            mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/framework/testing storage/logs bootstrap/cache
-            chmod -R 755 storage bootstrap/cache
+          echo "--- Garantir estrutura de storage ---"
+          mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/framework/testing storage/logs bootstrap/cache
+          chmod -R 755 storage bootstrap/cache
 
-            echo "--- Instalar dependências PHP (produção) ---"
-            composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction
+          echo "--- Instalar dependências PHP (produção) ---"
+          composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction
 
-            echo "--- Correr migrations ---"
-            php artisan migrate --force
+          echo "--- Correr migrations ---"
+          php artisan migrate --force
 
-            echo "--- Caches de produção ---"
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan event:cache
+          echo "--- Caches de produção ---"
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan event:cache
 
-            echo "--- Storage symlink ---"
-            php artisan storage:link --force
+          echo "--- Storage symlink ---"
+          php artisan storage:link --force
 
-            echo "✅ Deploy concluído com sucesso!"
+          echo "✅ Deploy concluído com sucesso!"
+          ENDSSH
