@@ -1,3 +1,6 @@
+# Forçar PHP 8.4 via EasyApache 4 (HostGator cPanel)
+AddHandler application/x-httpd-ea-php84 .php
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
