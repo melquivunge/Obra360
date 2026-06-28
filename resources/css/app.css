@@ -136,11 +136,15 @@
 .progress-bar { height: 0.5rem; width: 100%; border-radius: 9999px; background-color: var(--color-surface); overflow: hidden; }
 .progress-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, var(--color-primary), oklch(0.82 0.14 80)); transition: width 0.3s; }
 
-/* Tab nav */
-.tab-nav { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1.5rem; }
-.tab-btn { padding: 0.625rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--color-muted-foreground); border-bottom: 2px solid transparent; cursor: pointer; background: none; border-top: none; border-left: none; border-right: none; transition: color 0.15s, border-color 0.15s; }
+/* Alpine.js x-cloak: hide panels until Alpine initialises (prevents flash of all content) */
+[x-cloak] { display: none !important; }
+
+/* Tab nav — horizontally scrollable on mobile, no wrap */
+.tab-nav { display: flex; gap: 0; border-bottom: 1px solid var(--color-border); margin-bottom: 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap; }
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-btn { padding: 0.625rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--color-muted-foreground); border-bottom: 2px solid transparent; cursor: pointer; background: none; border-top: none; border-left: none; border-right: none; transition: color 0.15s, border-color 0.15s; white-space: nowrap; flex-shrink: 0; }
 .tab-btn:hover { color: var(--color-foreground); }
-.tab-btn.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.tab-btn.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 600; }
 
 /* Table */
 .data-table { width: 100%; font-size: 0.875rem; border-collapse: collapse; }
