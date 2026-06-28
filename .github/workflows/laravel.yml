@@ -118,8 +118,9 @@ jobs:
               --exclude='storage/app' \
               --exclude='storage/logs' \
               --exclude='*.docx' \
-              -czf obra360-deploy.tar.gz .
-          echo "Tamanho do pacote: $(du -sh obra360-deploy.tar.gz | cut -f1)"
+              -czf /tmp/obra360-deploy.tar.gz .
+          echo "Tamanho do pacote: $(du -sh /tmp/obra360-deploy.tar.gz | cut -f1)"
+          cp /tmp/obra360-deploy.tar.gz obra360-deploy.tar.gz
 
       - name: Upload pacote via SCP
         uses: appleboy/scp-action@v0.1.7
