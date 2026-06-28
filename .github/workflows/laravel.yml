@@ -108,6 +108,13 @@ jobs:
         run: |
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, bcmath, gd, zip
+          coverage: none
+
       - name: Instalar dependências PHP (incluir vendor no deploy)
         run: composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction
 
