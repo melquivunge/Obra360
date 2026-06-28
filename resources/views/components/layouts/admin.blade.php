@@ -106,7 +106,7 @@
     </aside>
 
     {{-- Main wrapper --}}
-    <div class="min-h-screen lg:ml-64" style="background-color:var(--background);">
+    <div class="lg:min-h-screen lg:ml-64" style="background-color:var(--background);">
 
         {{-- Topbar --}}
         <header class="h-14 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30"
