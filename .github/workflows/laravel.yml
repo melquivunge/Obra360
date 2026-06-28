@@ -108,21 +108,28 @@ jobs:
         run: |
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Sync código para o servidor via rsync
+      - name: Criar pacote de deploy (tar)
         run: |
-          rsync -avzr --delete \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.env' \
-            --exclude='node_modules' \
-            --exclude='vendor' \
-            --exclude='storage/app' \
-            --exclude='storage/logs' \
-            --exclude='*.docx' \
-            -e "ssh -p ${{ secrets.SSH_PORT }} -q -o StrictHostKeyChecking=no -o BatchMode=yes" \
-            ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/obra360app.com/
+          tar --exclude='.git' \
+              --exclude='.github' \
+              --exclude='.env' \
+              --exclude='node_modules' \
+              --exclude='vendor' \
+              --exclude='storage/app' \
+              --exclude='storage/logs' \
+              --exclude='*.docx' \
+              -czf /tmp/obra360-deploy.tar.gz .
+          echo "Tamanho do pacote: $(du -sh /tmp/obra360-deploy.tar.gz | cut -f1)"
 
-      - name: Instalar dependências e optimizar no servidor
+      - name: Upload pacote via SCP
+        run: |
+          scp -P ${{ secrets.SSH_PORT }} \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              /tmp/obra360-deploy.tar.gz \
+              ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/obra360-deploy.tar.gz
+
+      - name: Extrair, instalar e optimizar no servidor
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -131,14 +138,20 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
-            cd ~/obra360app.com
 
-            echo "--- Instalar dependências PHP (produção) ---"
-            composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction
+            echo "--- Extrair pacote ---"
+            mkdir -p ~/obra360app.com
+            tar -xzf ~/obra360-deploy.tar.gz -C ~/obra360app.com
+            rm ~/obra360-deploy.tar.gz
+
+            cd ~/obra360app.com
 
             echo "--- Garantir estrutura de storage ---"
             mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/framework/testing storage/logs bootstrap/cache
             chmod -R 755 storage bootstrap/cache
+
+            echo "--- Instalar dependências PHP (produção) ---"
+            composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction
 
             echo "--- Correr migrations ---"
             php artisan migrate --force
