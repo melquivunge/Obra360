@@ -131,37 +131,28 @@ jobs:
           echo "Tamanho: $(du -sh /tmp/obra360-deploy.tar.gz | cut -f1)"
           cp /tmp/obra360-deploy.tar.gz obra360-deploy.tar.gz
 
-      - name: Upload e extrair código no servidor
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          source: "obra360-deploy.tar.gz"
-          target: "~/obra360app.com/"
-          strip_components: 0
+      - name: Upload, extrair e pós-deploy via SSH nativo
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        run: |
+          SSH_OPTS="-p ${SSH_PORT} -o StrictHostKeyChecking=no -o ConnectTimeout=30"
 
-      - name: Pós-deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
+          # Upload do tarball numa única ligação SSH/SCP
+          scp $SSH_OPTS obra360-deploy.tar.gz "${SSH_USERNAME}@${SSH_HOST}:~/obra360app.com/"
+
+          # Pós-deploy na mesma sessão SSH
+          ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" bash -s <<'REMOTE'
             set -e
             cd ~/obra360app.com
 
-            # Extrair tarball
             tar -xzf obra360-deploy.tar.gz
             rm -f obra360-deploy.tar.gz
 
-            # Storage
             mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/framework/testing storage/logs bootstrap/cache
             chmod -R 755 storage bootstrap/cache
 
-            # Artisan
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
@@ -169,4 +160,5 @@ jobs:
             php artisan event:cache
             php artisan storage:link --force
 
-            echo "✅ Deploy concluído!"
+            echo "Deploy concluído!"
+          REMOTE
