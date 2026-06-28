@@ -1,17 +1,17 @@
-name: Laravel CI
+name: CI/CD — Obra360
 
 on:
   push:
-    branches:
-      - main
-
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  laravel-tests:
-    name: Laravel Tests
+  # ──────────────────────────────────────────────────────────────
+  # JOB 1: Testes, qualidade e build
+  # ──────────────────────────────────────────────────────────────
+  test:
+    name: Testes & Qualidade
     runs-on: ubuntu-latest
 
     steps:
@@ -74,3 +74,82 @@ jobs:
 
       - name: Audit npm dependencies
         run: npm audit --audit-level=moderate
+
+  # ──────────────────────────────────────────────────────────────
+  # JOB 2: Deploy para HostGator (só em push na main)
+  # ──────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy → HostGator
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node (build assets de produção)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Build frontend assets (produção)
+        run: |
+          npm ci
+          npm run build
+
+      - name: Instalar chave SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Adicionar servidor aos known_hosts
+        run: |
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync código para o servidor via rsync
+        run: |
+          rsync -avzr --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.env' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='storage/app' \
+            --exclude='storage/logs' \
+            --exclude='*.docx' \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/obra360app.com/
+
+      - name: Instalar dependências e optimizar no servidor
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd ~/obra360app.com
+
+            echo "--- Instalar dependências PHP (produção) ---"
+            composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction
+
+            echo "--- Garantir estrutura de storage ---"
+            mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/framework/testing storage/logs bootstrap/cache
+            chmod -R 755 storage bootstrap/cache
+
+            echo "--- Correr migrations ---"
+            php artisan migrate --force
+
+            echo "--- Caches de produção ---"
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+
+            echo "--- Storage symlink ---"
+            php artisan storage:link --force
+
+            echo "✅ Deploy concluído com sucesso!"
