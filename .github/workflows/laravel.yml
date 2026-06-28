@@ -168,14 +168,16 @@ jobs:
             $PHP artisan event:cache
             $PHP artisan storage:link --force
 
-            echo "=== PHP web version ==="
-            php -r "echo PHP_VERSION . PHP_EOL;" 2>/dev/null || echo "system php indisponível"
+            echo "=== Apache vhost config para o domínio ==="
+            cat /etc/apache2/conf.d/userdata/ssl/2_4/hgwebm57/obra360app.com/*.conf 2>/dev/null || echo "(ssl conf não encontrado)"
+            cat /etc/apache2/conf.d/userdata/std/2_4/hgwebm57/obra360app.com/*.conf 2>/dev/null || echo "(std conf não encontrado)"
 
-            echo "=== PHP-FPM sockets ea-php84 ==="
-            find /opt/cpanel/ea-php84 /var/cpanel -name "*.sock" 2>/dev/null | head -10 || echo "nenhum socket encontrado"
+            echo "=== PHP binários disponíveis ==="
+            ls /opt/cpanel/ea-php*/root/usr/bin/php 2>/dev/null
+            ls /usr/local/cpanel/cgi-sys/ea-php* 2>/dev/null || echo "(sem cgi php)"
 
-            echo "=== PHP-FPM pool configs ==="
-            ls /opt/cpanel/ea-php84/root/etc/php-fpm.d/ 2>/dev/null || echo "sem pool configs"
+            echo "=== Todos sockets PHP ==="
+            find /opt/cpanel /var/cpanel /tmp -name "*.sock" 2>/dev/null | grep -i php | head -20 || echo "nenhum"
 
             echo "Deploy concluído!"
           REMOTE
