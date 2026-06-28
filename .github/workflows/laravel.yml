@@ -158,6 +158,10 @@ jobs:
 
             PHP=/opt/cpanel/ea-php85/root/usr/bin/php
 
+            # Forçar PHP 8.5 no VHost via cPanel API (resolve o handler do Apache)
+            /usr/local/cpanel/bin/uapi LangPHP php_set_vhost_versions \
+              version=ea-php85 vhost=obra360app.com 2>&1 || echo "uapi indisponível"
+
             $PHP artisan optimize:clear
             $PHP artisan migrate --force
             $PHP artisan config:cache
@@ -166,5 +170,5 @@ jobs:
             $PHP artisan event:cache
             $PHP artisan storage:link --force
 
-            echo "Deploy concluído!"
+            echo "Deploy concluído! PHP web: $($PHP -r 'echo PHP_VERSION;')"
           REMOTE
