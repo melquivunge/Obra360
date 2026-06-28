@@ -356,12 +356,12 @@
 
     {{-- TAB: Mensagens --}}
     <div x-show="tab==='mensagens'" x-cloak>
-        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;display:flex;flex-direction:column;min-height:60vh;">
-            <div style="padding:1rem;border-bottom:1px solid var(--border);">
+        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;display:flex;flex-direction:column;height:min(70vh,520px);">
+            <div style="padding:1rem;border-bottom:1px solid var(--border);flex-shrink:0;">
                 <p style="font-weight:700;">{{ $project->name }}</p>
                 <p style="font-size:0.75rem;color:var(--muted-foreground)">Conversa em tempo real</p>
             </div>
-            <div id="msg-list" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;min-height:300px;">
+            <div id="msg-list" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;">
                 @forelse($project->messages as $msg)
                 @php $mine = $msg->user_id === auth()->id(); @endphp
                 <div style="display:flex;justify-content:{{ $mine?'flex-end':'flex-start' }};">
