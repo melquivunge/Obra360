@@ -160,6 +160,7 @@ jobs:
             # Usar o binário ea-php84 directamente para os comandos artisan.
             PHP=/opt/cpanel/ea-php84/root/usr/bin/php
 
+            $PHP artisan optimize:clear
             $PHP artisan migrate --force
             $PHP artisan config:cache
             $PHP artisan route:cache
@@ -167,5 +168,7 @@ jobs:
             $PHP artisan event:cache
             $PHP artisan storage:link --force
 
+            echo "=== Laravel log (últimas 30 linhas) ==="
+            tail -30 storage/logs/laravel.log 2>/dev/null || echo "(sem log)"
             echo "Deploy concluído!"
           REMOTE
