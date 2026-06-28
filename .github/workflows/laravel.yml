@@ -153,12 +153,16 @@ jobs:
             mkdir -p storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/framework/testing storage/logs bootstrap/cache
             chmod -R 755 storage bootstrap/cache
 
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan event:cache
-            php artisan storage:link --force
+            # cPanel MultiPHP só muda o PHP web; o CLI continua no sistema.
+            # Usar o binário ea-php84 directamente para os comandos artisan.
+            PHP=/opt/cpanel/ea-php84/root/usr/bin/php
+
+            $PHP artisan migrate --force
+            $PHP artisan config:cache
+            $PHP artisan route:cache
+            $PHP artisan view:cache
+            $PHP artisan event:cache
+            $PHP artisan storage:link --force
 
             echo "Deploy concluído!"
           REMOTE
