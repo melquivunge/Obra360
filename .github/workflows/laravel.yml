@@ -137,13 +137,13 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         run: |
-          SSH_OPTS="-p ${SSH_PORT} -o StrictHostKeyChecking=no -o ConnectTimeout=30"
+          COMMON_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=30"
 
-          # Upload do tarball numa única ligação SSH/SCP
-          scp $SSH_OPTS obra360-deploy.tar.gz "${SSH_USERNAME}@${SSH_HOST}:~/obra360app.com/"
+          # scp usa -P (maiúscula) para o porto; ssh usa -p (minúscula)
+          scp -P "${SSH_PORT}" $COMMON_OPTS obra360-deploy.tar.gz "${SSH_USERNAME}@${SSH_HOST}:~/obra360app.com/"
 
           # Pós-deploy na mesma sessão SSH
-          ssh $SSH_OPTS "${SSH_USERNAME}@${SSH_HOST}" bash -s <<'REMOTE'
+          ssh -p "${SSH_PORT}" $COMMON_OPTS "${SSH_USERNAME}@${SSH_HOST}" bash -s <<'REMOTE'
             set -e
             cd ~/obra360app.com
 
