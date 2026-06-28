@@ -168,7 +168,9 @@ jobs:
             $PHP artisan event:cache
             $PHP artisan storage:link --force
 
-            echo "=== Laravel log (últimas 30 linhas) ==="
-            tail -30 storage/logs/laravel.log 2>/dev/null || echo "(sem log)"
+            echo "=== Laravel log (último erro) ==="
+            grep -a "\[20[0-9][0-9]" storage/logs/laravel.log 2>/dev/null | grep "local\." | tail -5 || echo "(sem entradas de erro)"
+            echo "--- stack trace (primeiras 20 linhas do último erro) ---"
+            tac storage/logs/laravel.log 2>/dev/null | grep -m1 -B999 "^\[20" | tac | head -20 || echo "(sem log)"
             echo "Deploy concluído!"
           REMOTE
