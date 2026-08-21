@@ -180,7 +180,7 @@
     {{-- TAB: Despesas --}}
     <div x-show="tab==='despesas'" x-cloak class="space-y-4">
         <div class="flex justify-end">
-            <button type="button" onclick="openModal('modal-despesa')" class="btn-primary">
+            <button type="button" onclick="novaDespesa()" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Registrar despesa
             </button>
@@ -203,7 +203,20 @@
                             <td>{{ $exp->description }}</td>
                             <td style="color:var(--muted-foreground)">{{ $exp->supplier??'—' }}</td>
                             <td style="text-align:right;font-weight:600;">{{ money($exp->amount) }}</td>
-                            <td>
+                            <td style="white-space:nowrap;display:flex;gap:0.25rem;">
+                                <button type="button" title="Editar despesa"
+                                        onclick='editarDespesa(@json([
+                                            "id" => $exp->id,
+                                            "category" => $exp->category,
+                                            "spent_at" => $exp->spent_at?->toDateString(),
+                                            "description" => $exp->description,
+                                            "amount" => (float) $exp->amount,
+                                            "supplier" => $exp->supplier,
+                                            "notes" => $exp->notes,
+                                        ]))'
+                                        style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
+                                </button>
                                 <form method="POST" action="{{ route('admin.projects.expenses.destroy', [$project, $exp]) }}" onsubmit="return confirm('Remover despesa?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
@@ -489,11 +502,12 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
 <div id="modal-despesa" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-despesa')">
   <div class="modal-box" style="max-width:40rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" style="margin:0;">Registrar despesa</h2>
+      <h2 class="modal-title" id="titulo-despesa" style="margin:0;">Registrar despesa</h2>
       <button type="button" onclick="closeModal('modal-despesa')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
-    <form method="POST" action="{{ route('admin.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
+    <form id="form-despesa" method="POST" action="{{ route('admin.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
       @csrf
+      <input type="hidden" name="_method" id="despesa-method" disabled value="PUT">
       <div class="grid gap-3 sm:grid-cols-2">
         <div><label class="field-label">Categoria</label><select name="category">@foreach(\App\Models\Expense::CATEGORIES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
         <div><label class="field-label">Data</label><input type="date" name="spent_at" value="{{ now()->toDateString() }}" required></div>
@@ -503,7 +517,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <div><label class="field-label">Comprovante</label><input type="file" name="receipt" style="padding:0.375rem;"></div>
         <div><label class="field-label">Notas</label><input type="text" name="notes"></div>
       </div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Registrar despesa</button><button type="button" onclick="closeModal('modal-despesa')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary" id="despesa-submit">Registrar despesa</button><button type="button" onclick="fecharDespesa()" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
@@ -615,5 +629,43 @@ function closeLightbox() {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && document.getElementById('lightbox-overlay')?.style.display === 'flex') closeLightbox();
 });
+
+// ── Despesas: o mesmo modal serve para criar e editar (DESP-03) ──────────────
+const despesaStoreUrl = @json(route('admin.projects.expenses.store', $project));
+const despesaUpdateUrl = id => @json(route('admin.projects.expenses.update', [$project, '__ID__'])).replace('__ID__', id);
+
+function editarDespesa(despesa) {
+    const form = document.getElementById('form-despesa');
+    form.action = despesaUpdateUrl(despesa.id);
+    document.getElementById('despesa-method').disabled = false;
+    document.getElementById('despesa-submit').textContent = 'Guardar alterações';
+    document.getElementById('titulo-despesa').textContent = 'Editar despesa';
+
+    form.category.value = despesa.category ?? '';
+    form.spent_at.value = despesa.spent_at ?? '';
+    form.description.value = despesa.description ?? '';
+    form.amount.value = despesa.amount ?? '';
+    form.supplier.value = despesa.supplier ?? '';
+    form.notes.value = despesa.notes ?? '';
+    form.receipt.value = '';
+
+    openModal('modal-despesa');
+}
+
+function novaDespesa() {
+    const form = document.getElementById('form-despesa');
+    form.reset();
+    form.action = despesaStoreUrl;
+    document.getElementById('despesa-method').disabled = true;
+    document.getElementById('despesa-submit').textContent = 'Registrar despesa';
+    document.getElementById('titulo-despesa').textContent = 'Registrar despesa';
+    form.spent_at.value = @json(now()->toDateString());
+
+    openModal('modal-despesa');
+}
+
+function fecharDespesa() {
+    closeModal('modal-despesa');
+}
 </script>
 </x-admin-layout>

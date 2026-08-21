@@ -97,6 +97,7 @@ Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.
 Route::middleware(['auth', 'role:admin,financial'])->prefix('admin')->name('admin.')->group(function () {
     // Expenses
     Route::post('/obras/{project}/despesas', [ProjectController::class, 'storeExpense'])->name('projects.expenses.store');
+    Route::put('/obras/{project}/despesas/{expense}', [ProjectController::class, 'updateExpense'])->name('projects.expenses.update');
     Route::delete('/obras/{project}/despesas/{expense}', [ProjectController::class, 'destroyExpense'])->name('projects.expenses.destroy');
 
     // Payments
