@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\ProjectController as ClientProjectController;
@@ -31,6 +32,11 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Reports: same visibility rules as project data (scoped in the controller).
+    Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/obras/{project}/relatorios/{type}', [ReportController::class, 'show'])->name('reports.show');
+    Route::get('/obras/{project}/relatorios/{type}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
 
     // Read project data + messages: all internal roles.
     Route::get('/obras', [ProjectController::class, 'index'])->name('projects.index');
