@@ -17,7 +17,12 @@ class AuditObserver
      * Never written to the log — secrets and noise.
      */
     private const REDACTED = [
+        // Credentials.
         'password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes',
+        // Payment instrument data — the audit trail needs to know a payment
+        // changed, not the key someone can pay into.
+        'pix_key', 'pix_qrcode', 'barcode',
+        // Noise.
         'updated_at', 'created_at',
     ];
 

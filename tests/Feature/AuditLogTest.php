@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AuditLog;
 use App\Models\Client;
+use App\Models\Payment;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -82,6 +83,27 @@ class AuditLogTest extends TestCase
         $this->assertArrayNotHasKey('password', $log->changes);
         $this->assertArrayNotHasKey('remember_token', $log->changes);
         $this->assertStringNotContainsString('password', json_encode($log->changes));
+    }
+
+    public function test_payment_keys_never_reach_the_log(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $project = Project::factory()->create();
+
+        Payment::factory()->create([
+            'project_id' => $project->id,
+            'client_id' => $project->client_id,
+            'pix_key' => 'chave-secreta@example.com',
+            'barcode' => '00190500954014481606906809350314337370000000100',
+        ]);
+
+        $log = AuditLog::where('auditable_type', Payment::class)->first();
+        $encoded = json_encode($log->changes);
+
+        $this->assertStringNotContainsString('chave-secreta@example.com', $encoded);
+        $this->assertStringNotContainsString('00190500954014481606906809350314337370000000100', $encoded);
+        $this->assertArrayNotHasKey('pix_key', $log->changes);
+        $this->assertArrayNotHasKey('barcode', $log->changes);
     }
 
     public function test_only_admin_can_open_the_audit_screen(): void
