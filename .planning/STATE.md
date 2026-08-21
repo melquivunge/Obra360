@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phases 1-4 shipped and deployed; Phase 5 partially delivered (settings done, reports pending)
-last_updated: "2026-08-20"
-last_activity: 2026-08-20 -- .planning reconciled against the deployed codebase
+status: completed
+stopped_at: planning reconciliation complete
+last_updated: "2026-08-21T02:35:53.264Z"
+last_activity: 2026-08-20 -- planning docs reconciled with the actual codebase
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 0
   total_plans: 8
-  completed_plans: 8
-  percent: 85
+  completed_plans: 6
+  percent: 75
 ---
 
 # Project State
@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-20)
 
 **Core value:** A client logs in, immediately sees the current state of their construction project (phase, progress %, recent photos, money spent), and feels informed — without needing to contact the company.
-**Current focus:** Phase 04.1 — financial test safety net (inserted), then Phase 05 reports/audit log
+**Current focus:** Phase 05 — Reports & Settings (PDF reports, audit log, per-event toggles)
 
 ## Current Position
 
@@ -86,7 +86,9 @@ Logged in PROJECT.md Key Decisions. Recent ones affecting current work:
 
 ### Roadmap Evolution
 
-- Phase 04.1 inserted after Phase 4 on 2026-08-20: Rede de testes do fluxo financeiro (URGENT) — the money path has no test cover and Phase 5 will change it
+- Phase 04.1 inserted after Phase 4 on 2026-08-20, then removed the same day and re-added as Phase 6.
+  Reason: the user chose to build the missing features first and add the test net afterwards.
+  Accepted risk: Phase 5 rewrites financial formatting and reporting with no regression tests underneath.
 
 ### Pending Todos
 
@@ -97,6 +99,7 @@ None tracked here — see "Remaining Work" above.
 - `.planning/codebase/*.md` still describe the June 2026 skeleton ("only User model exists").
   Those files are inlined into `AGENTS.md` and `CLAUDE.md`, so agents read a wrong picture of the project.
   Regenerate with `/gsd-map-codebase`.
+
 - Phases 2-5 have no plan/summary artifacts; future audits cannot rely on `.planning/phases/`.
 
 ## Session Continuity
@@ -104,4 +107,4 @@ None tracked here — see "Remaining Work" above.
 Last session: 2026-08-20
 Stopped at: planning reconciliation complete
 
-Next step: `/gsd-plan-phase 04.1` — build the financial test safety net, then Phase 5 (reports, audit log, per-event toggles).
+Next step: `/gsd-plan-phase 5` — PDF reports (REL-01..04), audit log (SEC-05), per-event notification toggles (CONF-04). Tests follow in Phase 6.
