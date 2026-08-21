@@ -17,6 +17,11 @@ class Photo extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected function casts(): array
+    {
+        return ['taken_at' => 'date'];
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

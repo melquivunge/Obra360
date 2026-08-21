@@ -301,7 +301,7 @@
                         <tbody>
                             @foreach($expenses->take(50) as $expense)
                             <tr>
-                                <td style="white-space:nowrap;color:var(--color-muted-foreground);">{{ \Carbon\Carbon::parse($expense->spent_at)->format('d/m/Y') }}</td>
+                                <td style="white-space:nowrap;color:var(--color-muted-foreground);">{{ $expense->spent_at?->format('d/m/Y') }}</td>
                                 <td>{{ \App\Models\Expense::CATEGORIES[$expense->category] ?? $expense->category }}</td>
                                 <td>{{ $expense->description ?: '—' }}</td>
                                 <td style="color:var(--color-muted-foreground);">{{ $expense->supplier ?: '—' }}</td>

@@ -198,7 +198,7 @@
                     <tbody>
                         @forelse($project->expenses as $exp)
                         <tr>
-                            <td style="color:var(--muted-foreground);white-space:nowrap;">{{ \Carbon\Carbon::parse($exp->spent_at)->format('d/m/Y') }}</td>
+                            <td style="color:var(--muted-foreground);white-space:nowrap;">{{ $exp->spent_at?->format('d/m/Y') }}</td>
                             <td>{{ \App\Models\Expense::CATEGORIES[$exp->category]??$exp->category }}</td>
                             <td>{{ $exp->description }}</td>
                             <td style="color:var(--muted-foreground)">{{ $exp->supplier??'—' }}</td>

@@ -34,6 +34,9 @@ class Project extends Model
         return [
             'show_financials' => 'boolean',
             'budget' => 'decimal:2',
+            'start_date' => 'date',
+            'expected_end_date' => 'date',
+            'completed_at' => 'datetime',
         ];
     }
 
