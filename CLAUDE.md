@@ -11,7 +11,7 @@ A web portal for construction, renovation, and inspection companies to share pro
 
 - **Tech stack**: Laravel 13 + Blade + TailwindCSS v4 + MySQL — no SPA framework, server-side rendering
 - **Auth**: Laravel Breeze (Blade) — installed
-- **PDF**: DomPDF (barryvdh/laravel-dompdf) for report exports — **not installed yet**
+- **PDF**: DomPDF (barryvdh/laravel-dompdf) — installed and in use by the four reports
 - **Storage**: Private local disk via Flysystem; media served through authenticated routes; S3-ready
 - **PHP**: 8.5 in production (cPanel ea-php85), 8.4 in Docker, 8.3+ minimum per composer.json
 - **Security**: CSRF, XSS, SQL injection protection built-in via Laravel; upload validation required; policies on all sensitive routes

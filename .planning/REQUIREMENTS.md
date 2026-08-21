@@ -43,15 +43,15 @@
 - [x] **FASE-01**: Administrator/Manager can create phases for a project with: name, description, status, percentage, sort order, start date, expected end date, real end date
 - [x] **FASE-02**: Phase status can be: Pendente, Em andamento, Concluída, Pausada, Aguardando aprovação
 - [x] **FASE-03**: Phases are displayed in configurable sort order
-- [~] **FASE-04**: Progress percentage can be updated manually or derived from completed phases (configurable per system settings) _(2026-08-20: progresso é recalculado a partir das fases (`Project::recalcProgress`), mas não é configurável nas definições)_
+- [~] **FASE-04**: Progress percentage can be updated manually or derived from completed phases (configurable per system settings)
 - [x] **FASE-05**: Changing a phase status triggers an automatic entry in the project update history
 
 ### Photo Management
 
 - [x] **FOTO-01**: Administrator/Manager can upload photos (JPG, JPEG, PNG, WebP) linked to a project and optionally to a phase
 - [x] **FOTO-02**: Each photo has a title/caption, description, date, and the user who uploaded it
-- [ ] **FOTO-03**: System generates thumbnails on upload for gallery performance _(2026-08-20: a coluna `photos.thumbnail_path` existe mas nada a preenche)_
-- [ ] **FOTO-04**: Photos are displayed in a gallery filterable by date, phase, most recent, oldest _(2026-08-20: a galeria não tem filtros por data ou fase)_
+- [x] **FOTO-03**: System generates thumbnails on upload for gallery performance _(2026-08-20: a coluna `photos.thumbnail_path` existe mas nada a preenche)_
+- [x] **FOTO-04**: Photos are displayed in a gallery filterable by date, phase, most recent, oldest
 - [x] **FOTO-05**: Client can only view photos of their own projects
 - [x] **FOTO-06**: Upload validates file type and enforces a maximum file size
 
@@ -59,18 +59,18 @@
 
 - [x] **DESP-01**: Administrator/Financial can register an expense for a project with: category, description, amount, date, supplier, optional receipt file, notes
 - [x] **DESP-02**: Expense categories: Material, Mão de obra, Transporte, Equipamentos, Documentação, Licenças, Serviços terceirizados, Alimentação, Outros
-- [ ] **DESP-03**: Administrator/Financial can edit an expense _(2026-08-20: não existe rota de edição de despesa (só criar e apagar))_
+- [x] **DESP-03**: Administrator/Financial can edit an expense
 - [x] **DESP-04**: Administrator/Financial can delete an expense (soft delete with confirmation)
 - [x] **DESP-05**: Uploading a receipt file is optional and validated for allowed types
 
 ### Financial Summary
 
 - [x] **FIN-01**: System automatically calculates: total spent (sum of all project expenses), remaining balance (budget − total spent), % of budget used
-- [ ] **FIN-02**: Financial summary shows breakdown by expense category _(2026-08-20: sem repartição por categoria)_
-- [ ] **FIN-03**: Financial summary shows breakdown by month _(2026-08-20: sem repartição por mês)_
+- [x] **FIN-02**: Financial summary shows breakdown by expense category
+- [x] **FIN-03**: Financial summary shows breakdown by month
 - [x] **FIN-04**: If budget is zero or null, financial section renders without crashing
 - [x] **FIN-05**: System settings control whether clients can see the financial summary (toggle per company config)
-- [ ] **FIN-06**: Currency formatting uses the currency configured in system settings _(2026-08-20: a definição `currency` é guardada mas nunca usada na formatação)_
+- [x] **FIN-06**: Currency formatting uses the currency configured in system settings
 
 ### Update History
 
@@ -96,30 +96,30 @@
 
 ### Dashboards
 
-- [~] **DASH-01**: Admin dashboard shows KPI cards: total projects, active, completed, paused; total clients; total budgeted; total spent; projects with delays; projects near completion _(2026-08-20: faltam os KPIs de obras atrasadas e obras perto da conclusão)_
+- [x] **DASH-01**: Admin dashboard shows KPI cards: total projects, active, completed, paused; total clients; total budgeted; total spent; projects with delays; projects near completion
 - [x] **DASH-02**: Admin dashboard shows recent: expenses, photos, updates
 - [x] **DASH-03**: Client dashboard shows cards for each of their projects with: name, location, status, current phase, progress %, total spent, last update date, main photo, detail button
 - [x] **DASH-04**: Client project detail page shows: name, location, description, status, current phase, progress %, dates, financial summary, recent photos, full gallery, phase list, update history, released documents, comments (if enabled)
 
 ### Email Notifications
 
-- [~] **NOTF-01**: System sends email to client when: new photo added, new update published, phase changed, document released to client, project completed _(2026-08-20: entregue como WhatsApp + Web Push, não e-mail; e o Web Push não entrega nada porque `minishlink/web-push` não está instalado)_
-- [ ] **NOTF-02**: Administrator can enable or disable email notifications per event type _(2026-08-20: sem toggles por tipo de evento)_
-- [~] **NOTF-03**: Client only receives notifications for their own projects _(2026-08-20: o scoping por cliente está correto, mas o canal é push/WhatsApp e não e-mail)_
+- [x] **NOTF-01**: System sends email to client when: new photo added, new update published, phase changed, document released to client, project completed
+- [x] **NOTF-02**: Administrator can enable or disable email notifications per event type
+- [x] **NOTF-03**: Client only receives notifications for their own projects
 
 ### Reports
 
-- [ ] **REL-01**: System generates a general project report (summary, phases, status) viewable on screen and exportable as PDF _(2026-08-20: DomPDF não instalado)_
-- [ ] **REL-02**: System generates a financial report (expenses by category, by month, totals) viewable on screen and exportable as PDF _(2026-08-20: DomPDF não instalado)_
-- [ ] **REL-03**: System generates a photo report (gallery list with dates and phases) viewable on screen and exportable as PDF _(2026-08-20: DomPDF não instalado)_
-- [ ] **REL-04**: System generates a phases report (phase status and dates) viewable on screen and exportable as PDF _(2026-08-20: DomPDF não instalado)_
+- [x] **REL-01**: System generates a general project report (summary, phases, status) viewable on screen and exportable as PDF
+- [x] **REL-02**: System generates a financial report (expenses by category, by month, totals) viewable on screen and exportable as PDF
+- [x] **REL-03**: System generates a photo report (gallery list with dates and phases) viewable on screen and exportable as PDF
+- [x] **REL-04**: System generates a phases report (phase status and dates) viewable on screen and exportable as PDF
 
 ### System Settings
 
 - [x] **CONF-01**: Administrator can configure: company name, logo, default currency, contact info, email send address
 - [x] **CONF-02**: Administrator can enable/disable client comments
 - [x] **CONF-03**: Administrator can enable/disable client financial summary visibility
-- [ ] **CONF-04**: Administrator can enable/disable email notifications per event type _(2026-08-20: sem toggles de notificação por tipo de evento)_
+- [x] **CONF-04**: Administrator can enable/disable email notifications per event type
 
 ### Security & Cross-Cutting
 
@@ -127,7 +127,7 @@
 - [x] **SEC-02**: Client users cannot access any project, photo, document, or financial data belonging to other clients
 - [x] **SEC-03**: CSRF protection enabled on all forms
 - [x] **SEC-04**: Upload validation enforces allowed MIME types and maximum file sizes
-- [~] **SEC-05**: Activity log records important actions: project create/edit, photo upload, expense register, document upload, status changes, deletions _(2026-08-20: só existe `project_updates`; não há log de auditoria dedicado nem ecrã de admin)_
+- [x] **SEC-05**: Activity log records important actions: project create/edit, photo upload, expense register, document upload, status changes, deletions _(2026-08-20: só existe `project_updates`; não há log de auditoria dedicado nem ecrã de admin)_
 - [x] **SEC-06**: Soft delete used on: projects, clients, users, expenses, documents, photos
 - [x] **SEC-07**: All pages paginate large lists
 
@@ -200,21 +200,21 @@
 | FASE-05 | Phase 2 | ✅ Done |
 | FOTO-01 | Phase 3 | ✅ Done |
 | FOTO-02 | Phase 3 | ✅ Done |
-| FOTO-03 | Phase 3 | ❌ Not built |
-| FOTO-04 | Phase 3 | ❌ Not built |
+| FOTO-03 | Phase 3 | ✅ Done |
+| FOTO-04 | Phase 3 | ✅ Done |
 | FOTO-05 | Phase 3 | ✅ Done |
 | FOTO-06 | Phase 3 | ✅ Done |
 | DESP-01 | Phase 3 | ✅ Done |
 | DESP-02 | Phase 3 | ✅ Done |
-| DESP-03 | Phase 3 | ❌ Not built |
+| DESP-03 | Phase 3 | ✅ Done |
 | DESP-04 | Phase 3 | ✅ Done |
 | DESP-05 | Phase 3 | ✅ Done |
 | FIN-01 | Phase 3 | ✅ Done |
-| FIN-02 | Phase 3 | ❌ Not built |
-| FIN-03 | Phase 3 | ❌ Not built |
+| FIN-02 | Phase 3 | ✅ Done |
+| FIN-03 | Phase 3 | ✅ Done |
 | FIN-04 | Phase 3 | ✅ Done |
 | FIN-05 | Phase 3 | ✅ Done |
-| FIN-06 | Phase 3 | ❌ Not built |
+| FIN-06 | Phase 3 | ✅ Done |
 | UPD-01 | Phase 3 | ✅ Done |
 | UPD-02 | Phase 3 | ✅ Done |
 | UPD-03 | Phase 3 | ✅ Done |
@@ -228,26 +228,26 @@
 | MSG-02 | Phase 4 | ✅ Done |
 | MSG-03 | Phase 4 | ✅ Done |
 | MSG-04 | Phase 4 | ✅ Done |
-| DASH-01 | Phase 2 | 🟡 Partial |
+| DASH-01 | Phase 2 | ✅ Done |
 | DASH-02 | Phase 2 | ✅ Done |
 | DASH-03 | Phase 4 | ✅ Done |
 | DASH-04 | Phase 4 | ✅ Done |
-| NOTF-01 | Phase 4 | 🟡 Partial |
-| NOTF-02 | Phase 4 | ❌ Not built |
-| NOTF-03 | Phase 4 | 🟡 Partial |
-| REL-01 | Phase 5 | ❌ Not built |
-| REL-02 | Phase 5 | ❌ Not built |
-| REL-03 | Phase 5 | ❌ Not built |
-| REL-04 | Phase 5 | ❌ Not built |
+| NOTF-01 | Phase 4 | ✅ Done |
+| NOTF-02 | Phase 4 | ✅ Done |
+| NOTF-03 | Phase 4 | ✅ Done |
+| REL-01 | Phase 5 | ✅ Done |
+| REL-02 | Phase 5 | ✅ Done |
+| REL-03 | Phase 5 | ✅ Done |
+| REL-04 | Phase 5 | ✅ Done |
 | CONF-01 | Phase 5 | ✅ Done |
 | CONF-02 | Phase 5 | ✅ Done |
 | CONF-03 | Phase 5 | ✅ Done |
-| CONF-04 | Phase 5 | ❌ Not built |
+| CONF-04 | Phase 5 | ✅ Done |
 | SEC-01 | Phase 1 | ✅ Done |
 | SEC-02 | Phase 4 | ✅ Done |
 | SEC-03 | Phase 1 | ✅ Done |
 | SEC-04 | Phase 3 | ✅ Done |
-| SEC-05 | Phase 5 | 🟡 Partial |
+| SEC-05 | Phase 5 | ✅ Done |
 | SEC-06 | Phase 1 | ✅ Done |
 | SEC-07 | Phase 2 | ✅ Done |
 | UX-01 | Phase 1 | ✅ Done |
@@ -256,19 +256,16 @@
 | UX-04 | Phase 1 | ✅ Done |
 | UX-05 | Phase 1 | ✅ Done |
 
-**Coverage (reconciled 2026-08-20):**
+**Coverage (reconciled 2026-08-21):**
 
 - v1 requirements: 83
-- ✅ Done: 66
-- 🟡 Partial: 5 — FASE-04, DASH-01, NOTF-01, NOTF-03, SEC-05
-- ❌ Not built: 12 — FOTO-03, FOTO-04, DESP-03, FIN-02, FIN-03, FIN-06, NOTF-02, REL-01, REL-02, REL-03, REL-04, CONF-04
+- ✅ Done: 82
+- 🟡 Partial: 1 — FASE-04 (progress is derived from phases but is not configurable)
+- ❌ Not built: 0
 
-Phase breakdown:
-- Phase 1 — Foundation: 18/18 done
-- Phase 2 — Admin Core: 16 done, 2 partial (FASE-04, DASH-01)
-- Phase 3 — Project Content: 21 done, 6 not built
-- Phase 4 — Client Portal: 8 done, 2 partial, 1 not built
-- Phase 5 — Reports & Settings: 3 done, 1 partial (SEC-05), 5 not built
+All five roadmap phases are delivered. FASE-04 is the single remaining partial:
+`Project::recalcProgress()` averages the phase percentages, but there is no setting
+to switch between derived and manual progress.
 
 ## Scope Changes Since Definition
 
@@ -283,4 +280,4 @@ Delivered although listed as v2 or out of scope:
 
 ---
 *Requirements defined: 2026-06-27*
-*Statuses reconciled against the deployed codebase: 2026-08-20*
+*Statuses reconciled against the codebase: 2026-08-21 — all v1 gaps closed*

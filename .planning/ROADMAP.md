@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Admin Core** — Client management, project management, phase management, and admin dashboard
 - [x] **Phase 3: Project Content** — Photos, expenses, financial summary, documents, and update history
 - [x] **Phase 4: Client Portal** — Client-facing views, project detail page, messaging, and email notifications
-- [~] **Phase 5: Reports & Settings** — PDF reports, system configuration, and activity log
+- [x] **Phase 5: Reports & Settings** — PDF reports, system configuration, and activity log
 - [ ] **Phase 6: Rede de testes do fluxo financeiro** — regression cover for the money path and access boundaries
 
 ## Phase Details
@@ -112,13 +112,39 @@ NOTF-02 (per-event toggle) was not built. Web Push is additionally inert: `minis
   2. Admin updates company name, logo, default currency, and contact info in settings; changes appear immediately in the UI (currency symbols, logo in header)
   3. Admin can enable/disable client comments, client financial summary visibility, and email notifications per event type — changes take effect in the client portal immediately
   4. Activity log shows a paginated, timestamped list of key actions (project create/edit, photo upload, expense entry, document upload, status changes, deletions) accessible only to admins
-**Plans**: none — partially built outside GSD
-**Delivered**: `Admin/SettingController` — company name/email/phone, logo upload,
-currency selection, client-comments toggle, client-financials toggle (CONF-01/02/03).
-**Not delivered**: REL-01..04 (PDF reports — DomPDF is not installed), CONF-04
-(per-event notification toggles), SEC-05 (audit log — only `project_updates` exists,
-with no admin screen), FIN-06 (the `currency` setting is stored but never used to format values).
+**Plans**: none — built outside GSD
+**Delivered (2026-08-21)**: all of it.
+- REL-01..04 — `Admin/ReportController` with four report types on screen and as PDF
+  (DomPDF), Blade partials shared between both, photos embedded as base64,
+  `isRemoteEnabled(false)`, "Relatórios" sidebar entry and a project picker.
+- CONF-01/02/03 — already shipped earlier in `Admin/SettingController`.
+- CONF-04 — `notify_<type>` setting per `ProjectUpdate` type, honoured by
+  `ProjectUpdateObserver`, with toggles on the settings screen. Default on.
+- SEC-05 — `audit_logs` table and a generic `AuditObserver` registered on 9 models;
+  admin-only `/admin/auditoria` with filters by action, type and user. Secrets redacted.
+- FIN-02/03/06 — expense breakdown by category and by month, plus a `money()` helper
+  that finally applies the configured currency (21 hardcoded `R$` removed).
 **UI hint**: yes
+
+### Phase 6: Rede de testes do fluxo financeiro
+
+**Goal**: The money path and the access-control boundaries are covered by feature tests.
+**Depends on**: Phase 5
+**Requirements**: regression cover for FIN-01, FIN-04, FIN-05, DESP-01/04, PROJ-05, SEC-02, SEC-04, DOC-03, FOTO-05 (no new user-facing behaviour)
+**History**: originally inserted as Phase 04.1 on 2026-08-20 to run *before* the feature work. Moved to the end the same day at the user's direction — features first, tests after. That accepted risk played out: a `ParseError` shipped in `7b3faa6` and was only caught one commit later, by the gallery tests.
+**Partially satisfied already**: the 2026-08-21 feature work shipped 58 tests alongside it, which cover criteria 1, 2 and 8 below. What remains is the *older* code, written before any of this.
+**Success Criteria** (what must be TRUE):
+  1. ✅ `Project::totalSpent()`, remaining balance and % of budget used are asserted against known expense fixtures, including the zero/null budget case (FIN-04) — `ProjectFinancialsTest`
+  2. ✅ Expense create and soft-delete are covered, and deleting an expense is proven to change the project total — `ProjectFinancialsTest`, `ExpenseUpdateTest`
+  3. Payment create, update and mark-paid are covered, including the effect on the project's payment totals
+  4. A manager only reaches projects where they are `manager_id`; a client only reaches their own client's projects — both proven to 403 otherwise (PROJ-05, SEC-02)
+  5. A document marked `Interno` returns 403 for a client user; a `Cliente` document downloads (DOC-03)
+  6. Photo and document upload validation rejects a disallowed MIME type and an oversized file (SEC-04)
+  7. `show_client_financials=0` hides the financial summary from the client portal (FIN-05)
+  8. ✅ The whole suite passes with `composer test`, and Pint passes with `--test` — 131 tests green on 2026-08-21
+  9. Project create/edit/soft-delete is covered, including the manager scoping on write
+**Plans**: TBD
+**UI hint**: no
 
 ## Progress
 
@@ -131,28 +157,14 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Admin Core | n/a | ✅ Complete (built outside GSD) | 2026-07 |
 | 3. Project Content | n/a | ✅ Complete, 3 gaps | 2026-07 |
 | 4. Client Portal | n/a | ✅ Complete, notifications deviate | 2026-08 |
-| 5. Reports & Settings | n/a | 🟡 Partial — settings only | - |
+| 5. Reports & Settings | n/a | ✅ Complete | 2026-08-21 |
+| 6. Testes do fluxo financeiro | 0/? | ⬜ Not started | - |
 
-**Outstanding for v1:** REL-01..04, CONF-04, SEC-05, NOTF-01/02/03 (email),
-FIN-02/FIN-03/FIN-06, FOTO-03, DESP-03, DASH-01 delay/near-completion KPIs.
+**Outstanding for v1:** FASE-04 only (progress is derived from phases but not
+configurable). Every other v1 requirement is delivered — 82 done, 1 partial, 0 unbuilt.
+
+**Top debt:** Phase 6 — the older code paths (project CRUD, payments, document
+access control) still have no regression tests.
 
 **Shipped beyond scope:** real-time messaging (Reverb), PWA + Web Push, WhatsApp channel,
 payments module, CI/CD deploy to HostGator.
-
-### Phase 6: Rede de testes do fluxo financeiro
-
-**Goal**: The money path and the access-control boundaries are covered by feature tests.
-**Depends on**: Phase 5
-**Requirements**: regression cover for FIN-01, FIN-04, FIN-05, DESP-01/04, PROJ-05, SEC-02, SEC-04, DOC-03, FOTO-05 (no new user-facing behaviour)
-**History**: originally inserted as Phase 04.1 on 2026-08-20 to run *before* the feature work. Moved to the end on the same day at the user's direction — features first, tests after. The risk this accepts: Phase 5 changes financial formatting and reporting with no regression net underneath.
-**Success Criteria** (what must be TRUE):
-  1. `Project::totalSpent()`, remaining balance and % of budget used are asserted against known expense fixtures, including the zero/null budget case (FIN-04)
-  2. Expense create and soft-delete are covered, and deleting an expense is proven to change the project total
-  3. Payment create, update and mark-paid are covered, including the effect on the project's payment totals
-  4. A manager only reaches projects where they are `manager_id`; a client only reaches their own client's projects — both proven to 403 otherwise (PROJ-05, SEC-02)
-  5. A document marked `Interno` returns 403 for a client user; a `Cliente` document downloads (DOC-03)
-  6. Photo and document upload validation rejects a disallowed MIME type and an oversized file (SEC-04)
-  7. `show_client_financials=0` hides the financial summary from the client portal (FIN-05)
-  8. The whole suite passes with `composer test`, and Pint passes with `--test`
-**Plans**: TBD
-**UI hint**: no

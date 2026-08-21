@@ -19,6 +19,7 @@ A empresa gere clientes, obras, fases, fotos, despesas, pagamentos, documentos e
 | Filas | `database` |
 | Ficheiros | Disco `local` privado (Flysystem) — servido por rotas autenticadas, pronto para S3 |
 | Notificações | E-mail, Web Push (VAPID/PWA) e canal WhatsApp Business API |
+| Relatórios | DomPDF (`barryvdh/laravel-dompdf`) |
 | Auth | Laravel Breeze (Blade) |
 | Qualidade | PHPUnit, Laravel Pint, GitHub Actions |
 
@@ -34,30 +35,32 @@ Existem quatro papéis (`app/Models/User.php`): `admin`, `manager`, `financial`,
 - Gestão de utilizadores (criar, editar, ativar/desativar, soft delete)
 - Gestão de clientes e vinculação de utilizadores a clientes
 - Tudo o que gestor e financeiro fazem
-- Configurações do sistema (nome da empresa, moeda, visibilidade financeira para o cliente, comentários)
+- Configurações do sistema (nome da empresa, logótipo, moeda, visibilidade financeira, comentários e notificações por tipo de evento)
+- Log de auditoria de tudo o que é criado, alterado ou removido
 
 **Gestor da Obra** — `/admin`
-- CRUD de obras, fases (com % e ordenação), fotos, documentos e atualizações manuais
+- CRUD de obras, fases (com % e ordenação), fotos com miniaturas e galeria filtrável, documentos e atualizações manuais
+- Quatro relatórios por obra (geral, financeiro, fotos, fases), no ecrã e em PDF
 - Responde às mensagens dos clientes
 
 **Financeiro** — `/admin`
-- Despesas por obra (categoria, fornecedor, comprovativo)
+- Despesas por obra (criar, editar, apagar) com categoria, fornecedor e comprovativo
 - Pagamentos (registo, edição, marcar como pago)
-- Resumo financeiro automático: gasto total, saldo, % do orçamento
+- Resumo financeiro automático: gasto total, saldo, % do orçamento, repartição por categoria e por mês
 
 **Cliente** — `/portal`
 - Dashboard com as suas obras: estado, fase atual, progresso, último update, foto de capa
 - Detalhe da obra: galeria de fotos, fases, resumo financeiro (se ativado), documentos libertados, histórico de atualizações
 - Conversa por obra com a empresa (mensagens em tempo real)
-- PWA instalável, com subscrição de notificações push
+- PWA instalável com notificações push
 
 Alterações relevantes (foto nova, mudança de fase, documento libertado) geram automaticamente uma entrada no histórico via `ProjectUpdateObserver`, que depois notifica os utilizadores do cliente.
 
-> **Ressalva sobre notificações.** `ProjectUpdateNotification` envia por `WhatsAppChannel` e `WebPushChannel` — não por e-mail.
-> O WhatsApp só dispara se `WHATSAPP_PHONE_ID` e `WHATSAPP_TOKEN` estiverem definidos.
-> O Web Push está **inativo**: o pacote `minishlink/web-push` não está instalado, por isso o canal regista
-> "WebPush skipped" e não entrega nada. As subscrições continuam a ser guardadas.
-> Para o ativar: `composer require minishlink/web-push` e definir as chaves VAPID.
+> **Notificações.** `ProjectUpdateNotification` envia por e-mail, Web Push e WhatsApp.
+> Cada tipo de acontecimento pode ser silenciado nas Configurações.
+> O WhatsApp só dispara com `WHATSAPP_PHONE_ID` e `WHATSAPP_TOKEN` definidos;
+> o Web Push precisa das chaves VAPID; o e-mail segue a configuração `MAIL_*`.
+> Cada canal falha em silêncio quando não está configurado — os outros continuam a funcionar.
 
 ---
 
@@ -128,6 +131,7 @@ composer test                             # limpa config + php artisan test
 npm run build                             # build de produção dos assets
 
 php artisan obra360:media:migrate-public  # ver docs/production-readiness.md
+php artisan obra360:photos:thumbnails      # miniaturas para fotos antigas
 ```
 
 `obra360:media:migrate-public` move media legada de `storage/app/public` para o disco privado. Corre primeiro sem flags (dry-run), depois `--commit`, e só no fim `--commit --delete-source`.
@@ -139,15 +143,16 @@ php artisan obra360:media:migrate-public  # ver docs/production-readiness.md
 ```
 app/
   Channels/       WebPushChannel, WhatsAppChannel
-  Console/        obra360:media:migrate-public
+  Console/        obra360:media:migrate-public, obra360:photos:thumbnails
   Events/         MessageSent (broadcast do chat)
   Http/
     Controllers/  Admin/, Client/, Portal/, Auth/
     Middleware/   EnsureUserRole, EnsureUserIsActive
   Models/         Project, ProjectPhase, Photo, Expense, Payment,
                   Document, ProjectUpdate, Message, Client, Setting,
-                  PushSubscription, User
-  Observers/      ProjectUpdateObserver (histórico automático)
+                  PushSubscription, AuditLog, User
+  Observers/      ProjectUpdateObserver (histórico), AuditObserver (auditoria)
+  Support/        helpers (money), Thumbnail
   Traits/         AuthorizesProjectAccess
 docker/           nginx + php config
 docs/             notas de produção
@@ -165,7 +170,10 @@ Rotas e UI estão em português (`/admin/obras`, `/portal/obras/{id}`).
 composer test
 ```
 
-Cobertura atual em `tests/Feature`: autenticação, redirecionamento por papel, bloqueio de utilizador inativo, recuperação de password, gestão de utilizadores, esquema da base de dados e hardening de segurança.
+Cobertura atual: 131 testes. Autenticação e papéis, gestão de utilizadores, esquema,
+hardening de segurança, cálculos financeiros, relatórios e fronteiras de acesso,
+auditoria, toggles de notificação, edição de despesas, KPIs do dashboard,
+miniaturas e filtros da galeria.
 
 ---
 
@@ -182,13 +190,22 @@ Segredos necessários no repositório: `SSH_HOST`, `SSH_PORT`, `SSH_USERNAME`, `
 
 ## Estado do projeto
 
-Implementado e em produção: autenticação e papéis, gestão de utilizadores e clientes, obras com fases, fotos, documentos, despesas, pagamentos, histórico de atualizações, portal do cliente, mensagens em tempo real, configurações, PWA e notificações push.
+Todos os requisitos v1 estão implementados: autenticação e papéis, gestão de
+utilizadores e clientes, obras com fases, fotos com miniaturas e galeria filtrável,
+documentos, despesas e pagamentos, resumo financeiro com repartição por categoria e
+por mês, moeda configurável, histórico de atualizações, portal do cliente, mensagens
+em tempo real, notificações por e-mail/push/WhatsApp com toggles por evento,
+quatro relatórios em PDF, log de auditoria, PWA e configurações do sistema.
 
 Por fazer:
 
-- Relatórios em PDF (geral, financeiro, fotos, fases) — DomPDF ainda não instalado
-- Log de auditoria dedicado (hoje o histórico vive em `project_updates`)
-- Migração para S3 (arquitetura já preparada)
+- **Rede de testes de regressão do fluxo financeiro.** Há 131 testes, mas os
+  caminhos mais antigos (criar obra, pagamentos, acesso a documentos) continuam
+  sem cobertura. É a dívida mais relevante.
+- Migração para S3 (arquitetura já preparada via Flysystem)
+- Correr `obra360:media:migrate-public` em produção e remover o fallback do disco público
+- Decidir a superfície exata do papel `financial` (ver `docs/production-readiness.md`)
+- Separar o `ProjectController`, que já passa das 400 linhas
 - App móvel nativa
 
-O planeamento detalhado vive em `.planning/` (`PROJECT.md`, `ROADMAP.md`, `STATE.md`) e as notas operacionais em `docs/production-readiness.md`.
+O planeamento vive em `.planning/` e as notas operacionais em `docs/production-readiness.md`.
