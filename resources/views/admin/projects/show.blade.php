@@ -65,15 +65,15 @@
             @php $spent=$totalSpent; $budget=floatval($project->budget??0); @endphp
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
                 <p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p>
-                <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">R$ {{ number_format($budget,2,',','.') }}</p>
+                <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">{{ money($budget) }}</p>
             </div>
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
                 <p style="font-size:0.75rem;color:var(--muted-foreground)">Total gasto</p>
-                <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">R$ {{ number_format($spent,2,',','.') }}</p>
+                <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">{{ money($spent) }}</p>
             </div>
             <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.35);border-radius:0.75rem;padding:1rem;">
                 <p style="font-size:0.75rem;color:var(--muted-foreground)">Saldo restante</p>
-                <p style="font-size:1.25rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">R$ {{ number_format($budget-$spent,2,',','.') }}</p>
+                <p style="font-size:1.25rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">{{ money($budget-$spent) }}</p>
             </div>
         </div>
     </div>
@@ -187,9 +187,9 @@
         </div>
         @php $budget=floatval($project->budget??0);$pct=$budget>0?min(100,round($totalSpent/$budget*100)):0; @endphp
         <div class="grid gap-3 sm:grid-cols-3">
-            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">R$ {{ number_format($budget,2,',','.') }}</p></div>
-            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Total gasto</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">R$ {{ number_format($totalSpent,2,',','.') }}</p></div>
-            <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.3);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Saldo</p><p style="font-size:1.125rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">R$ {{ number_format($budget-$totalSpent,2,',','.') }}</p></div>
+            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($budget) }}</p></div>
+            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Total gasto</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($totalSpent) }}</p></div>
+            <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.3);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Saldo</p><p style="font-size:1.125rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">{{ money($budget-$totalSpent) }}</p></div>
         </div>
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;overflow:hidden;">
             <div style="overflow-x:auto;">
@@ -202,7 +202,7 @@
                             <td>{{ \App\Models\Expense::CATEGORIES[$exp->category]??$exp->category }}</td>
                             <td>{{ $exp->description }}</td>
                             <td style="color:var(--muted-foreground)">{{ $exp->supplier??'—' }}</td>
-                            <td style="text-align:right;font-weight:600;">R$ {{ number_format($exp->amount,2,',','.') }}</td>
+                            <td style="text-align:right;font-weight:600;">{{ money($exp->amount) }}</td>
                             <td>
                                 <form method="POST" action="{{ route('admin.projects.expenses.destroy', [$project, $exp]) }}" onsubmit="return confirm('Remover despesa?')">
                                     @csrf @method('DELETE')
@@ -231,11 +231,11 @@
             <div class="flex gap-3 flex-wrap">
                 <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:0.75rem 1rem;">
                     <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">Pendente</p>
-                    <p style="font-size:1rem;font-weight:700;color:oklch(0.6 0.18 40)">R$ {{ number_format($totalPending,2,',','.') }}</p>
+                    <p style="font-size:1rem;font-weight:700;color:oklch(0.6 0.18 40)">{{ money($totalPending) }}</p>
                 </div>
                 <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:0.75rem 1rem;">
                     <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">Recebido</p>
-                    <p style="font-size:1rem;font-weight:700;color:oklch(0.55 0.16 145)">R$ {{ number_format($totalPaid,2,',','.') }}</p>
+                    <p style="font-size:1rem;font-weight:700;color:oklch(0.55 0.16 145)">{{ money($totalPaid) }}</p>
                 </div>
             </div>
             <button type="button" onclick="openModal('modal-pagamento')" class="btn-primary">
@@ -259,7 +259,7 @@
                             </td>
                             <td>{{ \App\Models\Payment::TYPES[$pay->type] ?? $pay->type }}</td>
                             <td style="white-space:nowrap;color:var(--muted-foreground)">{{ $pay->due_date?->format('d/m/Y') ?? '—' }}</td>
-                            <td style="text-align:right;font-weight:600;">R$ {{ number_format($pay->amount,2,',','.') }}</td>
+                            <td style="text-align:right;font-weight:600;">{{ money($pay->amount) }}</td>
                             <td>
                                 @if($pay->status === 'paid')
                                     <span style="display:inline-flex;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.55 0.16 145 / 0.12);color:oklch(0.55 0.16 145)">Pago</span>
@@ -498,7 +498,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <div><label class="field-label">Categoria</label><select name="category">@foreach(\App\Models\Expense::CATEGORIES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
         <div><label class="field-label">Data</label><input type="date" name="spent_at" value="{{ now()->toDateString() }}" required></div>
         <div class="sm:col-span-2"><label class="field-label">Descrição <span style="color:var(--destructive)">*</span></label><input type="text" name="description" required></div>
-        <div><label class="field-label">Valor (R$)</label><input type="number" name="amount" step="0.01" min="0" required></div>
+        <div><label class="field-label">Valor ({{ currency_symbol() }})</label><input type="number" name="amount" step="0.01" min="0" required></div>
         <div><label class="field-label">Fornecedor</label><input type="text" name="supplier"></div>
         <div><label class="field-label">Comprovante</label><input type="file" name="receipt" style="padding:0.375rem;"></div>
         <div><label class="field-label">Notas</label><input type="text" name="notes"></div>
@@ -542,7 +542,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
       @csrf
       <div class="grid gap-3 sm:grid-cols-2">
         <div class="sm:col-span-2"><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" required placeholder="Ex: Parcela 1, Sinal de obra…"></div>
-        <div><label class="field-label">Valor (R$) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" required></div>
+        <div><label class="field-label">Valor ({{ currency_symbol() }}) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" required></div>
         <div><label class="field-label">Vencimento</label><input type="date" name="due_date"></div>
         <div>
           <label class="field-label">Tipo</label>

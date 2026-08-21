@@ -16,9 +16,9 @@
                 ['label'=>'Concluídas',     'value'=>$completed,      'accent'=>false],
                 ['label'=>'Pausadas',       'value'=>$paused,         'accent'=>false],
                 ['label'=>'Clientes',       'value'=>$totalClients,   'accent'=>false],
-                ['label'=>'Total orçado',   'value'=>'R$ '.number_format($totalBudget,2,',','.'), 'accent'=>false],
-                ['label'=>'Total gasto',    'value'=>'R$ '.number_format($totalSpent,2,',','.'),  'accent'=>false],
-                ['label'=>'Saldo restante', 'value'=>'R$ '.number_format($totalBudget-$totalSpent,2,',','.'), 'accent'=>true],
+                ['label'=>'Total orçado',   'value'=>money($totalBudget), 'accent'=>false],
+                ['label'=>'Total gasto',    'value'=>money($totalSpent),  'accent'=>false],
+                ['label'=>'Saldo restante', 'value'=>money($totalBudget-$totalSpent), 'accent'=>true],
             ];
         @endphp
         @foreach($cards as $card)

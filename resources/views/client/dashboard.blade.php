@@ -73,7 +73,7 @@
                         @if($canViewFinancials && $project->show_financials && $project->budget)
                             <div>
                                 <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-foreground);">Orçamento</p>
-                                <p style="font-size:0.875rem;font-weight:600;margin-top:0.125rem;">R$ {{ number_format($project->budget, 2, ',', '.') }}</p>
+                                <p style="font-size:0.875rem;font-weight:600;margin-top:0.125rem;">{{ money($project->budget) }}</p>
                             </div>
                         @else
                             <span></span>
