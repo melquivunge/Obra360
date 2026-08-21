@@ -424,3 +424,26 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 > Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+
+<!-- OVERRIDE:working-method — escrito a pedido do utilizador, 2026-08-21 -->
+## Método de trabalho (substitui a secção GSD acima)
+
+O utilizador dispensou explicitamente o workflow GSD a 2026-08-21. A secção
+"GSD Workflow Enforcement" acima é gerada automaticamente e **não se aplica**.
+
+- **Não invocar skills `gsd-*`.** As restantes skills (`security-review`,
+  `code-review`, design, etc.) continuam a ser usadas.
+- **Delegar a execução a subagentes.** Encontrar problemas e corrigi-los vai para
+  os agentes, não para edição direta. Escolher o agente especializado quando
+  existir um adequado (`Senior Developer` para Laravel, `Senior SecOps Engineer`
+  para segurança, `Code Reviewer` para revisão).
+- **Paralelo quando os ficheiros não se cruzam, série quando se cruzam** — dois
+  agentes a escrever o mesmo ficheiro perdem trabalho um do outro.
+- **Verificar antes de reportar.** Correr `composer test`, `./vendor/bin/pint --test`,
+  `composer audit` e `npm audit` sobre o que o agente produziu. Um agente dizer
+  "concluído" não é prova; já aconteceu um mapeador afirmar que o CI não tinha
+  auditoria de dependências quando tinha.
+- **Manter `.planning/` à mão.** Nenhum comando GSD o vai atualizar.
+
+O registo do trabalho feito está em `docs/registo-2026-08-21.md`.
+<!-- OVERRIDE:working-method-end -->
