@@ -2,109 +2,108 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: planning reconciliation complete
-last_updated: "2026-08-21T02:35:53.264Z"
-last_activity: 2026-08-20 -- planning docs reconciled with the actual codebase
+status: executing
+stopped_at: All v1 feature gaps closed; Phase 6 (financial regression tests) outstanding
+last_updated: "2026-08-21"
+last_activity: 2026-08-21 -- Phase 5 completed and every remaining v1 gap built
 progress:
-  total_phases: 5
-  completed_phases: 0
+  total_phases: 6
+  completed_phases: 5
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 8
+  percent: 95
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-20)
+See: .planning/PROJECT.md (updated 2026-08-21)
 
 **Core value:** A client logs in, immediately sees the current state of their construction project (phase, progress %, recent photos, money spent), and feels informed — without needing to contact the company.
-**Current focus:** Phase 05 — Reports & Settings (PDF reports, audit log, per-event toggles)
+**Current focus:** Phase 06 — financial regression test net (the last outstanding item)
 
 ## Current Position
 
-Phase: 05 (reports-settings) — PARTIALLY DELIVERED
-Status: Phases 1-4 complete and running in production at obra360app.com
-Last activity: 2026-08-20 -- planning docs reconciled with the actual codebase
+Phase: 06 (rede de testes do fluxo financeiro) — NOT STARTED
+Status: Phases 1-5 delivered. 82 of 83 v1 requirements done, 1 partial, 0 not built.
+Last activity: 2026-08-21 -- all remaining feature gaps built and committed
 
-Progress: [████████▌░] 85%
+Progress: [█████████▌] 95%
 
-> **Important:** Phases 2 through 5 were built directly, outside the GSD phase workflow.
-> There are no PLAN.md / SUMMARY.md artifacts under `.planning/phases/` for them.
-> The status below was reconstructed by auditing routes, controllers, models and views
-> on 2026-08-20 — it reflects the code, not a plan-execution record.
+> **Working mode:** Phases 2-5 and the 2026-08-21 gap-closure work were built
+> directly, outside the GSD workflow, at the user's direction. There are no
+> PLAN.md/SUMMARY.md artifacts for them. The status below was reconstructed from
+> the code and the commit history.
 
-## Reconciliation Audit (2026-08-20)
+## What Was Built on 2026-08-21
 
-Verified against `routes/web.php`, `app/Http/Controllers/**`, `app/Models/**`,
-`app/Observers/ProjectUpdateObserver.php`, `app/Notifications/**`, `resources/views/**`.
+Six commits closed every outstanding v1 gap:
 
-| Phase | Status | Evidence |
-|-------|--------|----------|
-| 1. Foundation | ✅ Complete | Breeze in PT, 4 roles + `EnsureUserRole`/`EnsureUserIsActive`, full schema (17 migrations), soft deletes on 7 models, admin/client layouts, user CRUD, 13 feature tests |
-| 2. Admin Core | ✅ Complete | `Admin/ClientController`, `Admin/ProjectController` (+ phases), `Admin/DashboardController` with aggregate KPIs, pagination on users/clients/projects, manager scoping via `manager_id` |
-| 3. Project Content | ✅ Complete (2 gaps) | Photos, expenses, documents, updates all wired in `Admin/ProjectController`; `ProjectUpdateObserver` auto-logs history. Gaps: no thumbnail generation, no expense edit route |
-| 4. Client Portal | ✅ Complete (delivered differently) | `Client/DashboardController`, `Client/ProjectController`, per-project messaging with Reverb broadcast (`MessageSent`). Notifications ship as WhatsApp + Web Push, **not** email — and Web Push is inert because `minishlink/web-push` is not installed |
-| 5. Reports & Settings | 🟡 Partial | `Admin/SettingController` covers CONF-01/02/03. PDF reports (REL-01..04), per-event notification toggles (CONF-04) and the audit log (SEC-05) do not exist |
+| Commit | Delivered |
+|--------|-----------|
+| `2fd2f4a` | Currency helper `money()` replacing 21 hardcoded `R$`; `expensesByCategory()` / `expensesByMonth()` / `remainingBalance()` / `budgetUsedPercent()`; `ExpenseFactory`; DomPDF installed (FIN-02, FIN-03, FIN-06) |
+| `126972d` | Four per-project reports — geral, financeiro, fotos, fases — on screen and as PDF; "Relatórios" sidebar entry; date casts added to four models (REL-01..04) |
+| `3aac97f` | `audit_logs` table + `AuditObserver` on 9 models; admin-only `/admin/auditoria` with filters; per-event notification toggles wired into `ProjectUpdateObserver` (SEC-05, CONF-04) |
+| `7b3faa6` | Expense editing via a shared create/edit modal; dashboard "Atrasadas" and "Perto do fim" KPIs with alert lists (DESP-03, DASH-01) |
+| `becb9ba` | `App\Support\Thumbnail` (plain GD, no new dependency); thumbnails on upload, served with `?thumb=1`; `obra360:photos:thumbnails` backfill; gallery filters by phase, date range and order (FOTO-03, FOTO-04) |
+| `991c2cd` | `minishlink/web-push` installed — Web Push had never delivered anything; `toMail()` added to `ProjectUpdateNotification` (NOTF-01, NOTF-03) |
 
-## Delivered Beyond v1 Scope
+**Tests: 73 → 131, all passing. Pint clean. `composer audit` clean.**
 
-Shipped even though the roadmap listed them as v2 or out of scope:
+## Incidental Findings Fixed
 
-- **Real-time messaging** (was ADV-01) — Laravel Reverb + Echo, `MessageSent` broadcast event
-- **Web Push / PWA** (was out of scope) — `public/manifest.json`, `sw.js`, `PushSubscription`, VAPID
-- **WhatsApp channel** (was INT-01 / out of scope) — `app/Channels/WhatsAppChannel.php`
-- **Payments module** — `Payment` model + `Admin/PaymentController`; never appeared in REQUIREMENTS.md
-- **CI/CD to production** — `.github/workflows/laravel.yml` deploys to HostGator on push to `main`
-- **Private media storage** — covers/photos on the private `local` disk behind authenticated routes, plus `obra360:media:migrate-public`
+- **CI was red before any of this work.** `composer audit` reported 12 advisories
+  against `guzzlehttp/guzzle` and `league/commonmark`, which the CI runs as a
+  blocking step — deploys were failing. Both packages updated.
+- **Four models had no date casts** (`Expense`, `Project`, `ProjectPhase`, `Photo`).
+  Views worked around it with `Carbon::parse` over raw strings. Fixed at the model.
+- **A multi-line `@json` inside an `onclick` attribute** broke the project page with
+  a `ParseError`. Introduced in `7b3faa6` and shipped undetected because the expense
+  tests only asserted redirects; the gallery tests, which render the page, caught it.
 
-## Remaining Work (v1 gaps)
+## Remaining Work
 
-1. **REL-01..04** — PDF reports (general, financial, photos, phases). DomPDF is not installed.
-2. **SEC-05** — dedicated audit log. Today only `project_updates` exists, and it has no admin screen.
-3. **CONF-04** — enable/disable notifications per event type.
-4. **NOTF-01/03** — email notifications. The observer fires WhatsApp + Web Push only, and **Web Push delivers nothing** until `composer require minishlink/web-push` is run (`WebPushChannel` bails on `class_exists`).
-5. **FIN-02/FIN-03** — expense breakdown by category and by month.
-6. **FIN-06** — the `currency` setting is stored but never used for formatting.
-7. **FOTO-03** — `photos.thumbnail_path` exists as a column but nothing writes to it.
-8. **DESP-03** — expenses can be created and deleted but not edited.
-9. **DASH-01** — "projects with delays" and "projects near completion" KPIs are missing.
+1. **Phase 6 — financial regression tests.** 131 tests exist, but the older paths
+   (project CRUD, payments, document access control, upload validation on the
+   pre-existing routes) are still uncovered. This is the top debt.
+2. **FASE-04** — progress is derived from phases but there is no setting to choose
+   derived vs. manual. The only partial requirement left.
+3. Run `obra360:media:migrate-public` in production, then drop the public-disk fallback.
+4. Decide the exact surface the `financial` role should reach (`docs/production-readiness.md`).
+5. Split `ProjectController` — over 400 lines covering projects, phases, photos,
+   documents, expenses and updates.
+6. S3 migration (Flysystem already abstracts it).
 
 ## Accumulated Context
 
 ### Decisions
 
-Logged in PROJECT.md Key Decisions. Recent ones affecting current work:
-
-- Notifications were delivered as Web Push + WhatsApp instead of email (deviation from NOTF-01)
-- Real-time chat via Reverb was pulled forward from v2
-- Payments were added as a module without a corresponding requirement
-- Media moved to the private disk; see `docs/production-readiness.md`
-- `financial` role still has access to the whole admin area — pending a product decision
+- Notifications now ship on three channels — e-mail, Web Push and WhatsApp — each
+  failing silently when unconfigured, with per-event-type toggles in Settings.
+- Audit trail implemented as one generic observer over 9 models rather than audit
+  calls in controllers: less code, and impossible to forget on a new write path.
+  `ProjectUpdate` is deliberately excluded — it is client-facing content.
+- Thumbnails use plain GD instead of Intervention Image — the job is ~40 lines.
+- Reports share Blade partials between the on-screen view and the PDF; photos are
+  embedded as base64 because the media disk is private and DomPDF cannot
+  authenticate. `isRemoteEnabled(false)` since the HTML is built from user data.
 
 ### Roadmap Evolution
 
-- Phase 04.1 inserted after Phase 4 on 2026-08-20, then removed the same day and re-added as Phase 6.
-  Reason: the user chose to build the missing features first and add the test net afterwards.
-  Accepted risk: Phase 5 rewrites financial formatting and reporting with no regression tests underneath.
-
-### Pending Todos
-
-None tracked here — see "Remaining Work" above.
+- Phase 04.1 inserted 2026-08-20, then removed and re-added as Phase 6 on the user's
+  direction to build features before tests. That risk played out exactly as flagged:
+  a `ParseError` shipped in `7b3faa6` and was only caught one commit later.
 
 ### Blockers/Concerns
 
-- `.planning/codebase/*.md` still describe the June 2026 skeleton ("only User model exists").
-  Those files are inlined into `AGENTS.md` and `CLAUDE.md`, so agents read a wrong picture of the project.
-  Regenerate with `/gsd-map-codebase`.
-
-- Phases 2-5 have no plan/summary artifacts; future audits cannot rely on `.planning/phases/`.
+- `.planning/codebase/*.md` were regenerated on 2026-08-20 and are now mildly stale:
+  they predate `AuditLog`, `ReportController`, `Thumbnail`, the money helper and the
+  audit_logs table. Re-run the codebase mapping before relying on them.
 
 ## Session Continuity
 
-Last session: 2026-08-20
-Stopped at: planning reconciliation complete
+Last session: 2026-08-21
+Stopped at: all v1 feature gaps closed and committed
 
-Next step: `/gsd-plan-phase 5` — PDF reports (REL-01..04), audit log (SEC-05), per-event notification toggles (CONF-04). Tests follow in Phase 6.
+Next step: build the Phase 6 regression net over the financial and access-control paths.

@@ -10,7 +10,7 @@ A client logs in, immediately sees the current state of their construction proje
 
 ## Requirements
 
-*Reconciled against the deployed codebase on 2026-08-20. See `.planning/REQUIREMENTS.md` for per-requirement status.*
+*Reconciled against the codebase on 2026-08-21. See `.planning/REQUIREMENTS.md` for per-requirement status.*
 
 ### Validated
 
@@ -29,28 +29,30 @@ A client logs in, immediately sees the current state of their construction proje
 - ✓ Document management with Interno/Cliente visibility — Phase 3
 - ✓ Client dashboard and project detail page — Phase 4
 - ✓ Per-project messaging, delivered live over Laravel Reverb — Phase 4
-- ✓ System settings: company name/logo/contacts, currency, comment and financial-visibility toggles — Phase 5
+- ✓ System settings: company name/logo/contacts, currency, comment, financial-visibility and per-event notification toggles — Phase 5
+- ✓ Four per-project PDF reports: general, financial, photos, phases — Phase 5
+- ✓ Audit log over 9 models with an admin-only screen — Phase 5
+- ✓ Expense breakdown by category and by month; the currency setting now actually formats values — Phase 5
+- ✓ Photo thumbnails and a gallery filterable by phase, date range and order — Phase 5
+- ✓ Expense editing — Phase 5
+- ✓ Dashboard KPIs for late and near-completion projects — Phase 5
+- ✓ Notifications on three channels — e-mail, Web Push and WhatsApp — Phase 5
 - ✓ Role-based access control via middleware + `AuthorizesProjectAccess` — Phase 1/4
 - ✓ Soft deletes on users, clients, projects, phases' parents, expenses, documents, photos, payments — Phase 1
 - ✓ Mobile-first responsive UI in Portuguese across all screens — Phase 1-4
-- ✓ PWA with Web Push subscription capture (VAPID) — beyond original scope; **delivery inactive**, `minishlink/web-push` is not installed
+- ✓ PWA with working Web Push delivery (VAPID) — beyond original scope
 - ✓ WhatsApp notification channel — beyond original scope
 - ✓ CI/CD: GitHub Actions running tests + Pint + audits, deploying to HostGator — beyond original scope
 
 ### Active
 
-- [ ] Reports: per-project general, financial, photos, phases — screen + PDF export (REL-01..04, DomPDF not installed)
-- [ ] Audit/activity log with an admin screen (SEC-05 — only `project_updates` exists today)
-- [ ] Email notifications (NOTF-01/03 — currently WhatsApp + Web Push only)
-- [ ] Install `minishlink/web-push` — without it `WebPushChannel` delivers nothing, so the PWA push feature is dead code
-- [ ] Per-event notification toggles (NOTF-02 / CONF-04)
-- [ ] Financial breakdown by category and by month (FIN-02, FIN-03)
-- [ ] Apply the configured currency when formatting values (FIN-06)
-- [ ] Photo thumbnail generation (FOTO-03) and gallery filters by date/phase (FOTO-04)
-- [ ] Expense editing (DESP-03)
-- [ ] Dashboard KPIs for delayed and near-completion projects (DASH-01)
-- [ ] Write requirements retroactively for the payments module
+- [ ] **Regression tests for the older code paths** — 131 tests exist, but project CRUD, payments, document access control and upload validation on the pre-existing routes are still uncovered (Phase 6). Top debt.
+- [ ] FASE-04 — progress is derived from the phases, but there is no setting to switch between derived and manual
+- [ ] Run `obra360:media:migrate-public` in production, then remove the public-disk fallback
 - [ ] Decide the exact surface the `financial` role should reach (see `docs/production-readiness.md`)
+- [ ] Split `ProjectController` — over 400 lines covering six sub-resources
+- [ ] Write requirements retroactively for the payments module
+- [ ] Media cleanup policy on force-delete — soft-deleted projects leave files on disk
 
 ### Out of Scope
 
@@ -62,9 +64,9 @@ A client logs in, immediately sees the current state of their construction proje
 
 ## Context
 
-- **Codebase state (2026-08-20)**: In production at obra360app.com. 12 Eloquent models, 20 controllers, 17 migrations, 13 feature tests. Phases 1-4 of the roadmap are delivered; Phase 5 is partial.
-- **Planning artifacts**: Only Phase 1 was executed through the GSD workflow. Phases 2-5 were built directly, so `.planning/phases/` has no plans or summaries for them.
-- **Stale docs**: `.planning/codebase/*.md` still describe the June 2026 skeleton and are inlined into `AGENTS.md` and `CLAUDE.md`. Regenerate with `/gsd-map-codebase`.
+- **Codebase state (2026-08-21)**: In production at obra360app.com. 13 Eloquent models, 22 controllers, 18 migrations, 23 test files with 131 passing tests. Phases 1-5 delivered; 82 of 83 v1 requirements done.
+- **Planning artifacts**: Only Phase 1 ran through the GSD workflow. Phases 2-5 and the 2026-08-21 gap-closure work were built directly at the user's direction, so `.planning/phases/` has no plans or summaries for them.
+- **Codebase docs**: `.planning/codebase/*.md` were regenerated 2026-08-20 and now predate `AuditLog`, `ReportController`, `Thumbnail` and the money helper. Mildly stale.
 - **Target users**: Construction company admin staff (non-technical), field managers, financial staff, and end clients
 - **Language**: Portuguese (PT) — all UI text, routes, labels, and notifications
 - **Document source**: `requisitos_portal_acompanhamento_obras.docx` (v1, 26/06/2026)
@@ -74,7 +76,7 @@ A client logs in, immediately sees the current state of their construction proje
 
 - **Tech stack**: Laravel 13 + Blade + TailwindCSS v4 + MySQL — no SPA framework, server-side rendering
 - **Auth**: Laravel Breeze (Blade) — installed
-- **PDF**: DomPDF (barryvdh/laravel-dompdf) for report exports — **not installed yet**
+- **PDF**: DomPDF (barryvdh/laravel-dompdf) — installed and in use by the four reports
 - **Storage**: Private local disk via Flysystem; media served through authenticated routes; S3-ready
 - **PHP**: 8.5 in production (cPanel ea-php85), 8.4 in Docker, 8.3+ minimum per composer.json
 - **Security**: CSRF, XSS, SQL injection protection built-in via Laravel; upload validation required; policies on all sensitive routes
@@ -89,11 +91,14 @@ A client logs in, immediately sees the current state of their construction proje
 | Soft deletes on entities | RB08 requires confirmation before delete; logical delete prevents accidents | ✅ Done — 7 models |
 | Portuguese UI | End users are Portuguese-speaking; reduces confusion and support burden | ✅ Done — UI and routes in PT |
 | Separate admin/client view layouts | Clear separation of concerns; prevents accidental data leakage | ✅ Done — `components/layouts/admin` + `client` |
-| Web Push + WhatsApp instead of email notifications | Clients read push and WhatsApp; email was being ignored | ⚠️ Deviates from NOTF-01 — email still owed |
+| Web Push + WhatsApp instead of email notifications | Clients read push and WhatsApp; email was being ignored | ✅ Resolved 2026-08-21 — e-mail added as a third channel, all three toggleable per event |
 | Laravel Reverb for live messaging | Pulled ADV-01 forward; chat felt broken without it | ✅ Done — `MessageSent` broadcast |
 | Payments as a separate module | Budget vs. expense was not enough to track client billing | ✅ Done — no requirement was ever written |
 | Deploy to HostGator via GitHub Actions | Cheapest path to a live URL for client demos | ✅ Done — PHP 8.5 forced via cPanel uapi |
 | Phases 2-5 built outside GSD | Speed; the workflow felt heavy mid-build | ⚠️ Cost: no plan/summary artifacts, planning docs drifted for ~2 months |
+| Audit trail as one generic observer, not calls in controllers | Less code, and impossible to forget on a new write path | ✅ Done — `AuditObserver` on 9 models |
+| Plain GD for thumbnails instead of Intervention Image | The job is ~40 lines; a dependency was not worth it | ✅ Done — `App\Support\Thumbnail` |
+| Features before the test net | User's call after the risk was flagged | ⚠️ A `ParseError` shipped undetected in `7b3faa6`, caught one commit later |
 
 ## Evolution
 
@@ -113,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-20 — reconciled with the deployed codebase*
+*Last updated: 2026-08-21 — Phase 5 complete, all v1 feature gaps closed*
