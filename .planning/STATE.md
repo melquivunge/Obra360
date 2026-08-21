@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-20)
 
 **Core value:** A client logs in, immediately sees the current state of their construction project (phase, progress %, recent photos, money spent), and feels informed — without needing to contact the company.
-**Current focus:** Phase 05 — Reports & Settings (settings shipped; PDF reports and audit log outstanding)
+**Current focus:** Phase 04.1 — financial test safety net (inserted), then Phase 05 reports/audit log
 
 ## Current Position
 
@@ -84,6 +84,10 @@ Logged in PROJECT.md Key Decisions. Recent ones affecting current work:
 - Media moved to the private disk; see `docs/production-readiness.md`
 - `financial` role still has access to the whole admin area — pending a product decision
 
+### Roadmap Evolution
+
+- Phase 04.1 inserted after Phase 4 on 2026-08-20: Rede de testes do fluxo financeiro (URGENT) — the money path has no test cover and Phase 5 will change it
+
 ### Pending Todos
 
 None tracked here — see "Remaining Work" above.
@@ -100,4 +104,4 @@ None tracked here — see "Remaining Work" above.
 Last session: 2026-08-20
 Stopped at: planning reconciliation complete
 
-Next step: close the v1 gaps listed above — start with REL-01..04 (`/gsd-plan-phase 5`), or run `/gsd-map-codebase` first to refresh the stale codebase docs.
+Next step: `/gsd-plan-phase 04.1` — build the financial test safety net, then Phase 5 (reports, audit log, per-event toggles).
