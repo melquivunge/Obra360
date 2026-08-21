@@ -1,178 +1,229 @@
 # External Integrations
 
-**Analysis Date:** 2026-06-27
+**Analysis Date:** 2026-08-20
 
 ## APIs & External Services
 
-**Font Delivery:**
-- Bunny Fonts CDN - Serves `Instrument Sans` typeface (weights 400, 500, 600)
-  - SDK/Client: `laravel-vite-plugin/fonts` (the `bunny` helper imported in `vite.config.js`)
-  - Auth: None (public CDN)
-  - Config: `vite.config.js` lines 3 and 11–15
+**Meta WhatsApp Business API:**
+- Service: WhatsApp Business API (Graph API v18.0)
+- What it's used for: Send WhatsApp notifications to users/clients about project updates
+- SDK/Client: `guzzlehttp/guzzle` (HTTP client)
+- Auth: Environment variables `WHATSAPP_PHONE_ID` and `WHATSAPP_TOKEN`
+- Implementation: `app/Channels/WhatsAppChannel.php`
+  - Endpoint: `https://graph.facebook.com/v18.0/{$phoneId}/messages`
+  - Message type: Text messages with optional preview URL
+  - Error handling: Retries on HTTP failures and connection errors; logs warnings with hashed phone numbers
+  - Phone normalization: Requires 10+ digits, stored as digits-only
 
-**Transactional Email (configured but not active):**
-- Postmark - Email delivery
-  - SDK: Laravel built-in transport (`postmark` driver in `config/mail.php`)
-  - Auth: `POSTMARK_API_KEY` env var
-  - Status: Defined in `config/services.php`; not active — current `MAIL_MAILER=log`
-
-- Resend - Email delivery
-  - SDK: Laravel built-in transport (`resend` driver in `config/mail.php`)
-  - Auth: `RESEND_API_KEY` env var
-  - Status: Defined in `config/services.php`; not active
-
-- AWS SES - Email delivery
-  - SDK: Laravel built-in transport (`ses` driver in `config/mail.php`)
-  - Auth: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`
-  - Status: Defined in `config/services.php`; not active
-
-**Notifications (configured but not active):**
-- Slack - Bot notifications
-  - Auth: `SLACK_BOT_USER_OAUTH_TOKEN`, `SLACK_BOT_USER_DEFAULT_CHANNEL`
-  - Config: `config/services.php`; also available as a log channel via `LOG_SLACK_WEBHOOK_URL` in `config/logging.php`
-  - Status: Config present; not wired to any active notification
+**Web Push Notifications (VAPID):**
+- Service: Browser native Web Push API (no external provider; self-hosted push)
+- What it's used for: Send push notifications to PWA users who have subscribed
+- SDK/Client: `minishlink/web-push` (PHP library, installed separately if PWA enabled)
+- Auth: VAPID public/private keys (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`)
+- Implementation: `app/Channels/WebPushChannel.php`
+  - Generates VAPID keys via: `php artisan tinker` → `[Minishlink\WebPush\VAPID::createVapidKeys()['publicKey'], Minishlink\WebPush\VAPID::createVapidKeys()['privateKey']]`
+  - Subscription storage: `push_subscriptions` table via `app/Models/PushSubscription.php`
+  - Automatic cleanup: Expired subscriptions are deleted on failed delivery reports
 
 ## Data Storage
 
 **Databases:**
-- MySQL 8.0 (active — Docker service `obra360_db`, image `mysql:8.0`)
-  - Connection env vars: `DB_HOST=db`, `DB_PORT=3306`, `DB_DATABASE=obra360`, `DB_USERNAME=obra360_user`, `DB_PASSWORD=obra360_pass`
-  - Client: Laravel Eloquent ORM via `pdo_mysql` extension
-  - Config: `config/database.php`, connection name `mysql`
-  - Default connection set in `.env.example`: `DB_CONNECTION=mysql`
-  - Migrations table: `migrations`; jobs table: `jobs`; cache table: `cache`; sessions table: implied by `SESSION_DRIVER=database`
+- Type: MySQL 8.0 (primary production database)
+  - Connection: `DB_CONNECTION=mysql`, `DB_HOST=db`, `DB_DATABASE=obra360`
+  - Client: Laravel Eloquent ORM
+  - Port: 3306
+  - Docker container: `obra360_db`
 
-- SQLite (fallback/local dev without Docker)
-  - File: `database/database.sqlite` (present in repo root under `database/`)
-  - Config: `config/database.php`, connection name `sqlite` (framework default when `DB_CONNECTION` not set)
+- Type: SQLite (testing only, via GitHub Actions CI)
+  - Database file: `database/database.sqlite`
+  - Used by: PHPUnit tests (isolated from production data)
+
+**Tables (Key entities from migrations):**
+- `users` - Admin and client user accounts with roles
+- `clients` - Client company contacts
+- `projects` - Construction projects
+- `project_phases` - Project phases (foundation, structure, finishing, etc.)
+- `photos` - Project photos with URLs
+- `expenses` - Project expenses/costs
+- `documents` - Project documents (contracts, invoices, etc.)
+- `project_updates` - Timeline updates sent to clients
+- `messages` - Client-company communication
+- `payments` - Payment records
+- `push_subscriptions` - PWA push notification subscriber endpoints
+- `jobs` - Queue job records (database queue driver)
+- `failed_jobs` - Failed job records (queue retries)
+- `sessions` - User session records (database session driver)
+- `cache` - Cache entries (database cache driver)
 
 **File Storage:**
-- Local filesystem (active default)
-  - Private: `storage/app/private`
-  - Public: `storage/app/public` (symlinked to `public/storage`)
-  - Config: `config/filesystems.php`, disk `local` and `public`
-
-- AWS S3 (configured, not active)
-  - Auth: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`
-  - Config: `config/filesystems.php`, disk `s3`
-  - Status: Env vars present in `.env.example` but empty; `FILESYSTEM_DISK=local` is active
+- Type: Local filesystem (default, no S3 currently deployed)
+- Implementation: League Flysystem with local disk driver
+- Storage paths:
+  - Private: `storage/app/private/` (user data, documents, backups)
+  - Public: `storage/app/public/` (photos, attachments served via `/storage`)
+- Symlink: `public/storage` → `storage/app/public` (created by `artisan storage:link`)
+- Upload limits (PHP config):
+  - Max file size: 64MB
+  - Max post size: 64MB
+- S3 Support: Prepared via flysystem abstraction (`config/filesystems.php` s3 disk config) but requires AWS credentials in `.env`
 
 **Caching:**
-- Database cache (active default)
-  - Table: `cache` (created by migration `0001_01_01_000001_create_cache_table.php`)
-  - Config: `config/cache.php`, store `database`; env var `CACHE_STORE=database`
-
-- Redis (configured, not active)
-  - Client: `phpredis` (env `REDIS_CLIENT=phpredis`)
-  - Connection: `REDIS_HOST=127.0.0.1`, `REDIS_PORT=6379`
-  - Config: `config/database.php` redis section, `config/cache.php` redis store
-  - Note: `phpredis` PHP extension is NOT installed in `Dockerfile` — activation requires extension install
-
-- Memcached (configured, not active)
-  - Config: `config/cache.php`, `MEMCACHED_HOST=127.0.0.1`
-
-- AWS DynamoDB (configured, not active)
-  - Auth: reuses `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
-  - Table: `DYNAMODB_CACHE_TABLE=cache`
+- Driver: Database (default)
+- Table: `cache` and `cache_locks` (Laravel cache tables)
+- Config: `CACHE_STORE=database`
+- Alternative: Memcached (config available, not enabled)
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- Laravel built-in session-based auth (custom/framework)
-  - Guard: `web` (session driver)
-  - Provider: Eloquent — `App\Models\User` (`app/Models/User.php`)
-  - Password resets: database table `password_reset_tokens`
-  - Bcrypt rounds: 12 (env `BCRYPT_ROUNDS=12`)
-  - Config: `config/auth.php`
-  - No OAuth, no Socialite, no Sanctum/Passport detected at this stage
-
-## Queue Processing
-
-**Queue Driver:**
-- Database queue (active default)
-  - Table: `jobs` (migration `0001_01_01_000002_create_jobs_table.php`)
-  - Failed jobs table: `failed_jobs`
-  - Env: `QUEUE_CONNECTION=database`
-  - Config: `config/queue.php`
-
-- Redis queue (configured, not active)
-  - Config: `config/queue.php`, connection `redis`
-
-- AWS SQS (configured, not active)
-  - Auth: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
-  - Config: `config/queue.php`, connection `sqs`
-
-## Session Storage
-
-- Database driver (active)
-  - Env: `SESSION_DRIVER=database`
-  - Lifetime: 120 minutes
-  - Config: `config/session.php`
+- Type: Custom with Laravel Breeze scaffolding
+- Implementation: Laravel built-in authentication + session-based (no OAuth/SAML)
+- User model: `app/Models/User.php` with roles (`admin`, `company`, `client`)
+- Session storage: Database driver (`SESSION_DRIVER=database`)
+- Session lifetime: 120 minutes (`SESSION_LIFETIME=120`)
+- Session encryption: Enabled (`SESSION_ENCRYPT=true`)
+- Password hashing: Bcrypt (Laravel default, `BCRYPT_ROUNDS=12`)
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- Not detected (no Sentry, Bugsnag, Flare, or similar package)
+- Type: None detected (no Sentry, Rollbar, etc.)
+- Fallback: Built-in Laravel error handling via `bootstrap/app.php`
+- Error responses: HTML for web requests; JSON conditionally for `api/*` routes (but API routes not yet implemented)
 
 **Logs:**
-- Monolog 3.10 via Laravel's logging system
-- Default channel: `stack` → `single` (writes to `storage/logs/laravel.log`)
-- Available channels: `single`, `daily`, `slack`, `papertrail`, `stderr`, `syslog`, `errorlog`
-- Papertrail (configured, not active): `PAPERTRAIL_URL`, `PAPERTRAIL_PORT` env vars
-- Slack log channel (configured, not active): `LOG_SLACK_WEBHOOK_URL`
-- Config: `config/logging.php`
+- Driver: Stack (file-based by default)
+- Config: `LOG_CHANNEL=stack`, `LOG_STACK=single`, `LOG_LEVEL=warning`
+- Location: `storage/logs/`
+- Real-time tailing: `php artisan pail` (Laravel Pail)
+- Logging library: Monolog v3.10.0
 
-**Dev Log Tailing:**
-- Laravel Pail 1.2.5 — real-time log output during `composer run dev`
+**Application Health:**
+- Health endpoint: GET `/up` (Laravel built-in)
+- Returns: 200 OK if application is healthy
+- Used by: Docker health checks, load balancer probes
 
 ## CI/CD & Deployment
 
 **Hosting:**
-- Docker Compose stack (`docker-compose.yml`):
-  - `obra360_app` — PHP-FPM 8.4 app container (port 9000 internal)
-  - `obra360_nginx` — Nginx Alpine web server (port 8000 exposed)
-  - `obra360_db` — MySQL 8.0 database (port 3306 exposed)
-  - `obra360_phpmyadmin` — phpMyAdmin (port 8080 exposed, upload limit 64MB)
-- All services on isolated `obra360_network` bridge network
-- Database data persisted via Docker volume `db_data`
+- Platform: HostGator shared hosting (cPanel)
+- Domain: `obra360app.com`
+- PHP version: 8.5 (ea-php85, set via cPanel API `LangPHP php_set_vhost_versions`)
+- Deployment path: `~/obra360app.com/`
 
 **CI Pipeline:**
-- GitHub Actions pipeline referenced in commit history (`Add Laravel CI pipeline`)
-- Pipeline definition file not read; likely at `.github/workflows/`
+- Service: GitHub Actions
+- Workflow file: `.github/workflows/laravel.yml`
+- Trigger: Push to `main` branch or pull request to `main`
+- Jobs:
+  1. **Test** (runs on every push and PR):
+     - PHP 8.4 setup with extensions (mbstring, pdo_mysql, gd, zip, etc.)
+     - Node 24 setup
+     - Composer install, npm ci
+     - PHP style check via `./vendor/bin/pint --test`
+     - Frontend asset build via `npm run build`
+     - Database migrations on SQLite
+     - Laravel tests via `php artisan test`
+     - Composer audit (dependencies) and npm audit (frontend dependencies)
+  2. **Deploy** (runs only on successful test + main branch push):
+     - Builds production assets (Node 24)
+     - Compresses project to tar.gz excluding `.git`, `.github`, `node_modules`, `storage/*`, `.env`
+     - Uploads to HostGator via SCP (SSH private key from secrets)
+     - Extracts on server, runs artisan optimize, migrate, cache
+     - Caches PHP version to 8.5 via cPanel uapi
 
 ## Environment Configuration
 
-**Required env vars (from `.env.example`):**
-- `APP_KEY` — Laravel encryption key (generate with `php artisan key:generate`)
-- `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — Database
-- `APP_NAME`, `APP_ENV`, `APP_URL`, `APP_DEBUG` — Application identity
+**Required env vars (from .env.example):**
 
-**Optional env vars (for future integrations):**
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET` — S3 / SES / SQS / DynamoDB
-- `POSTMARK_API_KEY`, `RESEND_API_KEY` — Transactional email
-- `SLACK_BOT_USER_OAUTH_TOKEN`, `SLACK_BOT_USER_DEFAULT_CHANNEL` — Slack notifications
-- `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` — Redis cache/queue
-- `PAPERTRAIL_URL`, `PAPERTRAIL_PORT` — Remote log aggregation
-- `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS` — SMTP mail
+*Application:*
+- `APP_NAME` - Application name
+- `APP_ENV` - Environment (local, production)
+- `APP_KEY` - Encryption key (generated by `artisan key:generate`)
+- `APP_DEBUG` - Debug mode (false in production)
+- `APP_URL` - Public URL
+- `APP_LOCALE`, `APP_FALLBACK_LOCALE` - Language settings
+
+*Database:*
+- `DB_CONNECTION` (mysql)
+- `DB_HOST` (db in Docker)
+- `DB_PORT` (3306)
+- `DB_DATABASE` (obra360)
+- `DB_USERNAME`, `DB_PASSWORD` (obra360_user)
+- `DB_ROOT_PASSWORD` (MySQL root password for Docker)
+
+*Queue & Cache:*
+- `QUEUE_CONNECTION` (database)
+- `CACHE_STORE` (database)
+
+*Session:*
+- `SESSION_DRIVER` (database)
+- `SESSION_LIFETIME` (120)
+- `SESSION_ENCRYPT` (true)
+
+*Broadcasting & WebSockets:*
+- `BROADCAST_CONNECTION` (log for dev, reverb for production)
+- `REVERB_ALLOWED_ORIGINS` - CORS origins for WebSocket connections
+- `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_APP_ID` - Reverb credentials
+- `REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME` - Reverb server connection
+
+*Frontend (Vite):*
+- `VITE_APP_NAME` - Passed to frontend
+- `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT`, `VITE_REVERB_SCHEME` - WebSocket connection for frontend
+
+*WhatsApp:*
+- `WHATSAPP_PHONE_ID` - Meta Business phone ID
+- `WHATSAPP_TOKEN` - Meta Business API access token
+
+*Web Push (PWA):*
+- `VAPID_PUBLIC_KEY` - VAPID public key for push notifications
+- `VAPID_PRIVATE_KEY` - VAPID private key for push notifications
+- `VAPID_SUBJECT` - VAPID subject (mailto: email)
+
+*Mail:*
+- `MAIL_MAILER` (log for dev, smtp/postmark/resend for production)
+- `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
+- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` (if SMTP)
+
+*AWS (S3, optional):*
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`
 
 **Secrets location:**
-- `.env` file at project root (not committed); `.env.example` committed as template
+- GitHub Secrets (used by CI/CD workflow):
+  - `SSH_HOST`, `SSH_PORT`, `SSH_USERNAME` - HostGator connection
+  - `SSH_PRIVATE_KEY` - GitHub Actions SSH key (base64 encoded)
+- `.env` file (version controlled as `.env.example`, actual `.env` never committed)
+- Docker secrets: Passed via `docker-compose.yml` environment variables from `.env`
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- None detected (no webhook routes, no Stripe/GitHub/Slack callback endpoints registered in `routes/web.php`)
+- None detected (application receives WhatsApp events but no inbound webhook handlers found)
 
 **Outgoing:**
-- None detected at current stage
+- WhatsApp notifications: Sent via `app/Channels/WhatsAppChannel.php` to Meta Graph API
+- Web Push notifications: Sent via `app/Channels/WebPushChannel.php` to browser push service
+- Broadcast events: Sent via Reverb to connected WebSocket clients in real-time
 
-## Database Administration
+## Real-time Features
 
-- phpMyAdmin — Web-based MySQL admin UI
-  - URL: `http://localhost:8080` (via Docker)
-  - Container: `obra360_phpmyadmin`
-  - Connects to `obra360_db` service using root credentials
+**WebSocket Broadcasting:**
+- Server: Laravel Reverb (primary)
+- Fallback: Pusher.js (if Reverb unavailable)
+- Client: Laravel-Echo + Pusher.js (configured in `resources/js/app.js`)
+- Use case: Real-time project updates, chat messages, notifications
+- Non-blocking: Echo initialization wrapped in try-catch to prevent UI blocking
+
+**Service Worker & PWA:**
+- File: `public/sw.js`
+- Manifest: `public/manifest.json`
+- Features:
+  - Offline support (via cache strategy — currently basic, not fully offline)
+  - Push notification handling: Shows native OS notifications with vibration, actions
+  - Notification click handling: Opens target URL or focuses existing window
+  - App icons: 192x192 and 512x512 PNG (maskable + regular)
+- Installation: Linked in HTML via `<link rel="manifest" href="/manifest.json">` and `<script>navigator.serviceWorker.register('/sw.js')</script>`
 
 ---
 
-*Integration audit: 2026-06-27*
+*Integration audit: 2026-08-20*

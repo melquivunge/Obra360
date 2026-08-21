@@ -103,7 +103,7 @@
 
 ### Email Notifications
 
-- [~] **NOTF-01**: System sends email to client when: new photo added, new update published, phase changed, document released to client, project completed _(2026-08-20: entregue como Web Push + WhatsApp, não e-mail)_
+- [~] **NOTF-01**: System sends email to client when: new photo added, new update published, phase changed, document released to client, project completed _(2026-08-20: entregue como WhatsApp + Web Push, não e-mail; e o Web Push não entrega nada porque `minishlink/web-push` não está instalado)_
 - [ ] **NOTF-02**: Administrator can enable or disable email notifications per event type _(2026-08-20: sem toggles por tipo de evento)_
 - [~] **NOTF-03**: Client only receives notifications for their own projects _(2026-08-20: o scoping por cliente está correto, mas o canal é push/WhatsApp e não e-mail)_
 

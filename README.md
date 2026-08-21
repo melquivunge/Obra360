@@ -49,9 +49,15 @@ Existem quatro papéis (`app/Models/User.php`): `admin`, `manager`, `financial`,
 - Dashboard com as suas obras: estado, fase atual, progresso, último update, foto de capa
 - Detalhe da obra: galeria de fotos, fases, resumo financeiro (se ativado), documentos libertados, histórico de atualizações
 - Conversa por obra com a empresa (mensagens em tempo real)
-- PWA instalável com notificações push
+- PWA instalável, com subscrição de notificações push
 
-Alterações relevantes (foto nova, mudança de fase, documento libertado) geram automaticamente uma entrada no histórico via `ProjectUpdateObserver`.
+Alterações relevantes (foto nova, mudança de fase, documento libertado) geram automaticamente uma entrada no histórico via `ProjectUpdateObserver`, que depois notifica os utilizadores do cliente.
+
+> **Ressalva sobre notificações.** `ProjectUpdateNotification` envia por `WhatsAppChannel` e `WebPushChannel` — não por e-mail.
+> O WhatsApp só dispara se `WHATSAPP_PHONE_ID` e `WHATSAPP_TOKEN` estiverem definidos.
+> O Web Push está **inativo**: o pacote `minishlink/web-push` não está instalado, por isso o canal regista
+> "WebPush skipped" e não entrega nada. As subscrições continuam a ser guardadas.
+> Para o ativar: `composer require minishlink/web-push` e definir as chaves VAPID.
 
 ---
 

@@ -1,196 +1,163 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-06-27
+**Analysis Date:** 2026-08-20
 
----
+## Missing Features
 
-## Known Bugs
+**Expense Editing:**
+- Issue: No update/edit route for expenses after creation; users can only store or destroy
+- Files: `routes/web.php` (missing `PUT /obras/{project}/despesas/{expense}` route), `app/Http/Controllers/Admin/ProjectController.php` (missing `updateExpense()` method)
+- Impact: Users cannot correct expense data once recorded. Must delete and re-enter, losing audit trail
+- Fix approach: Add `Route::put()` for expense update; implement `updateExpense()` controller method with same validation as store; create blade form for editing
 
-**Sessions table does not exist in MySQL (active error):**
-- Symptoms: Every HTTP request throws `SQLSTATE[42S02]: Base table or view not found: 1146 Table 'obra360.sessions' doesn't exist`
-- Files: `storage/logs/laravel.log`, `database/migrations/0001_01_01_000000_create_users_table.php`
-- Trigger: Starting the app against the Docker MySQL database without running migrations
-- Workaround: Run `php artisan migrate` inside the `app` container after `docker compose up`
-- Root cause: The migration that creates the `sessions` table exists but has never been applied to the MySQL database. The Docker Compose setup has no entrypoint that auto-migrates.
+**PDF Report Generation:**
+- Issue: `barryvdh/laravel-dompdf` dependency not installed; no PDF export capability exists
+- Files: `composer.json` (missing from require), no controller methods for PDF generation
+- Impact: Cannot generate project reports or financial summaries in PDF format; blocks compliance/archival use cases
+- Fix approach: Add `composer require barryvdh/laravel-dompdf:^3.0`, create report controller, implement PDF views for projects and expenses
 
----
-
-## Security Considerations
-
-**APP_DEBUG defaults to true in .env.example:**
-- Risk: If `.env.example` is copied as-is to `.env` (which the `setup` script does), `APP_DEBUG=true` will leak stack traces, environment variables, and internal paths to users on errors
-- Files: `.env.example` (line 4), `composer.json` setup script (line 37)
-- Current mitigation: None
-- Recommendation: Change `APP_DEBUG=false` in `.env.example`; force debug off in production via a separate `.env.production` or CI deployment step
-
-**Session encryption is disabled:**
-- Risk: `SESSION_ENCRYPT=false` in `.env.example` means session payloads stored in the database are plaintext
-- Files: `.env.example` (line 33), `config/session.php`
-- Recommendation: Set `SESSION_ENCRYPT=true` in `.env.example` as a safe default; it has no meaningful performance cost
-
-**LOG_LEVEL=debug in .env.example:**
-- Risk: Debug-level logging can capture sensitive request data, user input, and SQL queries in `storage/logs/laravel.log`
-- Files: `.env.example` (line 18)
-- Recommendation: Default to `LOG_LEVEL=warning` or `LOG_LEVEL=error` in `.env.example`
-
-**Email verification is disabled on the User model:**
-- Risk: Users can access the application without verifying their email address
-- Files: `app/Models/User.php` (line 5 — `MustVerifyEmail` is commented out)
-- Recommendation: Implement `MustVerifyEmail` before building authenticated routes
-
-**No authentication package installed:**
-- Risk: There is no session-based auth scaffolding (Breeze/Jetstream) and no API token auth (Sanctum/Passport). Any authenticated routes built without a proper auth layer will be insecure.
-- Files: `composer.json`, `routes/web.php`
-- Recommendation: Install `laravel/breeze` for web auth or `laravel/sanctum` for API auth before writing authenticated features
-
-**No rate limiting on routes:**
-- Files: `routes/web.php`, `bootstrap/app.php`
-- Risk: No `throttle` middleware applied globally or per route — login/registration brute-force attacks, API abuse
-- Recommendation: Apply `throttle:api` or custom rate limiters in `AppServiceProvider` or middleware registration
-
-**Nginx has no HTTPS and no security headers:**
-- Risk: All traffic is HTTP only; no `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, or `Content-Security-Policy` headers are set
-- Files: `docker/nginx/default.conf`
-- Recommendation: Add security headers to the nginx config; add TLS termination (or handle via a reverse proxy/load balancer in production)
-
-**phpMyAdmin exposed in Docker Compose:**
-- Risk: phpMyAdmin is accessible on port 8080 with root MySQL credentials. If this compose file is ever used in a staging or production environment, the full database is exposed.
-- Files: `docker-compose.yml` (lines 48–63)
-- Recommendation: Remove phpMyAdmin from `docker-compose.yml` entirely; add it only in a `docker-compose.override.yml` (which is already in `.gitignore`) for local dev use
-
-**MySQL port 3306 exposed to host in Docker Compose:**
-- Risk: The database port is mapped to the host (`"3306:3306"`), allowing direct database connections from outside the container network
-- Files: `docker-compose.yml` (line 43)
-- Recommendation: Remove the port mapping for `db`; keep the database accessible only within `obra360_network`
-
-**Weak fallback credentials in docker-compose.yml:**
-- Risk: `DB_ROOT_PASSWORD:-root_secret` and `DB_PASSWORD:-obra360_pass` are committed fallback values. If `.env` is missing, the database starts with predictable credentials.
-- Files: `docker-compose.yml` (lines 37–40)
-- Recommendation: Remove fallback values; fail loudly if env vars are not set
-
----
+**Dedicated Audit Logging:**
+- Issue: No system-level audit log; only project-specific `ProjectUpdate` table exists which is user-facing, not audit-focused
+- Files: No audit-related tables or models; `app/Models/ProjectUpdate.php` serves dual purpose
+- Impact: Cannot track who changed critical settings, deleted records, or accessed sensitive data; compliance/security investigation limited
+- Fix approach: Create `audit_logs` table with action, user, model, changes, IP; implement `AuditEvent` and `AuditObserver` for sensitive model operations
 
 ## Tech Debt
 
-**Dockerfile copies devDependencies into the production image:**
-- Issue: `composer install --no-interaction --prefer-dist --optimize-autoloader` in the Dockerfile installs all `require-dev` packages (PHPUnit, Faker, Mockery, Pint, Pail, Pao) into the production image
-- Files: `Dockerfile` (line 36)
-- Impact: Larger image size; test tools and dev utilities available in production
-- Fix approach: Use `--no-dev` flag: `composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev`
+**Unused/Dead Code:**
+- Issue: `photos.thumbnail_path` column exists but is never populated or used anywhere
+- Files: `database/migrations/2026_06_27_100004_create_photos_table.php` (column defined), `app/Models/Photo.php` (in fillable), no usage anywhere
+- Impact: Database bloat, confusion for future developers, potential performance drag if populated later without indexing
+- Fix approach: Either implement thumbnail generation pipeline (resize images on upload, write path) or remove column via migration
 
-**No .dockerignore file:**
-- Issue: `COPY . .` in the Dockerfile copies the entire project directory into the image, including `.env`, `database/database.sqlite`, `storage/logs/`, `.git/`, and local development artifacts
-- Files: `Dockerfile` (line 33)
-- Impact: Secrets in `.env` may be baked into the image; image is unnecessarily large; log files and SQLite database are included
-- Fix approach: Create `.dockerignore` at project root excluding `.env`, `.git`, `node_modules`, `storage/logs`, `database/database.sqlite`, `tests/`, `docker/`
+**Unused Photo Model Properties:**
+- Issue: `photo.external_url` and `photo.media_type='video'` are fillable/stored but never rendered or used in templates
+- Files: `app/Models/Photo.php` (fillable), `app/Http/Controllers/Admin/ProjectController.php` (sets `media_type` on upload, line 233)
+- Impact: Dead code, unclear intent, potential for confusion when extending photo functionality
+- Fix approach: Either fully implement video gallery feature (update views, add video player) or remove these columns
 
-**PHP version mismatch between Dockerfile and CI:**
-- Issue: `Dockerfile` uses `php:8.4-fpm` (line 1) but the GitHub Actions workflow uses PHP `8.3` (`.github/workflows/laravel.yml` line 24)
-- Impact: Code that works in CI may fail in Docker (or vice versa) due to PHP 8.3 vs 8.4 behavioral differences
-- Fix approach: Align both to the same version; PHP 8.3 is the current LTS target, so update Dockerfile to `php:8.3-fpm`
+**Currency Setting Never Applied:**
+- Issue: `currency` setting stored in database but hardcoded to "R$" in all Blade templates using `number_format()`
+- Files: `app/Http/Controllers/Admin/SettingController.php` (stores currency), `resources/views/admin/dashboard.blade.php`, `resources/views/admin/projects/show.blade.php`, client views (all hardcoded "R$")
+- Impact: Currency changes at application level have no effect; misleading UX; blocks multi-currency support
+- Fix approach: Create `CurrencyFormatter` helper class; pass `$currency` to views; update all money display to use `moneyFormat($amount, $currency)` helper
 
-**Overly permissive CI permissions:**
-- Issue: `chmod -R 777 storage bootstrap/cache` in the CI workflow
-- Files: `.github/workflows/laravel.yml` (line 38)
-- Impact: World-writable permissions are a security smell; production servers should use `755` as the Dockerfile already does
-- Fix approach: Use `chmod -R 775` consistent with the Dockerfile
+## Known Security/Access Control Issues
 
-**database/database.sqlite committed to git:**
-- Issue: A binary SQLite database file is tracked in version control
-- Files: `database/database.sqlite`
-- Impact: Pollutes git history with binary diffs; anyone who clones the repo gets a copy of the database file; CI creates a fresh one anyway
-- Fix approach: Add `database/database.sqlite` to `.gitignore` (note: `database/.gitignore` currently only ignores `*.sqlite` pattern — verify it covers this file)
+**Financial Role Admin Area Access:**
+- Issue: `financial` role is allowed into admin area (`role:admin,manager,financial` middleware) but authorization logic (`AuthorizesProjectAccess` trait) restricts them to projects where they're the manager; unclear if intentional
+- Files: `routes/web.php` (line 31 includes financial), `app/Traits/AuthorizesProjectAccess.php` (line 14-18 financial check), `docs/production-readiness.md` (open decision documented)
+- Impact: Potential privilege escalation if financial users can access admin dashboard; inconsistent access control model
+- Fix approach: Product decision needed: either (a) restrict financial to `role:financial` only routes separate from admin, or (b) add `financial_id` column to projects and update authorization check; document decision in code
 
-**composer.json package metadata not updated:**
-- Issue: `"name": "laravel/laravel"` and `"description": "The skeleton application for the Laravel framework."` are still the default skeleton values
-- Files: `composer.json` (lines 2–5)
-- Impact: Low priority but creates confusion for tooling; the package name should be project-specific
-- Fix approach: Update to `"name": "camacam/obra360"` and a meaningful description
+**Session Encryption Overhead:**
+- Issue: `SESSION_ENCRYPT=true` in `.env.example` adds CPU cost to every session read; may impact performance under load
+- Files: `.env.example` (line 36), `config/session.php` (line 50)
+- Impact: Slower session operations; potential bottleneck in high-concurrency scenarios
+- Fix approach: Monitor session performance; consider disabling encryption if sessions are database-backed and already protected; add caching layer
 
-**No queue worker in Docker Compose:**
-- Issue: `QUEUE_CONNECTION=database` is configured but there is no `queue` service in `docker-compose.yml` running `php artisan queue:work`
-- Files: `docker-compose.yml`, `.env.example` (line 38)
-- Impact: Queued jobs will never be processed when running via Docker Compose
-- Fix approach: Add a `queue` service to `docker-compose.yml` using the same `app` image with command `php artisan queue:work --tries=3`
+## Performance Bottlenecks
 
-**No OPcache configuration in PHP Docker container:**
-- Issue: `docker/php/local.ini` only configures upload and memory limits; OPcache is not enabled or tuned
-- Files: `docker/php/local.ini`
-- Impact: PHP performance in the Docker container is lower than it should be for any load
-- Fix approach: Add OPcache settings to `docker/php/local.ini` or a separate `docker/php/opcache.ini`
+**Message Listing N+1 Query:**
+- Issue: `MessageController::index()` loads latest 1 message per project with eager load, but then sorts in-memory; queries are optimized but sorting large collections is inefficient
+- Files: `app/Http/Controllers/Admin/MessageController.php` (line 22-25)
+- Impact: Slow page load if many projects exist; memory usage grows with project count
+- Fix approach: Load message timestamps in initial query; order by `projects.updated_at` based on last message timestamp instead; use database sorting
 
----
+**Media Disk Redundancy:**
+- Issue: Deletion code attempts to delete from both 'local' and 'public' disks regardless of where file actually exists (no check like retrieve does)
+- Files: `app/Http/Controllers/Admin/ProjectController.php` (line 250-251 photos, line 312-313 expenses), `app/Http/Controllers/Admin/ClientController.php`
+- Impact: Wasted disk I/O operations; potential for silent failures if one disk fails; inefficient cleanup
+- Fix approach: Use the same `mediaDisk()` check before deletion; delete only from the disk that has the file
 
-## Missing Critical Features
+## Fragile Areas
 
-**No authorization layer:**
-- Problem: No role/permission system exists. For a construction project portal (Obra360), role-based access (admin, engineer, client, contractor) is fundamental.
-- Blocks: Any multi-tenant or role-specific feature cannot be safely built without this
-- Recommendation: Install `spatie/laravel-permission` early; define roles before building feature routes
+**Media Migration and Dual-Disk Fallback:**
+- Issue: Temporary fallback from `local` to `public` disk for legacy media remains in place; migration command exists but hasn't been fully executed
+- Files: `app/Console/Commands/MigratePublicProjectMedia.php`, `app/Http/Controllers/Admin/ProjectController.php` (line 396-399 mediaDisk check), `docs/production-readiness.md` (explicitly documented as open)
+- Impact: Code complexity; storage path unpredictable; if public disk is ever removed/moved, legacy media breaks
+- Fix approach: Run migration in production; enforce local-disk-only after confirmed success; remove fallback logic and `mediaDisk()` method
 
-**No API routes file:**
-- Problem: `routes/api.php` does not exist. The `bootstrap/app.php` only registers `web.php` and `console.php`. There is a JSON exception renderer for `api/*` requests in `bootstrap/app.php` (line 18) but no route file to back it up.
-- Files: `bootstrap/app.php`
-- Blocks: Any mobile client or SPA frontend integration
+**Soft Delete Media Cleanup Gap:**
+- Issue: Models use `SoftDeletes` (Project, Photo, Document, Expense, etc.) but media files are never cleaned up during soft delete; permanent cleanup requires explicit force-delete or manual cleanup job
+- Files: `app/Models/Project.php` (line 20 uses SoftDeletes), `app/Models/Photo.php` (line 9 uses SoftDeletes), `database/migrations/2026_06_27_100004_create_photos_table.php` (uses cascadeOnDelete which soft-deletes related rows)
+- Impact: Orphaned files accumulate on disk; storage bloat; restore of soft-deleted projects doesn't restore files if cleaned separately
+- Fix approach: Implement `ForceDeleting` observer to clean media before force-delete; or create scheduled `CleanupSoftDeletedMedia` job; document policy in README
 
-**No error tracking:**
-- Problem: Errors only go to `storage/logs/laravel.log`. There is no external error tracking (Sentry, Flare, Bugsnag).
-- Impact: Production errors are invisible unless someone manually tails log files
-- Recommendation: Install `sentry/sentry-laravel` or `spatie/laravel-ignition` before going to production
-
-**Mail is configured to `log` driver only:**
-- Problem: `MAIL_MAILER=log` in `.env.example` — all mail is logged instead of sent. No real SMTP or transactional email provider is configured.
-- Files: `.env.example` (line 51)
-- Blocks: Password reset emails, email verification, any notification requiring email delivery
-
----
+**Large ProjectController (400 lines):**
+- Issue: `ProjectController` combines create, read, update, delete for projects + phases, photos, documents, updates, expenses in one class
+- Files: `app/Http/Controllers/Admin/ProjectController.php` (400 lines)
+- Impact: High cognitive load; difficult to test; violates single responsibility; bugs in one feature affect entire controller
+- Fix approach: Refactor into separate controllers: `ProjectController` (CRUD only), `PhotoController`, `DocumentController`, `PhaseController`, `ExpenseController`
 
 ## Test Coverage Gaps
 
-**Only stub tests exist:**
-- What's not tested: Everything. The only tests are the default Laravel skeleton `ExampleTest` files that check if the homepage returns HTTP 200.
-- Files: `tests/Feature/ExampleTest.php`, `tests/Unit/ExampleTest.php`
-- Risk: Any future application code can break silently
-- Priority: High — establish testing patterns before writing application code
+**Critical Business Logic Untested:**
+- Issue: No test files for Project, Expense, Payment, or Photo operations; only auth, user management, and schema tests exist
+- Files: `tests/Feature/` has tests only for SecurityHardeningTest, UserManagementTest, and Auth classes; missing ProjectTest.php, ExpenseTest.php, PaymentTest.php
+- Impact: Regressions in core functionality go undetected; financial calculations (expense sums, payment tracking) can break silently
+- Fix approach: Create feature tests for: (a) expense CRUD, (b) payment creation/status changes, (c) project visibility by role, (d) photo upload, (e) document access control
 
-**No code coverage threshold enforced:**
-- What's not tested: Coverage is explicitly disabled in CI (`coverage: none` in `.github/workflows/laravel.yml` line 25)
-- Risk: Coverage can drop to 0% with no CI gate
-- Priority: Medium — at minimum, enable coverage reporting even without a hard threshold initially
-
-**No static analysis in CI:**
-- What's missing: No PHPStan or Larastan step in `.github/workflows/laravel.yml`
-- Impact: Type errors, undefined variables, and logic bugs not caught before merge
-- Priority: Medium — `laravel/pint` is installed for style; add PHPStan level 5+ before significant code lands
-
----
+**No Integration Tests for Workflows:**
+- Issue: No end-to-end test for complete project lifecycle (create → add phases → upload photos → record expenses → client views)
+- Files: `tests/` directory; only unit/security/auth tests
+- Impact: Cannot catch bugs in feature interactions; deployment risk high
+- Fix approach: Add feature tests covering: complete project workflow, financial workflow (budget → expenses → payments), client portal access scenarios
 
 ## Scaling Limits
 
-**Database session driver under load:**
-- Current capacity: The `sessions` table in MySQL with `SESSION_DRIVER=database` will become a hotspot under concurrent user load (every request reads and writes a session row)
-- Limit: Degrades at high concurrency; no indexes beyond the primary key on `id`
-- Scaling path: Switch to Redis (`SESSION_DRIVER=redis`) once a Redis container is added to Docker Compose
+**Database Query Performance at Scale:**
+- Issue: Dashboard aggregation query (line 21-28 DashboardController) uses `selectRaw()` efficiently but other views load full relations; no pagination on `ProjectUpdate` feed (line 45-49)
+- Files: `app/Http/Controllers/Admin/DashboardController.php`, views that don't paginate large datasets
+- Impact: Page load time grows with data volume; memory usage on large projects (many photos, messages, updates)
+- Fix approach: Implement pagination or cursor-based pagination for updates/messages; add query caching for aggregations; monitor slow queries
 
-**Single log file (single driver):**
-- Current capacity: All logs go to a single `storage/logs/laravel.log` file
-- Limit: File can grow unbounded; no rotation configured for Docker environment
-- Scaling path: Switch to `daily` log channel or configure log shipping (stdout/stderr in Docker) via `LOG_CHANNEL=stderr`
+**Session Table Growth:**
+- Issue: `QUEUE_CONNECTION=database` and `SESSION_DRIVER=database` means all sessions and queued jobs stored in database; no automatic cleanup configured
+- Files: `.env.example` (line 44, 35), `config/session.php`, `config/queue.php`
+- Impact: Sessions and job records accumulate indefinitely; database bloat; slower queries over time
+- Fix approach: Configure Laravel's session garbage collection; implement queue job pruning via `queue:prune-failed`; consider moving to Redis for scale
 
----
+**File Storage on Shared Disk:**
+- Issue: All media stored on `local` disk (which may be attached storage or shared network drive); no S3 migration path actively used
+- Files: `routes/web.php` (storePhoto uses `local` disk), `config/filesystems.php` (should have S3 configured as option)
+- Impact: Limits horizontal scaling; shared disk becomes bottleneck; backup complexity
+- Fix approach: Migrate to S3; use Flysystem `s3` driver configured; implement signed URLs for private media access
 
 ## Dependencies at Risk
 
-**`laravel/pao` is an experimental/new package:**
-- Risk: `laravel/pao` (`^1.0.6`) is an AI-agent-optimized test output package; it is very new and may have breaking changes or be abandoned
-- Impact: Breaks `composer dev` script if removed or renamed
-- Migration plan: It is a dev dependency only; can be removed without affecting production
+**No Security Update Strategy:**
+- Issue: No documented process for monitoring or applying security updates to dependencies
+- Files: `composer.json`, `composer.lock` exist but no CI/CD pipeline shown, no dependabot/renovate config
+- Impact: Vulnerable dependencies can remain unpatched indefinitely
+- Fix approach: Add GitHub Actions workflow for `composer outdated` checks; enable Dependabot; document security release process
 
-**`image: phpmyadmin:latest` in Docker Compose:**
-- Risk: Unpinned `latest` tag means the container image can change on `docker compose pull`, introducing unexpected breaking changes
-- Files: `docker-compose.yml` (line 50)
-- Fix approach: Pin to a specific version tag (e.g., `phpmyadmin:5.2`)
+**WhatsApp Integration Dependency:**
+- Issue: WhatsApp notification channel depends on Meta Graph API credentials (`WHATSAPP_PHONE_ID`, `WHATSAPP_TOKEN`); no fallback if API is unavailable
+- Files: `app/Channels/WhatsAppChannel.php` (line 40-62 throws on failure, relies on queue retry)
+- Impact: Notifications fail silently if API down; queue backs up with retried jobs; no alerting for missing credentials
+- Fix approach: Add alert/log when credentials missing; implement circuit breaker; add fallback notification channel (email); add monitoring for API errors
+
+## Miscellaneous Issues
+
+**Hardcoded Language/Locale:**
+- Issue: Portuguese text hardcoded throughout; no i18n/translation system in place despite `APP_LOCALE` config
+- Files: All Blade views, controller flash messages, notifications; `.env.example` shows locale but not used
+- Impact: Cannot easily add English or other language support; maintenance burden for text changes
+- Fix approach: Extract strings to `resources/lang/pt/messages.php`; use `__()` helper throughout; add locale switcher
+
+**Message Limit Hardcoding:**
+- Issue: Message queries hardcode limits (100, 200) in code to prevent OOM; limits not configurable
+- Files: `app/Http/Controllers/Client/ProjectController.php` (line 25), `app/Http/Controllers/Admin/MessageController.php` (line 37)
+- Impact: Limits become magic numbers; future changes require code edits; inconsistency across endpoints
+- Fix approach: Move to config: `config/app.php` → `'query_limits' => ['messages' => 200, ...]`; use throughout
+
+**No Rate Limiting on Resource Operations:**
+- Issue: Only push subscription endpoints throttled (`throttle:10,1` and `throttle:30,1`); no rate limiting on message posting, photo uploads, expense creation
+- Files: `routes/web.php` (line 126-130 have throttle, others don't)
+- Impact: Potential abuse vector; DoS risk; spam by malicious client users
+- Fix approach: Add `->middleware('throttle:10,1')` to POST/DELETE routes for content creation; document rate limits for clients
 
 ---
 
-*Concerns audit: 2026-06-27*
+*Concerns audit: 2026-08-20*
