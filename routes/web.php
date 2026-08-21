@@ -124,13 +124,16 @@ Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->g
     Route::get('/obras/{project}/capa', [ClientProjectController::class, 'cover'])->name('projects.cover');
     Route::get('/obras/{project}/fotos/{photo}', [ClientProjectController::class, 'photo'])->name('projects.photos.show');
     Route::get('/obras/{project}/mensagens', [ClientProjectController::class, 'messages'])->name('projects.messages');
-    Route::post('/obras/{project}/mensagens', [ClientProjectController::class, 'storeMessage'])->name('projects.messages.store');
+    // Clients are the least-trusted authenticated role; cap their writes.
+    Route::post('/obras/{project}/mensagens', [ClientProjectController::class, 'storeMessage'])
+        ->middleware('throttle:20,1')
+        ->name('projects.messages.store');
     Route::get('/obras/{project}/documentos/{document}/download', [ClientProjectController::class, 'downloadDocument'])->name('projects.documents.download');
     Route::post('/mensagens/marcar-lidas', function () {
         session(['messages_last_viewed_at' => now()->timestamp]);
 
         return response()->json(['ok' => true]);
-    })->name('messages.mark-read');
+    })->middleware('throttle:60,1')->name('messages.mark-read');
 
     // PWA push subscriptions
     Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])
