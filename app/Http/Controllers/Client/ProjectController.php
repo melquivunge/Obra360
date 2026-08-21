@@ -98,14 +98,20 @@ class ProjectController extends Controller
         return Storage::disk($disk)->response($project->cover_image_path);
     }
 
-    public function photo(Project $project, Photo $photo)
+    public function photo(Request $request, Project $project, Photo $photo)
     {
         $this->authorizeClientProject($project);
         abort_unless((int) $photo->project_id === (int) $project->id, 404);
 
-        $disk = $this->mediaDisk($photo->path);
+        $path = $photo->thumbnail_path
+            && $request->boolean('thumb')
+            && Storage::disk($this->mediaDisk($photo->thumbnail_path))->exists($photo->thumbnail_path)
+                ? $photo->thumbnail_path
+                : $photo->path;
 
-        return Storage::disk($disk)->response($photo->path);
+        $disk = $this->mediaDisk($path);
+
+        return Storage::disk($disk)->response($path);
     }
 
     private function canViewFinancials(Project $project): bool

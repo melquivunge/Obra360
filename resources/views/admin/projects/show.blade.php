@@ -154,14 +154,36 @@
                 <button type="submit" class="btn-primary">Enviar</button>
             </form>
         </div>
+        {{-- Filtros da galeria (FOTO-04) --}}
+        <form method="GET" action="{{ route('admin.projects.show', $project) }}" class="flex flex-wrap gap-2" style="margin-bottom:0.75rem;">
+            <select name="photo_phase" style="max-width:14rem;" onchange="this.form.submit()">
+                <option value="">Todas as fases</option>
+                @foreach($phases as $ph)
+                    <option value="{{ $ph->id }}" {{ (int) request('photo_phase') === $ph->id ? 'selected' : '' }}>{{ $ph->name }}</option>
+                @endforeach
+            </select>
+            <input type="date" name="photo_from" value="{{ request('photo_from') }}" style="max-width:11rem;" onchange="this.form.submit()" title="De">
+            <input type="date" name="photo_to" value="{{ request('photo_to') }}" style="max-width:11rem;" onchange="this.form.submit()" title="Até">
+            <select name="photo_order" style="max-width:11rem;" onchange="this.form.submit()">
+                <option value="recentes" {{ request('photo_order') !== 'antigas' ? 'selected' : '' }}>Mais recentes</option>
+                <option value="antigas" {{ request('photo_order') === 'antigas' ? 'selected' : '' }}>Mais antigas</option>
+            </select>
+            @if(request()->hasAny(['photo_phase','photo_from','photo_to','photo_order']))
+                <a href="{{ route('admin.projects.show', $project) }}" style="align-self:center;font-size:0.8125rem;color:var(--muted-foreground);">Limpar filtros</a>
+            @endif
+        </form>
+
         <div class="photo-grid">
-            @forelse($project->photos as $photo)
-            @php $photoUrl = route('admin.projects.photos.show', [$project, $photo]); @endphp
+            @forelse($photos as $photo)
+            @php
+                $photoUrl = route('admin.projects.photos.show', [$project, $photo]);
+                $thumbUrl = $photo->thumbnail_path ? $photoUrl.'?thumb=1' : $photoUrl;
+            @endphp
             <div class="photo-item" style="position:relative;">
                 @if($photo->media_type === 'video')
                 <video src="{{ $photoUrl }}" style="width:100%;height:100%;object-fit:cover;" muted></video>
                 @else
-                <img src="{{ $photoUrl }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js($photoUrl), @js($photo->caption ?? ''))">
+                <img src="{{ $thumbUrl }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js($photoUrl), @js($photo->caption ?? ''))">
                 @endif
                 @if($photo->caption)<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:0.5rem;font-size:0.75rem;color:#fff;">{{ $photo->caption }}</div>@endif
                 <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" onsubmit="return confirm('Remover foto?')" style="position:absolute;top:4px;right:4px;">
@@ -172,7 +194,9 @@
                 </form>
             </div>
             @empty
-            <p style="color:var(--muted-foreground);font-size:0.875rem;grid-column:1/-1;">Nenhuma foto enviada.</p>
+            <p style="color:var(--muted-foreground);font-size:0.875rem;grid-column:1/-1;">
+                {{ request()->hasAny(['photo_phase','photo_from','photo_to']) ? 'Nenhuma foto corresponde aos filtros.' : 'Nenhuma foto enviada.' }}
+            </p>
             @endforelse
         </div>
     </div>
@@ -204,16 +228,19 @@
                             <td style="color:var(--muted-foreground)">{{ $exp->supplier??'—' }}</td>
                             <td style="text-align:right;font-weight:600;">{{ money($exp->amount) }}</td>
                             <td style="white-space:nowrap;display:flex;gap:0.25rem;">
+                                @php
+                                    $expData = [
+                                        'id' => $exp->id,
+                                        'category' => $exp->category,
+                                        'spent_at' => $exp->spent_at?->toDateString(),
+                                        'description' => $exp->description,
+                                        'amount' => (float) $exp->amount,
+                                        'supplier' => $exp->supplier,
+                                        'notes' => $exp->notes,
+                                    ];
+                                @endphp
                                 <button type="button" title="Editar despesa"
-                                        onclick='editarDespesa(@json([
-                                            "id" => $exp->id,
-                                            "category" => $exp->category,
-                                            "spent_at" => $exp->spent_at?->toDateString(),
-                                            "description" => $exp->description,
-                                            "amount" => (float) $exp->amount,
-                                            "supplier" => $exp->supplier,
-                                            "notes" => $exp->notes,
-                                        ]))'
+                                        onclick='editarDespesa(@json($expData))'
                                         style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
                                 </button>
