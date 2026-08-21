@@ -24,6 +24,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Project Content** — Photos, expenses, financial summary, documents, and update history
 - [x] **Phase 4: Client Portal** — Client-facing views, project detail page, messaging, and email notifications
 - [~] **Phase 5: Reports & Settings** — PDF reports, system configuration, and activity log
+- [ ] **Phase 6: Rede de testes do fluxo financeiro** — regression cover for the money path and access boundaries
 
 ## Phase Details
 
@@ -102,24 +103,6 @@ messaging with live delivery via Reverb (`MessageSent`), strict client scoping t
 NOTF-02 (per-event toggle) was not built. Web Push is additionally inert: `minishlink/web-push` is not in composer.json, so `WebPushChannel` logs "skipped" and delivers nothing.
 **UI hint**: yes
 
-### Phase 04.1: Rede de testes do fluxo financeiro (INSERTED)
-
-**Goal**: The money path and the access-control boundaries are covered by feature tests, so Phase 5 (reports, currency formatting, audit log) can change financial code without silently breaking it.
-**Depends on**: Phase 4
-**Requirements**: regression cover for FIN-01, FIN-04, FIN-05, DESP-01/04, PROJ-05, SEC-02, SEC-04, DOC-03, FOTO-05 (no new user-facing behaviour)
-**Why inserted**: The audit on 2026-08-20 found 13 feature tests, none of which touch projects, expenses, payments, photos or documents. Every financial calculation is currently unprotected, and Phase 5 will rewrite how money is formatted and reported.
-**Success Criteria** (what must be TRUE):
-  1. `Project::totalSpent()`, remaining balance and % of budget used are asserted against known expense fixtures, including the zero/null budget case (FIN-04)
-  2. Expense create and soft-delete are covered, and deleting an expense is proven to change the project total
-  3. Payment create, update and mark-paid are covered, including the effect on the project's payment totals
-  4. A manager only reaches projects where they are `manager_id`; a client only reaches their own client's projects — both proven to 403 otherwise (PROJ-05, SEC-02)
-  5. A document marked `Interno` returns 403 for a client user; a `Cliente` document downloads (DOC-03)
-  6. Photo and document upload validation rejects a disallowed MIME type and an oversized file (SEC-04)
-  7. `show_client_financials=0` hides the financial summary from the client portal (FIN-05)
-  8. The whole suite passes with `composer test`, and Pint passes with `--test`
-**Plans**: TBD
-**UI hint**: no
-
 ### Phase 5: Reports & Settings
 **Goal**: Admins can view and export four types of per-project PDF reports, and control all system-wide settings including company branding, currency, client financial visibility, comment toggling, and email notification types.
 **Depends on**: Phase 4
@@ -156,5 +139,20 @@ FIN-02/FIN-03/FIN-06, FOTO-03, DESP-03, DASH-01 delay/near-completion KPIs.
 **Shipped beyond scope:** real-time messaging (Reverb), PWA + Web Push, WhatsApp channel,
 payments module, CI/CD deploy to HostGator.
 
----
-*Reconciled with the codebase: 2026-08-20*
+### Phase 6: Rede de testes do fluxo financeiro
+
+**Goal**: The money path and the access-control boundaries are covered by feature tests.
+**Depends on**: Phase 5
+**Requirements**: regression cover for FIN-01, FIN-04, FIN-05, DESP-01/04, PROJ-05, SEC-02, SEC-04, DOC-03, FOTO-05 (no new user-facing behaviour)
+**History**: originally inserted as Phase 04.1 on 2026-08-20 to run *before* the feature work. Moved to the end on the same day at the user's direction — features first, tests after. The risk this accepts: Phase 5 changes financial formatting and reporting with no regression net underneath.
+**Success Criteria** (what must be TRUE):
+  1. `Project::totalSpent()`, remaining balance and % of budget used are asserted against known expense fixtures, including the zero/null budget case (FIN-04)
+  2. Expense create and soft-delete are covered, and deleting an expense is proven to change the project total
+  3. Payment create, update and mark-paid are covered, including the effect on the project's payment totals
+  4. A manager only reaches projects where they are `manager_id`; a client only reaches their own client's projects — both proven to 403 otherwise (PROJ-05, SEC-02)
+  5. A document marked `Interno` returns 403 for a client user; a `Cliente` document downloads (DOC-03)
+  6. Photo and document upload validation rejects a disallowed MIME type and an oversized file (SEC-04)
+  7. `show_client_financials=0` hides the financial summary from the client portal (FIN-05)
+  8. The whole suite passes with `composer test`, and Pint passes with `--test`
+**Plans**: TBD
+**UI hint**: no
