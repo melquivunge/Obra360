@@ -298,9 +298,36 @@ class ProjectController extends Controller
         }
 
         Expense::create($data);
-        ProjectUpdate::log($project->id, 'Despesa: '.$data['description'].' — R$ '.number_format($data['amount'], 2, ',', '.'), 'despesa');
+        ProjectUpdate::log($project->id, 'Despesa: '.$data['description'].' — '.money($data['amount']), 'despesa');
 
         return back()->with('success', 'Despesa registrada.');
+    }
+
+    public function updateExpense(Request $request, Project $project, Expense $expense)
+    {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $expense);
+
+        $data = $request->validate([
+            'category' => 'required|in:'.implode(',', array_keys(Expense::CATEGORIES)),
+            'description' => 'required|string|max:500',
+            'amount' => 'required|numeric|min:0',
+            'spent_at' => 'required|date',
+            'supplier' => 'nullable|string|max:200',
+            'notes' => 'nullable|string|max:1000',
+            'receipt' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:10240',
+        ]);
+
+        if ($request->hasFile('receipt')) {
+            if ($expense->receipt_path) {
+                Storage::disk('local')->delete($expense->receipt_path);
+            }
+            $data['receipt_path'] = $request->file('receipt')->store("projects/{$project->id}/receipts", 'local');
+        }
+
+        $expense->update($data);
+
+        return back()->with('success', 'Despesa atualizada.');
     }
 
     public function destroyExpense(Project $project, Expense $expense)

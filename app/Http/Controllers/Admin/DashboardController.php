@@ -37,6 +37,26 @@ class DashboardController extends Controller
             : Client::count();
         $totalSpent = Expense::whereIn('project_id', (clone $statsQuery)->select('id'))->sum('amount');
 
+        // Late: past the expected end date and not finished or cancelled (DASH-01).
+        $lateProjects = (clone $statsQuery)
+            ->with('client')
+            ->whereNotNull('expected_end_date')
+            ->whereDate('expected_end_date', '<', now()->toDateString())
+            ->whereNotIn('status', ['concluida', 'cancelada'])
+            ->orderBy('expected_end_date')
+            ->get();
+
+        // Near completion: 80% or more, still running.
+        $nearCompletionProjects = (clone $statsQuery)
+            ->with('client')
+            ->where('progress', '>=', 80)
+            ->where('status', 'em_andamento')
+            ->orderByDesc('progress')
+            ->get();
+
+        $lateCount = $lateProjects->count();
+        $nearCompletionCount = $nearCompletionProjects->count();
+
         $recentProjects = (clone $statsQuery)->with('client')
             ->latest()
             ->limit(5)
@@ -51,6 +71,7 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact(
             'totalProjects', 'inProgress', 'completed', 'paused',
             'totalClients', 'totalBudget', 'totalSpent',
+            'lateProjects', 'nearCompletionProjects', 'lateCount', 'nearCompletionCount',
             'recentProjects', 'recentUpdates'
         ));
     }
