@@ -3,87 +3,101 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 gap-closure plans 01-07 and 01-08 created and validated
-last_updated: "2026-06-27T14:54:44.303Z"
-last_activity: 2026-06-27 -- Phase 01 execution started
+stopped_at: Phases 1-4 shipped and deployed; Phase 5 partially delivered (settings done, reports pending)
+last_updated: "2026-08-20"
+last_activity: 2026-08-20 -- .planning reconciled against the deployed codebase
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 4
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 8
+  percent: 85
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-27)
+See: .planning/PROJECT.md (updated 2026-08-20)
 
 **Core value:** A client logs in, immediately sees the current state of their construction project (phase, progress %, recent photos, money spent), and feels informed — without needing to contact the company.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 05 — Reports & Settings (settings shipped; PDF reports and audit log outstanding)
 
 ## Current Position
 
-Phase: 01 (foundation) — EXECUTING
-Plan: 1 of 8
-Status: Executing Phase 01
-Last activity: 2026-06-27 -- Phase 01 execution started
+Phase: 05 (reports-settings) — PARTIALLY DELIVERED
+Status: Phases 1-4 complete and running in production at obra360app.com
+Last activity: 2026-08-20 -- planning docs reconciled with the actual codebase
 
-Progress: [████████░░] 75%
+Progress: [████████▌░] 85%
 
-## Performance Metrics
+> **Important:** Phases 2 through 5 were built directly, outside the GSD phase workflow.
+> There are no PLAN.md / SUMMARY.md artifacts under `.planning/phases/` for them.
+> The status below was reconstructed by auditing routes, controllers, models and views
+> on 2026-08-20 — it reflects the code, not a plan-execution record.
 
-**Velocity:**
+## Reconciliation Audit (2026-08-20)
 
-- Total plans completed: 6
-- Average duration: —
-- Total execution time: 0 hours
+Verified against `routes/web.php`, `app/Http/Controllers/**`, `app/Models/**`,
+`app/Observers/ProjectUpdateObserver.php`, `app/Notifications/**`, `resources/views/**`.
 
-**By Phase:**
+| Phase | Status | Evidence |
+|-------|--------|----------|
+| 1. Foundation | ✅ Complete | Breeze in PT, 4 roles + `EnsureUserRole`/`EnsureUserIsActive`, full schema (17 migrations), soft deletes on 7 models, admin/client layouts, user CRUD, 13 feature tests |
+| 2. Admin Core | ✅ Complete | `Admin/ClientController`, `Admin/ProjectController` (+ phases), `Admin/DashboardController` with aggregate KPIs, pagination on users/clients/projects, manager scoping via `manager_id` |
+| 3. Project Content | ✅ Complete (2 gaps) | Photos, expenses, documents, updates all wired in `Admin/ProjectController`; `ProjectUpdateObserver` auto-logs history. Gaps: no thumbnail generation, no expense edit route |
+| 4. Client Portal | ✅ Complete (delivered differently) | `Client/DashboardController`, `Client/ProjectController`, per-project messaging with Reverb broadcast (`MessageSent`). Notifications ship as Web Push + WhatsApp, **not** email |
+| 5. Reports & Settings | 🟡 Partial | `Admin/SettingController` covers CONF-01/02/03. PDF reports (REL-01..04), per-event notification toggles (CONF-04) and the audit log (SEC-05) do not exist |
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. Foundation | 6/8 | — | — |
-| 2. Admin Core | 0/? | — | — |
-| 3. Project Content | 0/? | — | — |
-| 4. Client Portal | 0/? | — | — |
-| 5. Reports & Settings | 0/? | — | — |
+## Delivered Beyond v1 Scope
 
-**Recent Trend:**
+Shipped even though the roadmap listed them as v2 or out of scope:
 
-- Last 5 plans: —
-- Trend: —
+- **Real-time messaging** (was ADV-01) — Laravel Reverb + Echo, `MessageSent` broadcast event
+- **Web Push / PWA** (was out of scope) — `public/manifest.json`, `sw.js`, `PushSubscription`, VAPID
+- **WhatsApp channel** (was INT-01 / out of scope) — `app/Channels/WhatsAppChannel.php`
+- **Payments module** — `Payment` model + `Admin/PaymentController`; never appeared in REQUIREMENTS.md
+- **CI/CD to production** — `.github/workflows/laravel.yml` deploys to HostGator on push to `main`
+- **Private media storage** — covers/photos on the private `local` disk behind authenticated routes, plus `obra360:media:migrate-public`
 
-*Updated after each plan completion*
+## Remaining Work (v1 gaps)
+
+1. **REL-01..04** — PDF reports (general, financial, photos, phases). DomPDF is not installed.
+2. **SEC-05** — dedicated audit log. Today only `project_updates` exists, and it has no admin screen.
+3. **CONF-04** — enable/disable notifications per event type.
+4. **NOTF-01/03** — email notifications. Currently only Web Push + WhatsApp fire from the observer.
+5. **FIN-02/FIN-03** — expense breakdown by category and by month.
+6. **FIN-06** — the `currency` setting is stored but never used for formatting.
+7. **FOTO-03** — `photos.thumbnail_path` exists as a column but nothing writes to it.
+8. **DESP-03** — expenses can be created and deleted but not edited.
+9. **DASH-01** — "projects with delays" and "projects near completion" KPIs are missing.
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Logged in PROJECT.md Key Decisions. Recent ones affecting current work:
 
-- Project init: Laravel Breeze for auth (not custom); install with `breeze:install blade`
-- Project init: Blade + Tailwind CSS v4 (no SPA); server-side rendering only
-- Project init: Local disk storage via Flysystem; S3-ready with zero code change later
-- Project init: Soft deletes on projects, clients, users, expenses, documents, photos
-- Project init: Portuguese (PT) for all UI text, labels, and email notifications
-- Project init: Separate admin and client layout shells to prevent data leakage
+- Notifications were delivered as Web Push + WhatsApp instead of email (deviation from NOTF-01)
+- Real-time chat via Reverb was pulled forward from v2
+- Payments were added as a module without a corresponding requirement
+- Media moved to the private disk; see `docs/production-readiness.md`
+- `financial` role still has access to the whole admin area — pending a product decision
 
 ### Pending Todos
 
-None yet.
+None tracked here — see "Remaining Work" above.
 
 ### Blockers/Concerns
 
-- Phase 1 human verification found four UI gaps; plans 01-07 and 01-08 must execute before Phase 2.
-- Plan 01-08 ends at a blocking human visual sign-off; do not auto-approve it.
+- `.planning/codebase/*.md` still describe the June 2026 skeleton ("only User model exists").
+  Those files are inlined into `AGENTS.md` and `CLAUDE.md`, so agents read a wrong picture of the project.
+  Regenerate with `/gsd-map-codebase`.
+- Phases 2-5 have no plan/summary artifacts; future audits cannot rely on `.planning/phases/`.
 
 ## Session Continuity
 
-Last session: 2026-06-27T14:52:10.220Z
-Stopped at: Phase 1 gap-closure plans 01-07 and 01-08 created and validated
-Resume file: .planning/phases/01-foundation/01-07-PLAN.md
+Last session: 2026-08-20
+Stopped at: planning reconciliation complete
 
-Next step: Run `/gsd-execute-phase 1` to execute plans 01-07 and 01-08, then complete human visual sign-off
+Next step: close the v1 gaps listed above — start with REL-01..04 (`/gsd-plan-phase 5`), or run `/gsd-map-codebase` first to refresh the stale codebase docs.
