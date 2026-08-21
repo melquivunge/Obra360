@@ -50,11 +50,10 @@
 - Impact: Potential privilege escalation if financial users can access admin dashboard; inconsistent access control model
 - Fix approach: Product decision needed: either (a) restrict financial to `role:financial` only routes separate from admin, or (b) add `financial_id` column to projects and update authorization check; document decision in code
 
-**Session Encryption Overhead:**
-- Issue: `SESSION_ENCRYPT=true` in `.env.example` adds CPU cost to every session read; may impact performance under load
-- Files: `.env.example` (line 36), `config/session.php` (line 50)
-- Impact: Slower session operations; potential bottleneck in high-concurrency scenarios
-- Fix approach: Monitor session performance; consider disabling encryption if sessions are database-backed and already protected; add caching layer
+**Session Encryption Overhead (low priority — not a defect):**
+- Issue: `SESSION_ENCRYPT=true` adds a small CPU cost per session read
+- Files: `.env.example`, `config/session.php`
+- Impact: Negligible at current scale. Listed only for completeness — this is a deliberate security setting, not tech debt. Do not disable it without a measured bottleneck.
 
 ## Performance Bottlenecks
 
@@ -126,11 +125,11 @@
 
 ## Dependencies at Risk
 
-**No Security Update Strategy:**
-- Issue: No documented process for monitoring or applying security updates to dependencies
-- Files: `composer.json`, `composer.lock` exist but no CI/CD pipeline shown, no dependabot/renovate config
-- Impact: Vulnerable dependencies can remain unpatched indefinitely
-- Fix approach: Add GitHub Actions workflow for `composer outdated` checks; enable Dependabot; document security release process
+**No Automated Dependency Upgrade Path:**
+- Issue: CI already fails the build on known vulnerabilities — `composer audit` and `npm audit --audit-level=moderate` run in `.github/workflows/laravel.yml` (lines 73, 76). What is missing is an *upgrade* mechanism: no Dependabot or Renovate config, so a flagged advisory blocks CI until someone bumps the dependency by hand.
+- Files: `.github/workflows/laravel.yml`, no `.github/dependabot.yml`
+- Impact: A new advisory turns into a red build with no automated PR to fix it; upgrades are manual and reactive
+- Fix approach: Add `.github/dependabot.yml` for the composer and npm ecosystems
 
 **WhatsApp Integration Dependency:**
 - Issue: WhatsApp notification channel depends on Meta Graph API credentials (`WHATSAPP_PHONE_ID`, `WHATSAPP_TOKEN`); no fallback if API is unavailable
