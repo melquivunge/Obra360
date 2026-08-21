@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageController;
@@ -49,6 +50,9 @@ Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->na
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Audit trail (SEC-05) — admin only.
+    Route::get('/auditoria', [AuditLogController::class, 'index'])->name('audit.index');
+
     // Clients
     Route::get('/clientes', [ClientController::class, 'index'])->name('clients.index');
     Route::get('/clientes/novo', [ClientController::class, 'create'])->name('clients.create');
