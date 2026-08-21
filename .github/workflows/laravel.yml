@@ -70,7 +70,12 @@ jobs:
         run: php artisan test
 
       - name: Audit Composer dependencies
-        run: composer audit --no-interaction
+        # --abandoned=report: pacotes abandonados são um sinal de manutenção, não
+        # uma vulnerabilidade, e sem esta flag o composer audit sai a 1 só por
+        # causa deles. Os web-token/* e fgrosse/phpasn1 vêm do minishlink/web-push
+        # e não têm upgrade possível aqui (a v3 exige brick/math <=0.12 e o
+        # projeto tem 0.18). Advisories reais continuam a falhar o build.
+        run: composer audit --no-interaction --abandoned=report
 
       - name: Audit npm dependencies
         run: npm audit --audit-level=moderate
