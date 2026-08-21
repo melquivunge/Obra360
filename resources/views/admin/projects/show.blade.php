@@ -658,8 +658,15 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ── Despesas: o mesmo modal serve para criar e editar (DESP-03) ──────────────
-const despesaStoreUrl = @json(route('admin.projects.expenses.store', $project));
-const despesaUpdateUrl = id => @json(route('admin.projects.expenses.update', [$project, '__ID__'])).replace('__ID__', id);
+@php
+    // Atribuídos primeiro de propósito: @json divide a expressão pela vírgula,
+    // por isso um route() de dois argumentos faria o segundo passar por
+    // opções de json_encode e perderia as flags de escape.
+    $despesaStoreUrl = route('admin.projects.expenses.store', $project);
+    $despesaUpdateUrlTemplate = route('admin.projects.expenses.update', [$project, '__ID__']);
+@endphp
+const despesaStoreUrl = @json($despesaStoreUrl);
+const despesaUpdateUrl = id => @json($despesaUpdateUrlTemplate).replace('__ID__', id);
 
 function editarDespesa(despesa) {
     const form = document.getElementById('form-despesa');
