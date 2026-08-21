@@ -33,7 +33,7 @@ A client logs in, immediately sees the current state of their construction proje
 - ✓ Role-based access control via middleware + `AuthorizesProjectAccess` — Phase 1/4
 - ✓ Soft deletes on users, clients, projects, phases' parents, expenses, documents, photos, payments — Phase 1
 - ✓ Mobile-first responsive UI in Portuguese across all screens — Phase 1-4
-- ✓ PWA with Web Push notifications (VAPID) — beyond original scope
+- ✓ PWA with Web Push subscription capture (VAPID) — beyond original scope; **delivery inactive**, `minishlink/web-push` is not installed
 - ✓ WhatsApp notification channel — beyond original scope
 - ✓ CI/CD: GitHub Actions running tests + Pint + audits, deploying to HostGator — beyond original scope
 
@@ -41,7 +41,8 @@ A client logs in, immediately sees the current state of their construction proje
 
 - [ ] Reports: per-project general, financial, photos, phases — screen + PDF export (REL-01..04, DomPDF not installed)
 - [ ] Audit/activity log with an admin screen (SEC-05 — only `project_updates` exists today)
-- [ ] Email notifications (NOTF-01/03 — currently Web Push + WhatsApp only)
+- [ ] Email notifications (NOTF-01/03 — currently WhatsApp + Web Push only)
+- [ ] Install `minishlink/web-push` — without it `WebPushChannel` delivers nothing, so the PWA push feature is dead code
 - [ ] Per-event notification toggles (NOTF-02 / CONF-04)
 - [ ] Financial breakdown by category and by month (FIN-02, FIN-03)
 - [ ] Apply the configured currency when formatting values (FIN-06)

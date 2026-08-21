@@ -46,7 +46,7 @@ Verified against `routes/web.php`, `app/Http/Controllers/**`, `app/Models/**`,
 | 1. Foundation | ✅ Complete | Breeze in PT, 4 roles + `EnsureUserRole`/`EnsureUserIsActive`, full schema (17 migrations), soft deletes on 7 models, admin/client layouts, user CRUD, 13 feature tests |
 | 2. Admin Core | ✅ Complete | `Admin/ClientController`, `Admin/ProjectController` (+ phases), `Admin/DashboardController` with aggregate KPIs, pagination on users/clients/projects, manager scoping via `manager_id` |
 | 3. Project Content | ✅ Complete (2 gaps) | Photos, expenses, documents, updates all wired in `Admin/ProjectController`; `ProjectUpdateObserver` auto-logs history. Gaps: no thumbnail generation, no expense edit route |
-| 4. Client Portal | ✅ Complete (delivered differently) | `Client/DashboardController`, `Client/ProjectController`, per-project messaging with Reverb broadcast (`MessageSent`). Notifications ship as Web Push + WhatsApp, **not** email |
+| 4. Client Portal | ✅ Complete (delivered differently) | `Client/DashboardController`, `Client/ProjectController`, per-project messaging with Reverb broadcast (`MessageSent`). Notifications ship as WhatsApp + Web Push, **not** email — and Web Push is inert because `minishlink/web-push` is not installed |
 | 5. Reports & Settings | 🟡 Partial | `Admin/SettingController` covers CONF-01/02/03. PDF reports (REL-01..04), per-event notification toggles (CONF-04) and the audit log (SEC-05) do not exist |
 
 ## Delivered Beyond v1 Scope
@@ -65,7 +65,7 @@ Shipped even though the roadmap listed them as v2 or out of scope:
 1. **REL-01..04** — PDF reports (general, financial, photos, phases). DomPDF is not installed.
 2. **SEC-05** — dedicated audit log. Today only `project_updates` exists, and it has no admin screen.
 3. **CONF-04** — enable/disable notifications per event type.
-4. **NOTF-01/03** — email notifications. Currently only Web Push + WhatsApp fire from the observer.
+4. **NOTF-01/03** — email notifications. The observer fires WhatsApp + Web Push only, and **Web Push delivers nothing** until `composer require minishlink/web-push` is run (`WebPushChannel` bails on `class_exists`).
 5. **FIN-02/FIN-03** — expense breakdown by category and by month.
 6. **FIN-06** — the `currency` setting is stored but never used for formatting.
 7. **FOTO-03** — `photos.thumbnail_path` exists as a column but nothing writes to it.

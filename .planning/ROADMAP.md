@@ -99,7 +99,7 @@ messaging with live delivery via Reverb (`MessageSent`), strict client scoping t
 `AuthorizesProjectAccess`, PWA with Web Push subscriptions.
 **Deviation**: NOTF-01/03 were delivered as Web Push + WhatsApp rather than email —
 `ProjectUpdateNotification::via()` returns `[WhatsAppChannel, WebPushChannel]`.
-NOTF-02 (per-event toggle) was not built.
+NOTF-02 (per-event toggle) was not built. Web Push is additionally inert: `minishlink/web-push` is not in composer.json, so `WebPushChannel` logs "skipped" and delivers nothing.
 **UI hint**: yes
 
 ### Phase 5: Reports & Settings

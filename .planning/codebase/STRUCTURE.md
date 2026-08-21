@@ -1,288 +1,442 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-06-27
+**Analysis Date:** 2026-08-20
 
 ## Directory Layout
 
 ```
-Obra360/                          # Project root
-├── app/                          # Core application PHP code (PSR-4: App\)
+Obra360/
+├── app/                          # Application code (PHP)
+│   ├── Channels/                 # Custom notification channels (WhatsApp, WebPush)
+│   ├── Console/
+│   │   └── Commands/             # Artisan commands
+│   ├── Events/                   # Laravel Broadcasting events
 │   ├── Http/
-│   │   └── Controllers/
-│   │       └── Controller.php    # Abstract base controller
-│   ├── Models/
-│   │   └── User.php              # Eloquent User model
-│   └── Providers/
-│       └── AppServiceProvider.php
-├── artisan                       # CLI entry point
-├── bootstrap/                    # Application bootstrap and cache
-│   ├── app.php                   # Application factory and configuration
-│   ├── providers.php             # Registered service providers list
-│   └── cache/                    # Auto-generated config/route caches (not committed)
-├── composer.json                 # PHP dependency manifest
-├── composer.lock                 # Locked PHP dependency versions
-├── config/                       # All application configuration files
-│   ├── app.php
-│   ├── auth.php
-│   ├── cache.php
-│   ├── database.php
-│   ├── filesystems.php
-│   ├── logging.php
-│   ├── mail.php
-│   ├── queue.php
-│   ├── services.php
-│   └── session.php
-├── database/                     # Database schema and seed data
-│   ├── factories/
-│   │   └── UserFactory.php
-│   ├── migrations/
-│   │   ├── 0001_01_01_000000_create_users_table.php
-│   │   ├── 0001_01_01_000001_create_cache_table.php
-│   │   └── 0001_01_01_000002_create_jobs_table.php
-│   └── seeders/
-│       └── DatabaseSeeder.php
-├── docker/                       # Docker service configuration
-│   ├── nginx/
-│   │   └── default.conf          # Nginx virtual host config
-│   └── php/
-│       └── local.ini             # PHP ini overrides
-├── docker-compose.yml            # Multi-container orchestration
-├── Dockerfile                    # PHP-FPM 8.4 image definition
-├── package.json                  # Node/frontend dependency manifest
-├── phpunit.xml                   # PHPUnit test suite configuration
-├── public/                       # Web server document root (only directory exposed)
-│   ├── index.php                 # HTTP entry point
-│   ├── .htaccess                 # Apache rewrite rules
-│   ├── favicon.ico
-│   └── robots.txt
-├── resources/                    # Uncompiled frontend and view assets
+│   │   ├── Controllers/          # HTTP request handlers (Admin, Auth, Client, Portal)
+│   │   │   ├── Admin/            # Admin portal controllers (6 controllers)
+│   │   │   ├── Auth/             # Authentication controllers (8 controllers)
+│   │   │   ├── Client/           # Client portal controllers (2 controllers)
+│   │   │   └── Portal/           # PWA subscription controller
+│   │   ├── Middleware/           # Request middleware
+│   │   ├── Requests/             # FormRequest validation classes
+│   │   └── View/
+│   │       └── Composers/        # View data composers
+│   ├── Models/                   # Eloquent ORM models (12 models)
+│   ├── Notifications/            # Notification classes
+│   ├── Observers/                # Eloquent model observers
+│   ├── Policies/                 # Authorization policies
+│   ├── Providers/                # Service providers
+│   ├── Traits/                   # Shared traits
+│   └── View/
+│       └── Components/           # Blade view components
+│
+├── bootstrap/                    # Application bootstrap
+│   ├── app.php                   # Application configuration entry point
+│   └── providers.php             # Service provider list
+│
+├── config/                       # Configuration files (app, auth, database, etc.)
+│
+├── database/
+│   ├── factories/                # Model factories for testing (UserFactory)
+│   ├── migrations/               # Schema migrations (17 files)
+│   └── seeders/                  # Database seeders
+│
+├── docker/                       # Docker configuration
+│   ├── nginx/                    # Nginx reverse proxy config
+│   └── php/                      # PHP-FPM config
+│
+├── public/                       # Public web root
+│   ├── build/assets/             # Compiled Vite assets (CSS, JS)
+│   └── index.php                 # HTTP entry point
+│
+├── resources/
 │   ├── css/
 │   │   └── app.css               # Tailwind CSS entry point
 │   ├── js/
-│   │   └── app.js                # JavaScript entry point
-│   └── views/
-│       └── welcome.blade.php     # Default welcome page Blade template
-├── routes/                       # Route definitions
-│   ├── web.php                   # HTTP routes (web middleware group)
-│   └── console.php               # Artisan command routes
-├── storage/                      # Runtime-generated files (not committed)
+│   │   └── app.js                # Frontend JavaScript entry point (ES Modules)
+│   └── views/                    # Blade templates
+│       ├── admin/                # Admin portal views
+│       │   ├── projects/         # Project CRUD views
+│       │   ├── clients/          # Client CRUD views
+│       │   └── settings/         # Settings views
+│       ├── auth/                 # Authentication views (login, register, etc.)
+│       ├── client/               # Client portal views
+│       │   ├── projects/         # Client project detail view
+│       │   └── messages/         # Client messaging view
+│       ├── components/
+│       │   └── layouts/          # Layout components (admin, client, guest)
+│       ├── layouts/              # Legacy layout templates
+│       ├── profile/              # User profile views
+│       └── users/                # User management views
+│
+├── routes/
+│   ├── web.php                   # Web routes (role-gated groups: admin, portal)
+│   ├── auth.php                  # Auth routes (Breeze)
+│   └── channels.php              # Broadcasting channel authorization
+│
+├── storage/
 │   ├── app/
-│   │   ├── private/              # Private file uploads
-│   │   └── public/               # Publicly accessible uploaded files
-│   ├── framework/
-│   │   ├── cache/data/           # Application cache
-│   │   ├── sessions/             # File-based session storage
-│   │   ├── testing/              # Test fixtures
-│   │   └── views/                # Compiled Blade templates
-│   └── logs/
-│       └── laravel.log           # Application log output
-├── tests/                        # Automated test suite (PSR-4: Tests\)
-│   ├── Feature/
-│   │   └── ExampleTest.php
-│   └── Unit/
-│       └── ExampleTest.php
-├── vendor/                       # Composer-managed dependencies (not committed)
-└── vite.config.js                # Vite asset bundler configuration
+│   │   ├── private/              # Private disk (non-web-accessible files)
+│   │   └── public/               # Public disk (web-accessible, via /storage symlink)
+│   ├── framework/                # Framework cache/sessions/views
+│   └── logs/                     # Application logs
+│
+├── tests/
+│   ├── Feature/                  # Feature/integration tests
+│   │   └── Auth/
+│   ├── Unit/                     # Unit tests
+│   └── TestCase.php              # Base test class
+│
+├── .planning/codebase/           # Codebase analysis documents (generated)
+├── .planning/phases/             # Phase implementation docs (generated)
+├── .claude/                      # Claude tooling (workspaces, memory)
+├── .github/workflows/            # GitHub Actions CI/CD
+├── docker-compose.yml            # Docker Compose configuration
+├── Dockerfile                    # PHP-FPM Docker image
+├── vite.config.js                # Vite build configuration
+├── artisan                       # Artisan CLI binary
+├── composer.json                 # PHP dependencies
+├── package.json                  # Node.js dev dependencies
+└── phpunit.xml                   # PHPUnit test configuration
+
 ```
 
 ## Directory Purposes
 
-**`app/`:**
-- Purpose: All custom PHP application code following PSR-4 under the `App\` namespace
-- Contains: Controllers, Models, Providers, and any future Services, Middleware, Jobs, Events, Listeners, Mail classes
-- Key files: `app/Models/User.php`, `app/Http/Controllers/Controller.php`, `app/Providers/AppServiceProvider.php`
+**app/Models/:**
+- Purpose: Eloquent ORM entities — each model maps to a database table
+- Contains: 12 models (User, Client, Project, ProjectPhase, Photo, Expense, Document, ProjectUpdate, Message, Payment, Setting, PushSubscription)
+- Key files: `User.php` (authenticatable), `Project.php` (has phases/photos/messages/expenses/payments), `Client.php` (has users/projects)
+- Relationships use PHP 8 attributes (#[Fillable], #[Hidden]) for field config
 
-**`app/Http/Controllers/`:**
-- Purpose: HTTP request handlers
-- Contains: Controller classes. `Controller.php` is the abstract base all controllers should extend.
-- Key files: `app/Http/Controllers/Controller.php`
+**app/Http/Controllers/:**
+- Purpose: HTTP request handlers organized by role/domain
+- Namespaces:
+  - `Admin/` (6 controllers) — project/client/message/payment/setting management
+  - `Auth/` (8 controllers) — authentication (login, register, password reset, email verification)
+  - `Client/` (2 controllers) — client portal (dashboard, project view)
+  - `Portal/` (1 controller) — PWA push subscriptions
+  - Root: `Controller.php` (base abstract class), `ProfileController.php`, `UserController.php`
 
-**`app/Models/`:**
-- Purpose: Eloquent ORM models representing database tables
-- Contains: One class per table/entity
-- Key files: `app/Models/User.php`
+**app/Http/Middleware/:**
+- Purpose: Request filters (authentication, authorization, validation)
+- Contains: `EnsureUserRole.php` (gate access by role), `EnsureUserIsActive.php` (logout deactivated users)
 
-**`app/Providers/`:**
-- Purpose: Service providers that register bindings and perform boot setup
-- Contains: `AppServiceProvider.php` (the primary extension point for custom bindings)
-- Key files: `app/Providers/AppServiceProvider.php`
+**app/Http/Requests/:**
+- Purpose: Form request validation (centralize validation logic)
+- Contains: `StoreUserRequest.php`, `UpdateUserRequest.php`, `ProfileUpdateRequest.php`, `Auth/` (Breeze auth requests)
 
-**`bootstrap/`:**
-- Purpose: Application bootstrapping — not application code
-- Contains: `app.php` (the application factory), `providers.php` (provider list), `cache/` (generated cache, not committed)
-- Key files: `bootstrap/app.php`, `bootstrap/providers.php`
+**app/Http/View/Composers/:**
+- Purpose: Pre-compute and inject data into views before rendering
+- Contains: `ClientLayoutComposer.php` (queries unread messages, recent updates with caching)
 
-**`config/`:**
-- Purpose: Static application configuration, all read via `config()` helper
-- Contains: One file per concern (app, auth, cache, database, filesystems, logging, mail, queue, services, session)
-- Key files: `config/database.php`, `config/auth.php`, `config/app.php`
+**app/View/Components/:**
+- Purpose: Reusable Blade view components (layout shells)
+- Contains: `AdminLayout.php`, `ClientLayout.php`, `AppLayout.php`, `GuestLayout.php`
 
-**`database/`:**
-- Purpose: Database schema version control and test data
-- Contains: Migrations (one class per schema change), Factories (fake data generators), Seeders (data population scripts)
-- Key files: `database/migrations/0001_01_01_000000_create_users_table.php`, `database/factories/UserFactory.php`, `database/seeders/DatabaseSeeder.php`
+**app/Events/:**
+- Purpose: Domain events for side-effect handling
+- Contains: `MessageSent.php` (implements ShouldBroadcast, broadcasts to project channel)
 
-**`docker/`:**
-- Purpose: Docker service-specific configuration files mounted into containers
-- Contains: Nginx virtual host config, PHP ini overrides
-- Key files: `docker/nginx/default.conf`, `docker/php/local.ini`
+**app/Notifications/:**
+- Purpose: Multi-channel message delivery (WhatsApp, WebPush)
+- Contains: `ProjectUpdateNotification.php` (queued, sends on ProjectUpdate.created)
 
-**`public/`:**
-- Purpose: The only directory exposed to the web — the Nginx document root
-- Contains: `index.php` (entry point), compiled assets (generated by Vite into `public/build/`), `robots.txt`, `favicon.ico`
-- Key files: `public/index.php`
+**app/Channels/:**
+- Purpose: Custom notification transports (non-standard channels)
+- Contains: `WhatsAppChannel.php`, `WebPushChannel.php` (send() method dispatches to external API)
 
-**`resources/`:**
-- Purpose: Source assets and views before compilation
-- Contains: Blade templates (`views/`), CSS source (`css/`), JavaScript source (`js/`)
-- Key files: `resources/views/welcome.blade.php`, `resources/css/app.css`, `resources/js/app.js`
+**app/Observers/:**
+- Purpose: Listen to Eloquent model lifecycle events and trigger side effects
+- Contains: `ProjectUpdateObserver.php` (listens to ProjectUpdate.created, sends notifications to client users)
 
-**`routes/`:**
-- Purpose: All application route definitions
-- Contains: `web.php` (browser routes with session/CSRF middleware), `console.php` (Artisan command definitions)
-- Key files: `routes/web.php`, `routes/console.php`
+**app/Policies/:**
+- Purpose: Authorization policies (Laravel Gate pattern)
+- Contains: `UserPolicy.php` (controls who can view/edit/delete users)
 
-**`storage/`:**
-- Purpose: Runtime-writable files — generated by the framework, not committed to git
-- Contains: Compiled views, cache, sessions, logs, uploaded files
-- Key files: `storage/logs/laravel.log`
+**app/Traits/:**
+- Purpose: Shared authorization/utility methods across controllers
+- Contains: `AuthorizesProjectAccess.php` (validates manager_id matches auth user or aborts 403)
 
-**`tests/`:**
-- Purpose: Automated test suite
-- Contains: `Feature/` (HTTP/integration tests), `Unit/` (pure unit tests)
-- Key files: `tests/Feature/ExampleTest.php`, `tests/Unit/ExampleTest.php`
+**app/Providers/:**
+- Purpose: Service provider definitions (IoC container registration, boot hooks)
+- Contains: `AppServiceProvider.php` (registers observers, defines gates, binds view composers)
+
+**app/Console/Commands/:**
+- Purpose: Artisan command implementations
+- Contains: `MigratePublicProjectMedia.php` (migrate legacy media from public to private storage)
+
+**database/migrations/:**
+- Purpose: Versioned schema changes
+- Contains: 17 migrations from framework defaults (users, cache, jobs, sessions) + domain models (clients → push_subscriptions)
+- Timestamp prefixes: `0001_*` (framework), `2026_06_27_*` (domain), `2026_06_27_2_*` (relationships), `2026_06_27_3_*` (payments/push)
+
+**database/factories/:**
+- Purpose: Fake data generation for tests
+- Contains: `UserFactory.php` (generates test users with roles)
+
+**database/seeders/:**
+- Purpose: Populate database with seed data
+- Contains: `DatabaseSeeder.php` (orchestrates all seeders)
+
+**resources/views/**
+
+- **admin/:** Admin portal Blade templates
+  - `dashboard.blade.php` — stats, recent projects, recent updates
+  - `projects/` — index (filtered list), create, edit, show (with phases, photos, expenses, messages)
+  - `clients/` — index (list), create, edit (CRUD)
+  - `settings/` — index (global settings form)
+  - `messages/` — messaging interface (deprecated in favor of projects.messages.index)
+
+- **client/:** Client portal Blade templates
+  - `dashboard.blade.php` — project cards with cover images
+  - `projects/show.blade.php` — project detail (phases, photos, expenses, messages, documents)
+  - `messages/index.blade.php` — project messaging thread
+
+- **auth/:** Authentication views (Laravel Breeze)
+  - `login.blade.php`, `register.blade.php`, `forgot-password.blade.php`, `reset-password.blade.php`, `verify-email.blade.php`
+
+- **profile/:** User profile management
+  - `edit.blade.php` — profile edit form
+  - `partials/` — form sections (update info, change password, delete account)
+
+- **components/layouts/:** Layout shells (Blade components)
+  - `admin.blade.php` — admin sidebar, nav, footer (extends components.layouts.app)
+  - `client.blade.php` — client nav, sidebar, unread messages badge (extends components.layouts.app)
+  - `app.blade.php` — root layout with Vite asset injection
+  - `guest.blade.php` — auth layout (login, register)
+
+- **layouts/:** Legacy layout templates (used before components)
+- **users/:** User management views (admin only)
+
+**routes/web.php:**
+- Purpose: Define all web routes with role-based middleware
+- Groups:
+  - `/admin` — role: admin,manager,financial (read projects/messages)
+  - `/admin` — role: admin (manage clients, settings, users)
+  - `/admin` — role: admin,manager (create/edit projects, phases, photos, documents, updates)
+  - `/admin` — role: admin,financial (expenses, payments)
+  - `/portal` — role: client (client dashboard, projects, messages, push subscriptions)
+- All route names prefixed with group name (admin.*, portal.*, etc.)
+
+**routes/channels.php:**
+- Purpose: Authorize broadcasting channel subscriptions
+- Contains: `project.{projectId}` channel gated by role (admin/manager/client access rules)
+
+**routes/auth.php:**
+- Purpose: Authentication routes (Laravel Breeze)
+- Contains: Login, register, password reset, email verification routes
+
+**resources/css/app.css:**
+- Purpose: Tailwind CSS entry point
+- Imports: Tailwind directives (@tailwind), custom utilities, font imports (Bunny Fonts CDN for Instrument Sans)
+
+**resources/js/app.js:**
+- Purpose: Frontend JavaScript entry point (ES Modules)
+- Bundled by Vite, loaded via `@vite()` directive in layouts
+
+**storage/app/private/:**
+- Purpose: Private disk (not web-accessible)
+- Contains: Project media (covers, photos, documents)
+- Path pattern: `projects/{project_id}/`, `covers/`, etc.
+
+**storage/app/public/:**
+- Purpose: Public disk (web-accessible via /storage symlink)
+- Currently unused (media migrating from public to private disk)
+
+**public/index.php:**
+- Purpose: HTTP entry point
+- Loads autoloader, creates Application instance, dispatches request
+
+**public/build/assets/:**
+- Purpose: Compiled Vite assets (CSS, JS, images)
+- Generated by `npm run build`; versioned by Vite's cache-buster
+
+**tests/Feature/:**
+- Purpose: Integration/feature tests (test full request cycle)
+- Contains: Auth tests (login, register, email verification, password reset)
+
+**tests/Unit/:**
+- Purpose: Unit tests (test isolated components)
+
+**bootstrap/app.php:**
+- Purpose: Application configuration entry point
+- Defines: routing (web.php, channels.php, health:/up), middleware config, exception handling
+
+**bootstrap/providers.php:**
+- Purpose: Service provider list (list of all providers to load)
+
+**vite.config.js:**
+- Purpose: Vite bundler configuration
+- Defines: CSS/JS entry points, Tailwind/Laravel plugins, hot reload settings
+
+**docker-compose.yml:**
+- Purpose: Orchestrate local dev containers (PHP-FPM, Nginx, MySQL/Redis)
+
+**Dockerfile:**
+- Purpose: PHP-FPM 8.4 Docker image (installs extensions, Composer, Laravel app)
+
+**composer.json:**
+- Purpose: PHP dependencies (Laravel 13, Tailwind, DomPDF, etc.)
+- Key: `require` and `require-dev`, autoload PSR-4 mapping
+
+**package.json:**
+- Purpose: Node.js dev dependencies (Vite, Tailwind, concurrently, etc.)
+- No package-lock.json committed (npm install uses latest compatible versions)
 
 ## Key File Locations
 
 **Entry Points:**
-- `public/index.php`: HTTP entry point for all web requests
-- `artisan`: CLI entry point for all Artisan commands
+- `public/index.php` — Web HTTP entry point
+- `artisan` — Artisan CLI entry point
+- `routes/web.php` — All web route definitions
+- `bootstrap/app.php` — Application configuration factory
 
 **Configuration:**
-- `bootstrap/app.php`: Application factory — routing, middleware, exceptions wired here
-- `bootstrap/providers.php`: Service provider registration list
-- `config/app.php`: App name, environment, debug, timezone, locale
-- `config/database.php`: Database connection definitions
-- `config/auth.php`: Auth guard and provider definitions
-- `.env`: Local environment values (not committed)
-- `.env.example`: Template for required environment variables
+- `config/app.php` — App name, timezone, etc.
+- `config/database.php` — Database connection config
+- `config/auth.php` — Authentication guards/providers
+- `.env` — Environment variables (not committed, see .env.example)
+- `vite.config.js` — Asset bundling
 
 **Core Logic:**
-- `routes/web.php`: All HTTP route definitions
-- `routes/console.php`: All Artisan command definitions
-- `app/Http/Controllers/Controller.php`: Base controller
+- `app/Models/` — Data models (12 Eloquent models)
+- `app/Http/Controllers/` — HTTP request handlers
+- `routes/web.php` — Route definitions + middleware groups
+- `app/Providers/AppServiceProvider.php` — Service registration + gates + observers
 
-**Database:**
-- `database/migrations/`: Schema migration files
-- `database/seeders/DatabaseSeeder.php`: Root seeder (calls other seeders)
-- `database/factories/UserFactory.php`: User model factory for tests/seeds
-
-**Frontend:**
-- `vite.config.js`: Vite build configuration (entry points, plugins)
-- `resources/css/app.css`: CSS entry point (Tailwind)
-- `resources/js/app.js`: JS entry point
-
-**Infrastructure:**
-- `Dockerfile`: PHP-FPM 8.4 container definition
-- `docker-compose.yml`: Multi-service orchestration (app + nginx + db)
-- `docker/nginx/default.conf`: Nginx virtual host
+**Testing:**
+- `tests/Feature/Auth/` — Authentication feature tests
+- `tests/Unit/` — Unit test stubs
+- `phpunit.xml` — PHPUnit configuration
 
 ## Naming Conventions
 
 **Files:**
-- PHP classes: `PascalCase.php` matching the class name (e.g., `UserFactory.php`, `AppServiceProvider.php`)
-- Blade templates: `kebab-case.blade.php` or `snake_case.blade.php` (e.g., `welcome.blade.php`)
-- Config files: `snake_case.php` matching Laravel convention (e.g., `filesystems.php`)
-- Migrations: `YYYY_MM_DD_HHMMSS_verb_noun_table.php` (e.g., `0001_01_01_000000_create_users_table.php`)
+- Class files: PascalCase, one class per file (e.g., `UserController.php`, `ProjectFactory.php`)
+- Migration files: timestamp prefix + underscore-separated name (e.g., `0001_01_01_000000_create_users_table.php`)
+- Blade views: snake_case with .blade.php suffix (e.g., `dashboard.blade.php`, `projects/show.blade.php`)
+- Config files: snake_case.php (e.g., `app.php`, `database.php`)
 
 **Directories:**
-- PHP namespaces map directly to directory names in `PascalCase` under `app/`
-- All other directories use `snake_case` or `lowercase` (e.g., `resources/views/`, `database/factories/`)
+- PascalCase for namespaced directories (Controllers, Models, Events, Channels)
+- snake_case for template directories (resources/views/admin, resources/views/client)
 
 **Classes:**
-- Controllers: `PascalCaseController` (e.g., `UserController`)
-- Models: `PascalCase` singular noun (e.g., `User`, `Project`)
-- Providers: `PascalCaseServiceProvider`
-- Factories: `PascalCaseFactory` (e.g., `UserFactory`)
-- Seeders: `PascalCaseSeeder` (e.g., `DatabaseSeeder`)
+- PascalCase for all class names
+- Suffix with role/purpose: `*Controller`, `*Factory`, `*Seeder`, `*Request`, `*Policy`, `*Observer`, `*Provider`
 
-**Namespaces:**
-- App code: `App\Http\Controllers\`, `App\Models\`, `App\Providers\`
-- Tests: `Tests\Feature\`, `Tests\Unit\`
-- Factories: `Database\Factories\`
-- Seeders: `Database\Seeders\`
+**Methods:**
+- camelCase (e.g., `index()`, `storePhase()`, `toggleActive()`)
+- Return type declarations mandatory (e.g., `public function index(): View`)
+
+**Route Names:**
+- snake_case, prefixed by middleware group (e.g., `admin.projects.create`, `portal.dashboard`)
+- Nested resources separated by dot (e.g., `admin.projects.photos.store`)
+
+**Database Tables:**
+- snake_case, plural (e.g., `users`, `projects`, `project_updates`, `push_subscriptions`)
+
+**Database Columns:**
+- snake_case, suffixed with type (e.g., `created_at`, `manager_id`, `cover_image_path`)
 
 ## Where to Add New Code
 
-**New HTTP Controller:**
-- Implementation: `app/Http/Controllers/YourNameController.php`
-- Register route: `routes/web.php` or a new `routes/api.php` file
-- Must extend: `App\Http\Controllers\Controller`
+**New Feature (e.g., Site Visits Tracking):**
 
-**New Eloquent Model:**
-- Implementation: `app/Models/YourModel.php`
-- Migration: `database/migrations/YYYY_MM_DD_HHMMSS_create_your_models_table.php`
-- Factory: `database/factories/YourModelFactory.php`
+1. **Model:**
+   - Create `app/Models/SiteVisit.php` extending Model
+   - Add #[Fillable] attribute, relationships, business logic methods
+   - Create migration: `database/migrations/2026_08_20_000000_create_site_visits_table.php`
 
-**New Service / Business Logic Class:**
-- Implementation: `app/Services/YourService.php` (create the `Services/` directory)
-- Register in container: `app/Providers/AppServiceProvider.php` → `register()` method
+2. **Controller (Admin):**
+   - Create `app/Http/Controllers/Admin/SiteVisitController.php`
+   - Implement index(), create(), store(), show(), edit(), update(), destroy() (as needed)
+   - Add role middleware via route group: `middleware(['auth', 'role:admin,manager'])`
+   - Use AuthorizesProjectAccess trait if project-scoped
 
-**New Middleware:**
-- Implementation: `app/Http/Middleware/YourMiddleware.php`
-- Register: `bootstrap/app.php` → `->withMiddleware()` closure
+3. **Routes:**
+   - Add to `routes/web.php` under appropriate role group
+   - Example: `Route::resource('site-visits', SiteVisitController::class)->middleware(['auth', 'role:admin,manager'])`
 
-**New Artisan Command:**
-- Implementation: `app/Console/Commands/YourCommand.php`
-- Register: `routes/console.php` via `Artisan::command()` or auto-discovered
+4. **Validation:**
+   - Create `app/Http/Requests/StoreSiteVisitRequest.php` extending FormRequest
+   - Implement rules() method
+   - Use in controller: `$validated = $request->validated();`
 
-**New Blade View:**
-- Implementation: `resources/views/your-view.blade.php`
-- For feature groups, create subdirectories: `resources/views/obras/index.blade.php`
+5. **Views:**
+   - Create `resources/views/admin/site-visits/` directory
+   - Add: `index.blade.php`, `create.blade.php`, `edit.blade.php`, `show.blade.php`
+   - Use `<x-admin-layout>` component wrapper
 
-**New Feature Test:**
-- Implementation: `tests/Feature/YourFeatureTest.php`
+6. **Events/Notifications (if triggering side-effects):**
+   - Create `app/Events/SiteVisitCreated.php` (if broadcasting needed)
+   - Create `app/Notifications/SiteVisitNotification.php` (if notifying users)
+   - Register in `app/Providers/AppServiceProvider.php` via observer
 
-**New Unit Test:**
-- Implementation: `tests/Unit/YourClassTest.php`
+7. **Tests:**
+   - Create `tests/Feature/SiteVisitTest.php`
+   - Test authorization (role checks), CRUD operations, validation
 
-**New Configuration Value:**
-- Add to: the relevant file in `config/` (e.g., `config/services.php` for third-party APIs)
-- Reference via: `config('services.your_key')`
-- Environment variable: add to `.env.example`
+**New Component/Module (e.g., Photo Gallery Reusable Component):**
+
+- Create `app/View/Components/PhotoGallery.php`
+- Create `resources/views/components/photo-gallery.blade.php`
+- Use in templates: `<x-photo-gallery :photos="$project->photos" />`
+
+**Utilities/Helpers:**
+
+- Create `app/Traits/NameUtility.php` if used across multiple classes
+- Create `app/Services/SomeService.php` if stateful service needed
+- Create plain functions in `app/Helpers/helpers.php` (auto-loaded via composer.json) for stateless helpers
+
+**Middleware:**
+
+- Create `app/Http/Middleware/YourMiddleware.php`
+- Register in `bootstrap/app.php` via `$middleware->alias(['your' => YourMiddleware::class])`
+- Apply to routes: `middleware('your')`
+
+**Artisan Command:**
+
+- Create `app/Console/Commands/YourCommand.php`
+- Extend `Illuminate\Console\Command`
+- Define $signature and $description
+- Implement handle() method
+- Register in `bootstrap/app.php` via `->withCommands([YourCommand::class])`
 
 ## Special Directories
 
-**`vendor/`:**
-- Purpose: Composer-managed PHP dependencies
-- Generated: Yes (by `composer install`)
+**storage/app/private/:**
+- Purpose: Non-web-accessible file storage (project media)
+- Generated: Yes (created by Laravel)
+- Committed: No (.gitignore excludes storage/)
+- Accessed via: Storage::disk('local')->get/put/download
+
+**storage/framework/:**
+- Purpose: Framework cache, sessions, views (cache, sessions, cache/data, views, testing)
+- Generated: Yes
 - Committed: No
 
-**`node_modules/`:**
-- Purpose: npm-managed frontend dependencies
-- Generated: Yes (by `npm install`)
+**bootstrap/cache/:**
+- Purpose: Config/route caching (production optimization)
+- Generated: Yes (created by `php artisan config:cache`, `php artisan route:cache`)
 - Committed: No
 
-**`storage/`:**
-- Purpose: Runtime-writable files (cache, sessions, logs, compiled views, uploads)
-- Generated: Partially (framework creates subdirs; some files are committed as `.gitkeep`)
-- Committed: Only `.gitkeep` placeholders; actual content is not committed
+**public/build/assets/:**
+- Purpose: Compiled frontend assets (CSS, JS, images from Vite)
+- Generated: Yes (created by `npm run build`)
+- Committed: No (.gitignore excludes)
 
-**`bootstrap/cache/`:**
-- Purpose: Cached config, routes, services for production performance
-- Generated: Yes (by `php artisan config:cache`, `route:cache`, etc.)
-- Committed: No
+**.planning/:**
+- Purpose: GSD workflow artifacts (codebase analysis, phase plans)
+- Generated: Yes (created by GSD commands)
+- Committed: No (these are working documents)
 
-**`public/build/`:**
-- Purpose: Compiled frontend assets output by Vite
-- Generated: Yes (by `npm run build`)
-- Committed: No (excluded by `.gitignore`)
-
-**`.planning/`:**
-- Purpose: GSD planning documents for development workflow
-- Generated: No (manually maintained)
-- Committed: Yes
+**.claude/:**
+- Purpose: Claude-specific tooling (project workspaces, memory, skills)
+- Generated: Yes (created by Claude agent)
+- Committed: No (workspace-specific)
 
 ---
 
-*Structure analysis: 2026-06-27*
+*Structure analysis: 2026-08-20*
