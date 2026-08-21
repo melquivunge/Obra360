@@ -59,7 +59,7 @@
             <div class="grid grid-cols-2 gap-2 mt-4" style="font-size:0.75rem;">
                 <div style="background-color:var(--surface);border:1px solid var(--border);border-radius:0.5rem;padding:0.5rem;">
                     <div style="color:var(--muted-foreground)">Orçamento</div>
-                    <div style="font-weight:600;margin-top:0.125rem;">R$ {{ number_format($project->budget ?? 0, 2, ',', '.') }}</div>
+                    <div style="font-weight:600;margin-top:0.125rem;">{{ money($project->budget ?? 0) }}</div>
                 </div>
                 <div style="background-color:var(--surface);border:1px solid var(--border);border-radius:0.5rem;padding:0.5rem;">
                     <div style="color:var(--muted-foreground)">Início</div>
@@ -147,7 +147,7 @@
                     <input type="date" name="expected_end_date" value="{{ old('expected_end_date') }}">
                 </div>
                 <div>
-                    <label class="field-label">Orçamento (R$)</label>
+                    <label class="field-label">Orçamento ({{ currency_symbol() }})</label>
                     <input type="number" step="0.01" min="0" name="budget" value="{{ old('budget', 0) }}">
                 </div>
             </div>

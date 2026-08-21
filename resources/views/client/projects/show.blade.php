@@ -250,15 +250,15 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.75rem;padding:1rem;">
                         <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-foreground);">Total orçado</p>
-                        <p style="font-size:1.375rem;font-weight:700;margin-top:0.375rem;">R$ {{ number_format($project->budget ?? 0, 2, ',', '.') }}</p>
+                        <p style="font-size:1.375rem;font-weight:700;margin-top:0.375rem;">{{ money($project->budget ?? 0) }}</p>
                     </div>
                     <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.75rem;padding:1rem;">
                         <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-foreground);">Total gasto</p>
-                        <p style="font-size:1.375rem;font-weight:700;margin-top:0.375rem;">R$ {{ number_format($totalSpent, 2, ',', '.') }}</p>
+                        <p style="font-size:1.375rem;font-weight:700;margin-top:0.375rem;">{{ money($totalSpent) }}</p>
                     </div>
                     <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.3);border-radius:0.75rem;padding:1rem;">
                         <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-foreground);">Saldo restante</p>
-                        <p style="font-size:1.375rem;font-weight:700;margin-top:0.375rem;color:var(--color-primary);">R$ {{ number_format(($project->budget ?? 0) - $totalSpent, 2, ',', '.') }}</p>
+                        <p style="font-size:1.375rem;font-weight:700;margin-top:0.375rem;color:var(--color-primary);">{{ money(($project->budget ?? 0) - $totalSpent) }}</p>
                     </div>
                 </div>
 
@@ -275,7 +275,7 @@
                         <div>
                             <div class="flex justify-between mb-1">
                                 <span style="font-size:0.8125rem;color:var(--color-muted-foreground);">{{ \App\Models\Expense::CATEGORIES[$cat] ?? $cat }}</span>
-                                <span style="font-size:0.8125rem;font-weight:600;">R$ {{ number_format($val, 2, ',', '.') }} <span style="color:var(--color-muted-foreground);font-weight:400;">({{ $pct }}%)</span></span>
+                                <span style="font-size:0.8125rem;font-weight:600;">{{ money($val) }} <span style="color:var(--color-muted-foreground);font-weight:400;">({{ $pct }}%)</span></span>
                             </div>
                             <div class="progress-bar" style="height:0.375rem;">
                                 <div class="progress-fill" style="width:{{ $pct }}%"></div>
@@ -301,11 +301,11 @@
                         <tbody>
                             @foreach($expenses->take(50) as $expense)
                             <tr>
-                                <td style="white-space:nowrap;color:var(--color-muted-foreground);">{{ \Carbon\Carbon::parse($expense->spent_at)->format('d/m/Y') }}</td>
+                                <td style="white-space:nowrap;color:var(--color-muted-foreground);">{{ $expense->spent_at?->format('d/m/Y') }}</td>
                                 <td>{{ \App\Models\Expense::CATEGORIES[$expense->category] ?? $expense->category }}</td>
                                 <td>{{ $expense->description ?: '—' }}</td>
                                 <td style="color:var(--color-muted-foreground);">{{ $expense->supplier ?: '—' }}</td>
-                                <td style="text-align:right;font-weight:600;white-space:nowrap;">R$ {{ number_format($expense->amount, 2, ',', '.') }}</td>
+                                <td style="text-align:right;font-weight:600;white-space:nowrap;">{{ money($expense->amount) }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -349,7 +349,7 @@
                                 @if($pay->paid_at) · Pago em: {{ $pay->paid_at->format('d/m/Y') }} @endif
                             </p>
                         </div>
-                        <p style="font-size:1.25rem;font-weight:700;white-space:nowrap;{{ $isPaid ? 'color:oklch(0.55 0.16 145)' : '' }}">R$ {{ number_format($pay->amount,2,',','.') }}</p>
+                        <p style="font-size:1.25rem;font-weight:700;white-space:nowrap;{{ $isPaid ? 'color:oklch(0.55 0.16 145)' : '' }}">{{ money($pay->amount) }}</p>
                     </div>
                     @if(!$isPaid && !$isCancelled)
                         @if($pay->type === 'pix' && ($pay->pix_key || $pay->pix_qrcode))

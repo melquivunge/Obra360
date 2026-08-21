@@ -24,6 +24,15 @@ class ProjectPhase extends Model
         'aguardando_aprovacao' => 'Aguardando aprovação',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'start_date' => 'date',
+            'expected_end_date' => 'date',
+            'real_end_date' => 'date',
+        ];
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

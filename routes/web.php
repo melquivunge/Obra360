@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\ProjectController as ClientProjectController;
@@ -32,6 +34,11 @@ Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->na
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Reports: same visibility rules as project data (scoped in the controller).
+    Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/obras/{project}/relatorios/{type}', [ReportController::class, 'show'])->name('reports.show');
+    Route::get('/obras/{project}/relatorios/{type}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+
     // Read project data + messages: all internal roles.
     Route::get('/obras', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/obras/{project}', [ProjectController::class, 'show'])->name('projects.show');
@@ -43,6 +50,9 @@ Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->na
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Audit trail (SEC-05) — admin only.
+    Route::get('/auditoria', [AuditLogController::class, 'index'])->name('audit.index');
+
     // Clients
     Route::get('/clientes', [ClientController::class, 'index'])->name('clients.index');
     Route::get('/clientes/novo', [ClientController::class, 'create'])->name('clients.create');
@@ -87,6 +97,7 @@ Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.
 Route::middleware(['auth', 'role:admin,financial'])->prefix('admin')->name('admin.')->group(function () {
     // Expenses
     Route::post('/obras/{project}/despesas', [ProjectController::class, 'storeExpense'])->name('projects.expenses.store');
+    Route::put('/obras/{project}/despesas/{expense}', [ProjectController::class, 'updateExpense'])->name('projects.expenses.update');
     Route::delete('/obras/{project}/despesas/{expense}', [ProjectController::class, 'destroyExpense'])->name('projects.expenses.destroy');
 
     // Payments
@@ -113,13 +124,16 @@ Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->g
     Route::get('/obras/{project}/capa', [ClientProjectController::class, 'cover'])->name('projects.cover');
     Route::get('/obras/{project}/fotos/{photo}', [ClientProjectController::class, 'photo'])->name('projects.photos.show');
     Route::get('/obras/{project}/mensagens', [ClientProjectController::class, 'messages'])->name('projects.messages');
-    Route::post('/obras/{project}/mensagens', [ClientProjectController::class, 'storeMessage'])->name('projects.messages.store');
+    // Clients are the least-trusted authenticated role; cap their writes.
+    Route::post('/obras/{project}/mensagens', [ClientProjectController::class, 'storeMessage'])
+        ->middleware('throttle:20,1')
+        ->name('projects.messages.store');
     Route::get('/obras/{project}/documentos/{document}/download', [ClientProjectController::class, 'downloadDocument'])->name('projects.documents.download');
     Route::post('/mensagens/marcar-lidas', function () {
         session(['messages_last_viewed_at' => now()->timestamp]);
 
         return response()->json(['ok' => true]);
-    })->name('messages.mark-read');
+    })->middleware('throttle:60,1')->name('messages.mark-read');
 
     // PWA push subscriptions
     Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])

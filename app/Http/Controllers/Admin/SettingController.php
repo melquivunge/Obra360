@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ProjectUpdate;
 use App\Models\Setting;
+use App\Observers\ProjectUpdateObserver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,6 +20,12 @@ class SettingController extends Controller
             'allow_comments' => Setting::get('allow_comments', '1'),
             'show_client_financials' => Setting::get('show_client_financials', '1'),
             'currency' => Setting::get('currency', 'BRL'),
+            'notifications' => collect(ProjectUpdate::TYPES)
+                ->map(fn ($label, $type) => [
+                    'label' => $label,
+                    'enabled' => Setting::get(ProjectUpdateObserver::settingKey($type), '1') === '1',
+                ])
+                ->all(),
             'logo_url' => Setting::get('logo_url'),
         ];
 
@@ -40,6 +48,14 @@ class SettingController extends Controller
         Setting::set('allow_comments', $request->boolean('allow_comments') ? '1' : '0');
         Setting::set('show_client_financials', $request->boolean('show_client_financials') ? '1' : '0');
         Setting::set('currency', $request->currency ?? 'BRL');
+
+        // Per-event notification toggles (CONF-04).
+        foreach (array_keys(ProjectUpdate::TYPES) as $type) {
+            Setting::set(
+                ProjectUpdateObserver::settingKey($type),
+                $request->boolean('notify_'.$type) ? '1' : '0'
+            );
+        }
 
         if ($request->hasFile('logo')) {
             $old = Setting::get('logo_url');

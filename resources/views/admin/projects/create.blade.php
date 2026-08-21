@@ -44,7 +44,7 @@
                     <input type="date" name="expected_end_date" value="{{ old('expected_end_date') }}">
                 </div>
                 <div>
-                    <label class="field-label">Orçamento total (R$)</label>
+                    <label class="field-label">Orçamento total ({{ currency_symbol() }})</label>
                     <input type="number" step="0.01" min="0" name="budget" value="{{ old('budget', 0) }}">
                 </div>
             </div>

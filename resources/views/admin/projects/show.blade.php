@@ -65,15 +65,15 @@
             @php $spent=$totalSpent; $budget=floatval($project->budget??0); @endphp
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
                 <p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p>
-                <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">R$ {{ number_format($budget,2,',','.') }}</p>
+                <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">{{ money($budget) }}</p>
             </div>
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
                 <p style="font-size:0.75rem;color:var(--muted-foreground)">Total gasto</p>
-                <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">R$ {{ number_format($spent,2,',','.') }}</p>
+                <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">{{ money($spent) }}</p>
             </div>
             <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.35);border-radius:0.75rem;padding:1rem;">
                 <p style="font-size:0.75rem;color:var(--muted-foreground)">Saldo restante</p>
-                <p style="font-size:1.25rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">R$ {{ number_format($budget-$spent,2,',','.') }}</p>
+                <p style="font-size:1.25rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">{{ money($budget-$spent) }}</p>
             </div>
         </div>
     </div>
@@ -154,14 +154,36 @@
                 <button type="submit" class="btn-primary">Enviar</button>
             </form>
         </div>
+        {{-- Filtros da galeria (FOTO-04) --}}
+        <form method="GET" action="{{ route('admin.projects.show', $project) }}" class="flex flex-wrap gap-2" style="margin-bottom:0.75rem;">
+            <select name="photo_phase" style="max-width:14rem;" onchange="this.form.submit()">
+                <option value="">Todas as fases</option>
+                @foreach($phases as $ph)
+                    <option value="{{ $ph->id }}" {{ (int) request('photo_phase') === $ph->id ? 'selected' : '' }}>{{ $ph->name }}</option>
+                @endforeach
+            </select>
+            <input type="date" name="photo_from" value="{{ request('photo_from') }}" style="max-width:11rem;" onchange="this.form.submit()" title="De">
+            <input type="date" name="photo_to" value="{{ request('photo_to') }}" style="max-width:11rem;" onchange="this.form.submit()" title="Até">
+            <select name="photo_order" style="max-width:11rem;" onchange="this.form.submit()">
+                <option value="recentes" {{ request('photo_order') !== 'antigas' ? 'selected' : '' }}>Mais recentes</option>
+                <option value="antigas" {{ request('photo_order') === 'antigas' ? 'selected' : '' }}>Mais antigas</option>
+            </select>
+            @if(request()->hasAny(['photo_phase','photo_from','photo_to','photo_order']))
+                <a href="{{ route('admin.projects.show', $project) }}" style="align-self:center;font-size:0.8125rem;color:var(--muted-foreground);">Limpar filtros</a>
+            @endif
+        </form>
+
         <div class="photo-grid">
-            @forelse($project->photos as $photo)
-            @php $photoUrl = route('admin.projects.photos.show', [$project, $photo]); @endphp
+            @forelse($photos as $photo)
+            @php
+                $photoUrl = route('admin.projects.photos.show', [$project, $photo]);
+                $thumbUrl = $photo->thumbnail_path ? $photoUrl.'?thumb=1' : $photoUrl;
+            @endphp
             <div class="photo-item" style="position:relative;">
                 @if($photo->media_type === 'video')
                 <video src="{{ $photoUrl }}" style="width:100%;height:100%;object-fit:cover;" muted></video>
                 @else
-                <img src="{{ $photoUrl }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js($photoUrl), @js($photo->caption ?? ''))">
+                <img src="{{ $thumbUrl }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js($photoUrl), @js($photo->caption ?? ''))">
                 @endif
                 @if($photo->caption)<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:0.5rem;font-size:0.75rem;color:#fff;">{{ $photo->caption }}</div>@endif
                 <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" onsubmit="return confirm('Remover foto?')" style="position:absolute;top:4px;right:4px;">
@@ -172,7 +194,9 @@
                 </form>
             </div>
             @empty
-            <p style="color:var(--muted-foreground);font-size:0.875rem;grid-column:1/-1;">Nenhuma foto enviada.</p>
+            <p style="color:var(--muted-foreground);font-size:0.875rem;grid-column:1/-1;">
+                {{ request()->hasAny(['photo_phase','photo_from','photo_to']) ? 'Nenhuma foto corresponde aos filtros.' : 'Nenhuma foto enviada.' }}
+            </p>
             @endforelse
         </div>
     </div>
@@ -180,16 +204,16 @@
     {{-- TAB: Despesas --}}
     <div x-show="tab==='despesas'" x-cloak class="space-y-4">
         <div class="flex justify-end">
-            <button type="button" onclick="openModal('modal-despesa')" class="btn-primary">
+            <button type="button" onclick="novaDespesa()" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Registrar despesa
             </button>
         </div>
         @php $budget=floatval($project->budget??0);$pct=$budget>0?min(100,round($totalSpent/$budget*100)):0; @endphp
         <div class="grid gap-3 sm:grid-cols-3">
-            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">R$ {{ number_format($budget,2,',','.') }}</p></div>
-            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Total gasto</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">R$ {{ number_format($totalSpent,2,',','.') }}</p></div>
-            <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.3);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Saldo</p><p style="font-size:1.125rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">R$ {{ number_format($budget-$totalSpent,2,',','.') }}</p></div>
+            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($budget) }}</p></div>
+            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Total gasto</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($totalSpent) }}</p></div>
+            <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.3);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Saldo</p><p style="font-size:1.125rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">{{ money($budget-$totalSpent) }}</p></div>
         </div>
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;overflow:hidden;">
             <div style="overflow-x:auto;">
@@ -198,12 +222,28 @@
                     <tbody>
                         @forelse($project->expenses as $exp)
                         <tr>
-                            <td style="color:var(--muted-foreground);white-space:nowrap;">{{ \Carbon\Carbon::parse($exp->spent_at)->format('d/m/Y') }}</td>
+                            <td style="color:var(--muted-foreground);white-space:nowrap;">{{ $exp->spent_at?->format('d/m/Y') }}</td>
                             <td>{{ \App\Models\Expense::CATEGORIES[$exp->category]??$exp->category }}</td>
                             <td>{{ $exp->description }}</td>
                             <td style="color:var(--muted-foreground)">{{ $exp->supplier??'—' }}</td>
-                            <td style="text-align:right;font-weight:600;">R$ {{ number_format($exp->amount,2,',','.') }}</td>
-                            <td>
+                            <td style="text-align:right;font-weight:600;">{{ money($exp->amount) }}</td>
+                            <td style="white-space:nowrap;display:flex;gap:0.25rem;">
+                                @php
+                                    $expData = [
+                                        'id' => $exp->id,
+                                        'category' => $exp->category,
+                                        'spent_at' => $exp->spent_at?->toDateString(),
+                                        'description' => $exp->description,
+                                        'amount' => (float) $exp->amount,
+                                        'supplier' => $exp->supplier,
+                                        'notes' => $exp->notes,
+                                    ];
+                                @endphp
+                                <button type="button" title="Editar despesa"
+                                        onclick='editarDespesa(@json($expData))'
+                                        style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
+                                </button>
                                 <form method="POST" action="{{ route('admin.projects.expenses.destroy', [$project, $exp]) }}" onsubmit="return confirm('Remover despesa?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
@@ -231,11 +271,11 @@
             <div class="flex gap-3 flex-wrap">
                 <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:0.75rem 1rem;">
                     <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">Pendente</p>
-                    <p style="font-size:1rem;font-weight:700;color:oklch(0.6 0.18 40)">R$ {{ number_format($totalPending,2,',','.') }}</p>
+                    <p style="font-size:1rem;font-weight:700;color:oklch(0.6 0.18 40)">{{ money($totalPending) }}</p>
                 </div>
                 <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:0.75rem 1rem;">
                     <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">Recebido</p>
-                    <p style="font-size:1rem;font-weight:700;color:oklch(0.55 0.16 145)">R$ {{ number_format($totalPaid,2,',','.') }}</p>
+                    <p style="font-size:1rem;font-weight:700;color:oklch(0.55 0.16 145)">{{ money($totalPaid) }}</p>
                 </div>
             </div>
             <button type="button" onclick="openModal('modal-pagamento')" class="btn-primary">
@@ -259,7 +299,7 @@
                             </td>
                             <td>{{ \App\Models\Payment::TYPES[$pay->type] ?? $pay->type }}</td>
                             <td style="white-space:nowrap;color:var(--muted-foreground)">{{ $pay->due_date?->format('d/m/Y') ?? '—' }}</td>
-                            <td style="text-align:right;font-weight:600;">R$ {{ number_format($pay->amount,2,',','.') }}</td>
+                            <td style="text-align:right;font-weight:600;">{{ money($pay->amount) }}</td>
                             <td>
                                 @if($pay->status === 'paid')
                                     <span style="display:inline-flex;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.55 0.16 145 / 0.12);color:oklch(0.55 0.16 145)">Pago</span>
@@ -489,21 +529,22 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
 <div id="modal-despesa" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-despesa')">
   <div class="modal-box" style="max-width:40rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" style="margin:0;">Registrar despesa</h2>
+      <h2 class="modal-title" id="titulo-despesa" style="margin:0;">Registrar despesa</h2>
       <button type="button" onclick="closeModal('modal-despesa')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
-    <form method="POST" action="{{ route('admin.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
+    <form id="form-despesa" method="POST" action="{{ route('admin.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
       @csrf
+      <input type="hidden" name="_method" id="despesa-method" disabled value="PUT">
       <div class="grid gap-3 sm:grid-cols-2">
         <div><label class="field-label">Categoria</label><select name="category">@foreach(\App\Models\Expense::CATEGORIES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
         <div><label class="field-label">Data</label><input type="date" name="spent_at" value="{{ now()->toDateString() }}" required></div>
         <div class="sm:col-span-2"><label class="field-label">Descrição <span style="color:var(--destructive)">*</span></label><input type="text" name="description" required></div>
-        <div><label class="field-label">Valor (R$)</label><input type="number" name="amount" step="0.01" min="0" required></div>
+        <div><label class="field-label">Valor ({{ currency_symbol() }})</label><input type="number" name="amount" step="0.01" min="0" required></div>
         <div><label class="field-label">Fornecedor</label><input type="text" name="supplier"></div>
         <div><label class="field-label">Comprovante</label><input type="file" name="receipt" style="padding:0.375rem;"></div>
         <div><label class="field-label">Notas</label><input type="text" name="notes"></div>
       </div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Registrar despesa</button><button type="button" onclick="closeModal('modal-despesa')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary" id="despesa-submit">Registrar despesa</button><button type="button" onclick="fecharDespesa()" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
@@ -542,7 +583,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
       @csrf
       <div class="grid gap-3 sm:grid-cols-2">
         <div class="sm:col-span-2"><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" required placeholder="Ex: Parcela 1, Sinal de obra…"></div>
-        <div><label class="field-label">Valor (R$) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" required></div>
+        <div><label class="field-label">Valor ({{ currency_symbol() }}) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" required></div>
         <div><label class="field-label">Vencimento</label><input type="date" name="due_date"></div>
         <div>
           <label class="field-label">Tipo</label>
@@ -615,5 +656,50 @@ function closeLightbox() {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && document.getElementById('lightbox-overlay')?.style.display === 'flex') closeLightbox();
 });
+
+// ── Despesas: o mesmo modal serve para criar e editar (DESP-03) ──────────────
+@php
+    // Atribuídos primeiro de propósito: @json divide a expressão pela vírgula,
+    // por isso um route() de dois argumentos faria o segundo passar por
+    // opções de json_encode e perderia as flags de escape.
+    $despesaStoreUrl = route('admin.projects.expenses.store', $project);
+    $despesaUpdateUrlTemplate = route('admin.projects.expenses.update', [$project, '__ID__']);
+@endphp
+const despesaStoreUrl = @json($despesaStoreUrl);
+const despesaUpdateUrl = id => @json($despesaUpdateUrlTemplate).replace('__ID__', id);
+
+function editarDespesa(despesa) {
+    const form = document.getElementById('form-despesa');
+    form.action = despesaUpdateUrl(despesa.id);
+    document.getElementById('despesa-method').disabled = false;
+    document.getElementById('despesa-submit').textContent = 'Guardar alterações';
+    document.getElementById('titulo-despesa').textContent = 'Editar despesa';
+
+    form.category.value = despesa.category ?? '';
+    form.spent_at.value = despesa.spent_at ?? '';
+    form.description.value = despesa.description ?? '';
+    form.amount.value = despesa.amount ?? '';
+    form.supplier.value = despesa.supplier ?? '';
+    form.notes.value = despesa.notes ?? '';
+    form.receipt.value = '';
+
+    openModal('modal-despesa');
+}
+
+function novaDespesa() {
+    const form = document.getElementById('form-despesa');
+    form.reset();
+    form.action = despesaStoreUrl;
+    document.getElementById('despesa-method').disabled = true;
+    document.getElementById('despesa-submit').textContent = 'Registrar despesa';
+    document.getElementById('titulo-despesa').textContent = 'Registrar despesa';
+    form.spent_at.value = @json(now()->toDateString());
+
+    openModal('modal-despesa');
+}
+
+function fecharDespesa() {
+    closeModal('modal-despesa');
+}
 </script>
 </x-admin-layout>

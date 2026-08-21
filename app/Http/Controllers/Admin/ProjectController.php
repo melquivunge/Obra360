@@ -11,7 +11,9 @@ use App\Models\Project;
 use App\Models\ProjectPhase;
 use App\Models\ProjectUpdate;
 use App\Models\User;
+use App\Support\Thumbnail;
 use App\Traits\AuthorizesProjectAccess;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -80,16 +82,17 @@ class ProjectController extends Controller
         return redirect()->route('admin.projects.show', $project)->with('success', 'Obra criada com sucesso.');
     }
 
-    public function show(Project $project)
+    public function show(Request $request, Project $project)
     {
         $this->authorizeProjectAccess($project);
 
-        $project->load(['client', 'manager', 'phases', 'photos.phase', 'expenses', 'documents', 'updates.user', 'messages.user', 'payments']);
+        $project->load(['client', 'manager', 'phases', 'expenses', 'documents', 'updates.user', 'messages.user', 'payments']);
         $phases = $project->phases;
         $totalSpent = $project->totalSpent();
         $payments = $project->payments;
+        $photos = $this->filteredPhotos($request, $project);
 
-        return view('admin.projects.show', compact('project', 'phases', 'totalSpent', 'payments'));
+        return view('admin.projects.show', compact('project', 'phases', 'totalSpent', 'payments', 'photos'));
     }
 
     public function edit(Project $project)
@@ -207,6 +210,33 @@ class ProjectController extends Controller
         return back()->with('success', 'Fase removida.');
     }
 
+    /**
+     * Gallery filtering by phase, date range and order (FOTO-04).
+     *
+     * @return Collection<int, Photo>
+     */
+    private function filteredPhotos(Request $request, Project $project)
+    {
+        $query = $project->photos()->with('phase')->reorder();
+
+        if ($request->filled('photo_phase')) {
+            $query->where('phase_id', $request->photo_phase);
+        }
+
+        if ($request->filled('photo_from')) {
+            $query->whereDate('taken_at', '>=', $request->photo_from);
+        }
+
+        if ($request->filled('photo_to')) {
+            $query->whereDate('taken_at', '<=', $request->photo_to);
+        }
+
+        return $query
+            ->orderBy('taken_at', $request->input('photo_order') === 'antigas' ? 'asc' : 'desc')
+            ->orderBy('id', $request->input('photo_order') === 'antigas' ? 'asc' : 'desc')
+            ->get();
+    }
+
     // ── Photos ───────────────────────────────────────────────
 
     public function storePhoto(Request $request, Project $project)
@@ -230,6 +260,7 @@ class ProjectController extends Controller
                 'phase_id' => $request->phase_id,
                 'caption' => $request->caption,
                 'path' => $path,
+                'thumbnail_path' => $isVideo ? null : Thumbnail::generate($path),
                 'media_type' => $isVideo ? 'video' : 'image',
                 'taken_at' => $request->taken_at ?: now()->toDateString(),
                 'uploaded_by' => auth()->id(),
@@ -246,9 +277,9 @@ class ProjectController extends Controller
         $this->authorizeProjectAccess($project);
         $this->assertBelongsToProject($project, $photo);
 
-        if ($photo->path) {
-            Storage::disk('local')->delete($photo->path);
-            Storage::disk('public')->delete($photo->path);
+        foreach (array_filter([$photo->path, $photo->thumbnail_path]) as $file) {
+            Storage::disk('local')->delete($file);
+            Storage::disk('public')->delete($file);
         }
         $photo->delete();
 
@@ -265,14 +296,27 @@ class ProjectController extends Controller
         return Storage::disk($disk)->response($project->cover_image_path);
     }
 
-    public function photo(Project $project, Photo $photo)
+    public function photo(Request $request, Project $project, Photo $photo)
     {
         $this->authorizeProjectAccess($project);
         $this->assertBelongsToProject($project, $photo);
 
-        $disk = $this->mediaDisk($photo->path);
+        $path = $this->photoPath($photo, $request->boolean('thumb'));
+        $disk = $this->mediaDisk($path);
 
-        return Storage::disk($disk)->response($photo->path);
+        return Storage::disk($disk)->response($path);
+    }
+
+    /**
+     * The thumbnail when one was asked for and exists, otherwise the original.
+     */
+    private function photoPath(Photo $photo, bool $wantsThumb): string
+    {
+        if ($wantsThumb && $photo->thumbnail_path && Storage::disk($this->mediaDisk($photo->thumbnail_path))->exists($photo->thumbnail_path)) {
+            return $photo->thumbnail_path;
+        }
+
+        return $photo->path;
     }
 
     // ── Expenses ─────────────────────────────────────────────
@@ -298,9 +342,36 @@ class ProjectController extends Controller
         }
 
         Expense::create($data);
-        ProjectUpdate::log($project->id, 'Despesa: '.$data['description'].' — R$ '.number_format($data['amount'], 2, ',', '.'), 'despesa');
+        ProjectUpdate::log($project->id, 'Despesa: '.$data['description'].' — '.money($data['amount']), 'despesa');
 
         return back()->with('success', 'Despesa registrada.');
+    }
+
+    public function updateExpense(Request $request, Project $project, Expense $expense)
+    {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $expense);
+
+        $data = $request->validate([
+            'category' => 'required|in:'.implode(',', array_keys(Expense::CATEGORIES)),
+            'description' => 'required|string|max:500',
+            'amount' => 'required|numeric|min:0',
+            'spent_at' => 'required|date',
+            'supplier' => 'nullable|string|max:200',
+            'notes' => 'nullable|string|max:1000',
+            'receipt' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:10240',
+        ]);
+
+        if ($request->hasFile('receipt')) {
+            if ($expense->receipt_path) {
+                Storage::disk('local')->delete($expense->receipt_path);
+            }
+            $data['receipt_path'] = $request->file('receipt')->store("projects/{$project->id}/receipts", 'local');
+        }
+
+        $expense->update($data);
+
+        return back()->with('success', 'Despesa atualizada.');
     }
 
     public function destroyExpense(Project $project, Expense $expense)

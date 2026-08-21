@@ -3,8 +3,17 @@
 namespace App\Providers;
 
 use App\Http\View\Composers\ClientLayoutComposer;
+use App\Models\Client;
+use App\Models\Document;
+use App\Models\Expense;
+use App\Models\Payment;
+use App\Models\Photo;
+use App\Models\Project;
+use App\Models\ProjectPhase;
 use App\Models\ProjectUpdate;
+use App\Models\Setting;
 use App\Models\User;
+use App\Observers\AuditObserver;
 use App\Observers\ProjectUpdateObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -28,6 +37,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         ProjectUpdate::observe(ProjectUpdateObserver::class);
+
+        // Audit trail (SEC-05). ProjectUpdate is deliberately absent: it is
+        // client-facing content, already visible in the project history.
+        foreach ([
+            Project::class, Client::class, User::class, Expense::class,
+            Payment::class, Photo::class, Document::class, ProjectPhase::class,
+            Setting::class,
+        ] as $auditable) {
+            $auditable::observe(AuditObserver::class);
+        }
 
         View::composer('components.layouts.client', ClientLayoutComposer::class);
 

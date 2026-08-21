@@ -15,10 +15,12 @@
                 ['label'=>'Em andamento',   'value'=>$inProgress,     'accent'=>true],
                 ['label'=>'Concluídas',     'value'=>$completed,      'accent'=>false],
                 ['label'=>'Pausadas',       'value'=>$paused,         'accent'=>false],
+                ['label'=>'Atrasadas',      'value'=>$lateCount,      'accent'=>false],
+                ['label'=>'Perto do fim',   'value'=>$nearCompletionCount, 'accent'=>false],
                 ['label'=>'Clientes',       'value'=>$totalClients,   'accent'=>false],
-                ['label'=>'Total orçado',   'value'=>'R$ '.number_format($totalBudget,2,',','.'), 'accent'=>false],
-                ['label'=>'Total gasto',    'value'=>'R$ '.number_format($totalSpent,2,',','.'),  'accent'=>false],
-                ['label'=>'Saldo restante', 'value'=>'R$ '.number_format($totalBudget-$totalSpent,2,',','.'), 'accent'=>true],
+                ['label'=>'Total orçado',   'value'=>money($totalBudget), 'accent'=>false],
+                ['label'=>'Total gasto',    'value'=>money($totalSpent),  'accent'=>false],
+                ['label'=>'Saldo restante', 'value'=>money($totalBudget-$totalSpent), 'accent'=>true],
             ];
         @endphp
         @foreach($cards as $card)
@@ -28,6 +30,52 @@
         </div>
         @endforeach
     </div>
+
+    {{-- Alertas: obras atrasadas e perto da conclusão (DASH-01) --}}
+    @if($lateProjects->isNotEmpty() || $nearCompletionProjects->isNotEmpty())
+    <div class="grid gap-6 lg:grid-cols-2">
+        @if($lateProjects->isNotEmpty())
+        <div style="background-color:var(--card);border:1px solid oklch(0.6 0.18 40 / 0.4);border-radius:0.75rem;padding:1.25rem;">
+            <h2 style="font-size:1rem;font-weight:700;color:oklch(0.7 0.16 40);">Obras atrasadas ({{ $lateCount }})</h2>
+            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">Previsão de término já passou e a obra não está concluída.</p>
+            <div class="space-y-2">
+                @foreach($lateProjects as $late)
+                <a href="{{ route('admin.projects.show', $late) }}" class="flex items-center justify-between"
+                   style="padding:0.625rem 0.75rem;border-radius:0.5rem;background-color:var(--surface);">
+                    <span>
+                        <span style="font-weight:600;font-size:0.875rem;">{{ $late->name }}</span>
+                        <span style="display:block;font-size:0.75rem;color:var(--muted-foreground);">{{ $late->client?->name ?? '—' }}</span>
+                    </span>
+                    <span style="font-size:0.75rem;color:oklch(0.7 0.16 40);white-space:nowrap;">
+                        {{ $late->expected_end_date?->format('d/m/Y') }}
+                        · {{ (int) $late->expected_end_date?->diffInDays(now()) }} dias
+                    </span>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        @if($nearCompletionProjects->isNotEmpty())
+        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
+            <h2 style="font-size:1rem;font-weight:700;">Perto da conclusão ({{ $nearCompletionCount }})</h2>
+            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">Obras em andamento com 80% ou mais de progresso.</p>
+            <div class="space-y-2">
+                @foreach($nearCompletionProjects as $near)
+                <a href="{{ route('admin.projects.show', $near) }}" class="flex items-center justify-between"
+                   style="padding:0.625rem 0.75rem;border-radius:0.5rem;background-color:var(--surface);">
+                    <span>
+                        <span style="font-weight:600;font-size:0.875rem;">{{ $near->name }}</span>
+                        <span style="display:block;font-size:0.75rem;color:var(--muted-foreground);">{{ $near->client?->name ?? '—' }}</span>
+                    </span>
+                    <span style="font-size:0.75rem;font-weight:600;color:var(--primary);">{{ (int) $near->progress }}%</span>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
+    @endif
 
     {{-- Recent projects + updates --}}
     <div class="grid gap-6 lg:grid-cols-3">
