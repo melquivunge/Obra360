@@ -140,8 +140,9 @@ class ProjectCrudTest extends TestCase
     }
 
     /**
-     * O formulário de edição usa uma checkbox sem campo escondido: um PUT que
-     * não envie `show_financials` desliga o resumo financeiro do cliente.
+     * ProjectController@update:127 usa `$request->boolean('show_financials')`
+     * sem valor por omissão, ao contrário do store:68 que assume `true`. Um PUT
+     * que não envie o campo desliga o resumo financeiro do cliente em silêncio.
      * Documenta o comportamento atual — ver relatório.
      */
     public function test_updating_without_show_financials_turns_the_flag_off(): void

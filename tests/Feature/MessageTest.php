@@ -199,7 +199,7 @@ class MessageTest extends TestCase
 
     /**
      * BUG: Admin/MessageController tem o seu próprio authorizeProjectAccess
-     * (app/Http/Controllers/Admin/MessageController.php:83) que só verifica o
+     * (app/Http/Controllers/Admin/MessageController.php:68) que só verifica o
      * papel de gestor. Ao contrário do trait AuthorizesProjectAccess usado nos
      * outros controllers, deixa passar um utilizador financeiro em qualquer
      * obra. O teste documenta o comportamento atual.
