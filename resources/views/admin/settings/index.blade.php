@@ -83,6 +83,25 @@
                 </div>
             </fieldset>
 
+            <fieldset>
+                <legend style="font-size:0.875rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:0.75rem;border-bottom:1px solid var(--border);width:100%;margin-bottom:1rem;">Notificações</legend>
+                <p style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.75rem;">
+                    Escolha que acontecimentos notificam o cliente. Desativar um tipo silencia-o sem afetar o histórico da obra.
+                </p>
+                <div class="space-y-2">
+                    @foreach($settings['notifications'] as $type => $notification)
+                    <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--surface);border:1px solid var(--border);">
+                        <p style="font-size:0.875rem;font-weight:500;">{{ $notification['label'] }}</p>
+                        <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0.5rem;flex-shrink:0;margin-left:1rem;">
+                            <input type="hidden" name="notify_{{ $type }}" value="0">
+                            <input type="checkbox" name="notify_{{ $type }}" value="1" {{ $notification['enabled'] ? 'checked' : '' }} style="width:auto;accent-color:var(--primary);">
+                            <span style="font-size:0.75rem;color:var(--muted-foreground);">Ativado</span>
+                        </label>
+                    </div>
+                    @endforeach
+                </div>
+            </fieldset>
+
             <div class="pt-2">
                 <button type="submit" class="btn-primary">Salvar configurações</button>
             </div>
