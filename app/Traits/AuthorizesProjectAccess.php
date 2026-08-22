@@ -6,15 +6,20 @@ use App\Models\Project;
 
 trait AuthorizesProjectAccess
 {
+    /**
+     * O gestor está limitado às obras que gere; admin e financeiro não.
+     *
+     * Decisão de produto: o financeiro trabalha a parte financeira de TODAS as
+     * obras (despesas e cobranças) e lê o resto para contexto, mas nunca toca na
+     * estrutura da obra. O âmbito dele é definido pelo middleware `role:` em
+     * routes/web.php — que já o mantém fora da escrita estrutural — e não por
+     * obra, porque um financeiro nunca é gestor de obra nenhuma. Restringi-lo
+     * aqui por `manager_id` dava-lhe 403 em todo o lado, incluindo nas rotas
+     * que routes/web.php lhe atribui explicitamente.
+     */
     protected function authorizeProjectAccess(Project $project): void
     {
         if (auth()->user()->isManager()) {
-            abort_unless((int) $project->manager_id === auth()->id(), 403);
-        }
-        if (auth()->user()->isFinancial()) {
-            // Financial role: restrict write access to projects where this user is the manager.
-            // If financial users need unrestricted project access, add a financial_id column
-            // to projects and update this check accordingly.
             abort_unless((int) $project->manager_id === auth()->id(), 403);
         }
     }

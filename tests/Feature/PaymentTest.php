@@ -238,32 +238,20 @@ class PaymentTest extends TestCase
         $this->assertSame('pending', $payment->fresh()->status);
     }
 
-    public function test_financial_user_manages_payments_on_a_project_they_manage(): void
-    {
-        $financial = User::factory()->financial()->create();
-        $project = Project::factory()->create(['manager_id' => $financial->id]);
-
-        $this->actingAs($financial)
-            ->post(route('admin.projects.payments.store', $project), $this->payload())
-            ->assertRedirect();
-
-        $this->assertDatabaseCount('payments', 1);
-    }
-
     /**
-     * BUG: a rota é `role:admin,financial`, mas AuthorizesProjectAccess
-     * (app/Traits/AuthorizesProjectAccess.php:15) exige que o utilizador
-     * financeiro seja o `manager_id` da obra. Como o papel financeiro nunca é
-     * atribuído como gestor no fluxo normal, na prática um financeiro leva 403
-     * em todas as obras. O teste documenta o comportamento atual.
+     * O financeiro trabalha a parte financeira de todas as obras, não só das
+     * suas — nunca é gestor de nenhuma. Cobertura completa do papel em
+     * tests/Feature/FinancialRoleTest.php.
      */
-    public function test_financial_user_is_locked_out_of_a_project_they_do_not_manage(): void
+    public function test_financial_user_manages_payments_on_any_project(): void
     {
         $project = Project::factory()->create();
 
         $this->actingAs(User::factory()->financial()->create())
             ->post(route('admin.projects.payments.store', $project), $this->payload())
-            ->assertForbidden();
+            ->assertRedirect();
+
+        $this->assertDatabaseCount('payments', 1);
     }
 
     public function test_a_payment_from_another_project_cannot_be_updated(): void
