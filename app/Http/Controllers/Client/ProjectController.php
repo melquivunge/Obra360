@@ -11,6 +11,7 @@ use App\Models\Project;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProjectController extends Controller
 {
@@ -83,9 +84,9 @@ class ProjectController extends Controller
         abort_if((int) $document->project_id !== (int) $project->id, 404);
         abort_unless($document->isClientVisible(), 403);
 
-        $disk = Storage::disk('local')->exists($document->path) ? 'local' : 'public';
+        abort_unless(Storage::disk('local')->exists($document->path), 404);
 
-        return Storage::disk($disk)->download($document->path, $document->name);
+        return Storage::disk('local')->download($document->path, $document->name);
     }
 
     public function cover(Project $project)
@@ -93,9 +94,7 @@ class ProjectController extends Controller
         $this->authorizeClientProject($project);
         abort_unless($project->cover_image_path, 404);
 
-        $disk = $this->mediaDisk($project->cover_image_path);
-
-        return Storage::disk($disk)->response($project->cover_image_path);
+        return $this->mediaResponse($project->cover_image_path);
     }
 
     public function photo(Request $request, Project $project, Photo $photo)
@@ -105,13 +104,11 @@ class ProjectController extends Controller
 
         $path = $photo->thumbnail_path
             && $request->boolean('thumb')
-            && Storage::disk($this->mediaDisk($photo->thumbnail_path))->exists($photo->thumbnail_path)
+            && Storage::disk('local')->exists($photo->thumbnail_path)
                 ? $photo->thumbnail_path
                 : $photo->path;
 
-        $disk = $this->mediaDisk($path);
-
-        return Storage::disk($disk)->response($path);
+        return $this->mediaResponse($path);
     }
 
     private function canViewFinancials(Project $project): bool
@@ -125,8 +122,14 @@ class ProjectController extends Controller
         abort_if($project->client_id !== auth()->user()->client_id, 403);
     }
 
-    private function mediaDisk(string $path): string
+    /**
+     * Media vive só no disco privado. Um registo sem ficheiro é um 404 — sem
+     * isto o `response()` sobre um caminho inexistente devolve 500.
+     */
+    private function mediaResponse(string $path): StreamedResponse
     {
-        return Storage::disk('local')->exists($path) ? 'local' : 'public';
+        abort_unless(Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path);
     }
 }
