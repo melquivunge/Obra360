@@ -47,7 +47,7 @@
             </a>
 
             @if($firstProject)
-            <a href="{{ route('portal.projects.messages', $firstProject) }}"
+            <a href="{{ $msgHref }}"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors"
                style="color:{{ $onMessages ? 'var(--color-primary)' : 'var(--color-muted-foreground)' }}; background-color:{{ $onMessages ? 'oklch(0.74 0.135 78 / 0.1)' : 'transparent' }}; border-left:{{ $onMessages ? '2px solid var(--color-primary)' : '2px solid transparent' }}; padding-left:{{ $onMessages ? '10px' : '12px' }};"
                onmouseover="{{ $onMessages ? '' : "this.style.backgroundColor='var(--color-surface)';this.style.color='var(--color-foreground)';" }}"
@@ -130,7 +130,7 @@
             </a>
 
             @if($firstProject)
-            <a href="{{ route('portal.projects.messages', $firstProject) }}"
+            <a href="{{ $msgHref }}"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium w-full transition-colors"
                style="color:{{ $onMessages ? 'var(--color-primary)' : 'var(--color-muted-foreground)' }}; background-color:{{ $onMessages ? 'oklch(0.74 0.135 78 / 0.1)' : 'transparent' }}; border-left:{{ $onMessages ? '2px solid var(--color-primary)' : '2px solid transparent' }}; padding-left:{{ $onMessages ? '10px' : '12px' }};"
                onmouseover="{{ $onMessages ? '' : "this.style.backgroundColor='var(--color-surface)';this.style.color='var(--color-foreground)';" }}"
@@ -247,26 +247,21 @@
                         <div style="position:relative;">
                             <div id="msg-scroll-list" style="max-height:300px;overflow-y:auto;">
                                 @foreach($recentUnreadMsgs as $msg)
-                                @php
-                                    $msgItemHref = $msg->project
-                                        ? route('portal.projects.messages', $msg->project)
-                                        : route('portal.dashboard');
-                                @endphp
-                                <a href="{{ $msgItemHref }}"
+                                <a href="{{ $msg['href'] }}"
                                    style="display:block;padding:0.75rem 1rem;border-bottom:1px solid var(--color-border);text-decoration:none;transition:background-color 0.1s;"
                                    onmouseover="this.style.backgroundColor='var(--color-surface)'"
                                    onmouseout="this.style.backgroundColor=''">
                                     <div style="display:flex;align-items:flex-start;gap:0.625rem;">
                                         <div style="width:1.75rem;height:1.75rem;border-radius:9999px;background-color:oklch(0.74 0.135 78 / 0.2);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-size:0.625rem;font-weight:700;flex-shrink:0;margin-top:0.125rem;">
-                                            {{ strtoupper(substr($msg->user?->name ?? 'E', 0, 2)) }}
+                                            {{ strtoupper(substr($msg['author'], 0, 2)) }}
                                         </div>
                                         <div style="min-width:0;flex:1;">
                                             <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.2rem;">
-                                                <p style="font-size:0.8125rem;font-weight:600;color:var(--color-foreground);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $msg->user?->name ?? 'Equipa' }}</p>
-                                                <span style="font-size:0.6875rem;color:var(--color-muted-foreground);white-space:nowrap;flex-shrink:0;">{{ $msg->created_at->diffForHumans() }}</span>
+                                                <p style="font-size:0.8125rem;font-weight:600;color:var(--color-foreground);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $msg['author'] }}</p>
+                                                <span style="font-size:0.6875rem;color:var(--color-muted-foreground);white-space:nowrap;flex-shrink:0;">{{ $msg['time_ago'] }}</span>
                                             </div>
-                                            <p style="font-size:0.6875rem;color:var(--color-primary);margin:0 0 0.25rem;font-weight:500;">{{ $msg->project?->name ?? '—' }}</p>
-                                            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ Str::limit($msg->body, 60) }}</p>
+                                            <p style="font-size:0.6875rem;color:var(--color-primary);margin:0 0 0.25rem;font-weight:500;">{{ $msg['project_name'] }}</p>
+                                            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ Str::limit($msg['body'], 60) }}</p>
                                         </div>
                                     </div>
                                 </a>
@@ -316,12 +311,12 @@
                                 <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--color-border);transition:background-color 0.1s;"
                                      onmouseover="this.style.backgroundColor='var(--color-surface)'"
                                      onmouseout="this.style.backgroundColor=''">
-                                    <p style="font-size:0.8125rem;font-weight:500;color:var(--color-foreground);margin:0 0 0.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $update->title }}</p>
+                                    <p style="font-size:0.8125rem;font-weight:500;color:var(--color-foreground);margin:0 0 0.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $update['title'] }}</p>
                                     <div style="display:flex;align-items:center;gap:0.5rem;">
                                         <span style="font-size:0.6875rem;padding:0.125rem 0.375rem;border-radius:9999px;background-color:oklch(0.74 0.135 78 / 0.15);color:var(--color-primary);font-weight:500;">
-                                            {{ \App\Models\ProjectUpdate::TYPES[$update->type] ?? $update->type }}
+                                            {{ $update['type_label'] }}
                                         </span>
-                                        <span style="font-size:0.6875rem;color:var(--color-muted-foreground);">{{ $update->created_at->diffForHumans() }}</span>
+                                        <span style="font-size:0.6875rem;color:var(--color-muted-foreground);">{{ $update['time_ago'] }}</span>
                                     </div>
                                 </div>
                                 @endforeach
