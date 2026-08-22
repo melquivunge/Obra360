@@ -32,7 +32,9 @@ class ReportController extends Controller
     {
         $query = Project::with('client')->latest();
 
-        if (auth()->user()->isManager() || auth()->user()->isFinancial()) {
+        // Só o gestor é limitado às suas obras. O financeiro faz relatórios de
+        // todas elas — ver App\Traits\AuthorizesProjectAccess.
+        if (auth()->user()->isManager()) {
             $query->where('manager_id', auth()->id());
         }
 

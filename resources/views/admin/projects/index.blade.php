@@ -5,10 +5,12 @@
             <h1 style="font-size:1.5rem;font-weight:700;">Obras</h1>
             <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Cadastre e acompanhe todas as obras.</p>
         </div>
+        @can('manage-projects')
         <button type="button" onclick="openModal('modal-nova-obra')" class="btn-primary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Nova obra
         </button>
+        @endcan
     </div>
 
     @if(session('success'))
@@ -99,6 +101,7 @@
 </div>
 
 {{-- Modal: Nova Obra --}}
+@can('manage-projects')
 <div id="modal-nova-obra" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-nova-obra')">
     <div class="modal-box" style="max-width:42rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
@@ -187,6 +190,7 @@
         </form>
     </div>
 </div>
+@endcan
 
 <script>
 function openModal(id) {

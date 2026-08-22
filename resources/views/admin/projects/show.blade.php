@@ -18,6 +18,7 @@
                 </div>
                 <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ $project->client?->name }} · {{ $project->location ?: '—' }}</p>
             </div>
+            @can('manage-projects')
             <div class="flex gap-2">
                 <a href="{{ route('admin.projects.edit', $project) }}" class="btn-secondary">Editar</a>
                 <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir esta obra?')">
@@ -25,6 +26,7 @@
                     <button type="submit" class="btn-danger">Excluir</button>
                 </form>
             </div>
+            @endcan
         </div>
         <div class="mt-4">
             <div class="flex justify-between" style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:0.375rem;">
@@ -86,12 +88,14 @@
 
     {{-- TAB: Fases --}}
     <div x-show="tab==='fases'" x-cloak class="space-y-4">
+        @can('manage-projects')
         <div class="flex justify-end">
             <button type="button" onclick="openModal('modal-fase')" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Nova fase
             </button>
         </div>
+        @endcan
 
         @forelse($phases as $phase)
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;" x-data="{ editing: false }">
@@ -103,6 +107,7 @@
                     </div>
                     @if($phase->description)<p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;">{{ $phase->description }}</p>@endif
                 </div>
+                @can('manage-projects')
                 <div class="flex gap-1 shrink-0">
                     <button type="button" @click="editing=!editing" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
@@ -114,11 +119,13 @@
                         </button>
                     </form>
                 </div>
+                @endcan
             </div>
             <div class="mt-3">
                 <div class="flex justify-between" style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.375rem;"><span>Progresso</span><span>{{ $phase->percentage }}%</span></div>
                 <div class="progress-bar"><div class="progress-fill" style="width:{{ $phase->percentage }}%"></div></div>
             </div>
+            @can('manage-projects')
             <form x-show="editing" x-cloak method="POST" action="{{ route('admin.projects.phases.update', [$project, $phase]) }}" class="mt-4 space-y-3 pt-4" style="border-top:1px solid var(--border)">
                 @csrf @method('PUT')
                 <div class="grid gap-3 sm:grid-cols-2">
@@ -130,6 +137,7 @@
                 <div><label class="field-label">Descrição</label><textarea name="description" rows="2" style="resize:vertical;">{{ $phase->description }}</textarea></div>
                 <div class="flex gap-2"><button type="submit" class="btn-primary">Salvar</button><button type="button" @click="editing=false" class="btn-secondary">Cancelar</button></div>
             </form>
+            @endcan
         </div>
         @empty
         <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma fase cadastrada.</p>
@@ -138,6 +146,7 @@
 
     {{-- TAB: Fotos --}}
     <div x-show="tab==='fotos'" x-cloak class="space-y-4">
+        @can('manage-projects')
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
             <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Enviar fotos / vídeos</h3>
             <form method="POST" action="{{ route('admin.projects.photos.store', $project) }}" enctype="multipart/form-data" class="space-y-3">
@@ -160,6 +169,7 @@
                 <button type="submit" class="btn-primary">Enviar</button>
             </form>
         </div>
+        @endcan
         {{-- Filtros da galeria (FOTO-04) --}}
         <form method="GET" action="{{ route('admin.projects.show', $project) }}" class="flex flex-wrap gap-2" style="margin-bottom:0.75rem;">
             <input type="hidden" name="tab" value="fotos">
@@ -193,12 +203,14 @@
                 <img src="{{ $thumbUrl }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js($photoUrl), @js($photo->caption ?? ''))">
                 @endif
                 @if($photo->caption)<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:0.5rem;font-size:0.75rem;color:#fff;">{{ $photo->caption }}</div>@endif
+                @can('manage-projects')
                 <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" onsubmit="return confirm('Remover foto?')" style="position:absolute;top:4px;right:4px;">
                     @csrf @method('DELETE')
                     <button type="submit" style="background:rgba(0,0,0,0.6);border:none;border-radius:0.25rem;color:#fff;cursor:pointer;padding:0.25rem;">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </form>
+                @endcan
             </div>
             @empty
             <p style="color:var(--muted-foreground);font-size:0.875rem;grid-column:1/-1;">
@@ -210,12 +222,14 @@
 
     {{-- TAB: Despesas --}}
     <div x-show="tab==='despesas'" x-cloak class="space-y-4">
+        @can('access-financial')
         <div class="flex justify-end">
             <button type="button" onclick="novaDespesa()" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Registrar despesa
             </button>
         </div>
+        @endcan
         @php $budget=floatval($project->budget??0);$pct=$budget>0?min(100,round($totalSpent/$budget*100)):0; @endphp
         <div class="grid gap-3 sm:grid-cols-3">
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($budget) }}</p></div>
@@ -246,6 +260,7 @@
                                         'notes' => $exp->notes,
                                     ];
                                 @endphp
+                                @can('access-financial')
                                 <button type="button" title="Editar despesa"
                                         onclick='editarDespesa(@json($expData))'
                                         style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
@@ -257,6 +272,7 @@
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                                     </button>
                                 </form>
+                                @endcan
                             </td>
                         </tr>
                         @empty
@@ -285,10 +301,12 @@
                     <p style="font-size:1rem;font-weight:700;color:oklch(0.55 0.16 145)">{{ money($totalPaid) }}</p>
                 </div>
             </div>
+            @can('access-financial')
             <button type="button" onclick="openModal('modal-pagamento')" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Nova cobrança
             </button>
+            @endcan
         </div>
 
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;overflow:hidden;">
@@ -317,6 +335,7 @@
                                 @endif
                             </td>
                             <td>
+                                @can('access-financial')
                                 <div class="flex gap-1">
                                     @if($pay->isPending())
                                     <form method="POST" action="{{ route('admin.projects.payments.mark-paid', [$project, $pay]) }}">
@@ -331,6 +350,7 @@
                                         </button>
                                     </form>
                                 </div>
+                                @endcan
                             </td>
                         </tr>
                         @empty
@@ -344,12 +364,14 @@
 
     {{-- TAB: Documentos --}}
     <div x-show="tab==='documentos'" x-cloak class="space-y-4">
+        @can('manage-projects')
         <div class="flex justify-end">
             <button type="button" onclick="openModal('modal-documento')" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Enviar documento
             </button>
         </div>
+        @endcan
         <div class="space-y-2">
             @forelse($project->documents as $doc)
             <div class="flex items-center gap-3 p-3 rounded-lg" style="background-color:var(--card);border:1px solid var(--border);">
@@ -364,12 +386,14 @@
                 <a href="{{ route('admin.projects.documents.download', [$project, $doc]) }}" target="_blank" rel="noopener" style="padding:0.5rem;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                 </a>
+                @can('manage-projects')
                 <form method="POST" action="{{ route('admin.projects.documents.destroy', [$project, $doc]) }}" onsubmit="return confirm('Remover documento?')">
                     @csrf @method('DELETE')
                     <button type="submit" style="padding:0.5rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                     </button>
                 </form>
+                @endcan
             </div>
             @empty
             <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhum documento enviado.</p>
@@ -379,12 +403,14 @@
 
     {{-- TAB: Histórico --}}
     <div x-show="tab==='historico'" x-cloak class="space-y-4">
+        @can('manage-projects')
         <div class="flex justify-end">
             <button type="button" onclick="openModal('modal-historico')" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Nova atualização
             </button>
         </div>
+        @endcan
         <div class="space-y-2">
             @forelse($project->updates as $upd)
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
@@ -513,6 +539,7 @@ function closeModal(id){ document.getElementById(id).style.display='none'; }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-overlay').forEach(function(m){m.style.display='none';});});
 </script>
 
+@can('manage-projects')
 {{-- Modal: Nova Fase --}}
 <div id="modal-fase" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-fase')">
   <div class="modal-box">
@@ -543,7 +570,9 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </form>
   </div>
 </div>
+@endcan
 
+@can('access-financial')
 {{-- Modal: Registrar Despesa --}}
 <div id="modal-despesa" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-despesa')">
   <div class="modal-box" style="max-width:40rem;">
@@ -567,7 +596,9 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </form>
   </div>
 </div>
+@endcan
 
+@can('manage-projects')
 {{-- Modal: Enviar Documento --}}
 <div id="modal-documento" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-documento')">
   <div class="modal-box">
@@ -590,7 +621,9 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </form>
   </div>
 </div>
+@endcan
 
+@can('access-financial')
 {{-- Modal: Nova Cobrança --}}
 <div id="modal-pagamento" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-pagamento')">
   <div class="modal-box" style="max-width:40rem;">
@@ -625,7 +658,9 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </form>
   </div>
 </div>
+@endcan
 
+@can('manage-projects')
 {{-- Modal: Nova Atualização --}}
 <div id="modal-historico" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-historico')">
   <div class="modal-box">
@@ -641,6 +676,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </form>
   </div>
 </div>
+@endcan
 
 {{-- Lightbox --}}
 <div id="lightbox-overlay"

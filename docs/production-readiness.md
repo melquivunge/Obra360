@@ -38,6 +38,14 @@ Production was migrated on 2026-08-22. The dry-run found eight media records who
 
 ## Access and deletion decisions
 
-The `financial` role currently remains allowed into the internal admin area because the existing roadmap and gates only prove that it needs financial capabilities, not that it must be excluded from project context. Tighten this after a product decision defines the exact financial-only surface.
+The `financial` role now has a decided surface: it owns the money across the whole portfolio and never touches project structure.
+
+A financial user **can** read every project regardless of who manages it (project list, project page, cover and photo views, messages), open the dashboard and every report including the PDF export, and create, edit and delete expenses and payments on **any** project.
+
+A financial user **cannot** create, edit or delete projects, phases, photos, documents or project updates, and cannot manage users or open the settings page — those stay with `admin` and `manager`.
+
+The scope is enforced by the `role:` middleware groups in `routes/web.php`, not per project. `AuthorizesProjectAccess` deliberately restricts only the `manager` role to its own projects: a financial user is never assigned as a project manager, so scoping them by `manager_id` produced a 403 on every route the role was explicitly granted. The `manage-projects` and `access-financial` gates mirror those middleware groups so views hide write affordances that the routes would reject; the routes remain the enforcement point. `tests/Feature/FinancialRoleTest.php` locks this in from both directions, including a non-regression check that the manager remains scoped to their own projects.
+
+One consequence is unresolved: a financial user reads all project data (photos, documents, messages) for context, so the role is not a money-only silo. If a future requirement needs per-project financial assignment, it requires a new column on `projects` and a corresponding scope — the current model has no way to express it.
 
 Project deletion remains a soft delete. Media files are not removed during soft delete so future restore remains possible. Permanent media cleanup should be implemented with an explicit force-delete lifecycle or queued cleanup job.

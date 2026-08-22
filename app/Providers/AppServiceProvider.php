@@ -60,6 +60,15 @@ class AppServiceProvider extends ServiceProvider
         // Grants user management capabilities (admin only).
         Gate::define('manage-users', fn (User $u) => $u->isAdmin());
 
+        // Grants write access to the project structure — projects, phases,
+        // photos, documents, updates (admin and manager roles). Mirrors the
+        // `role:admin,manager` middleware so views can hide affordances that
+        // would 403 on click; the routes remain the enforcement point.
+        Gate::define('manage-projects', fn (User $u) => in_array($u->role, [
+            User::ROLE_ADMIN,
+            User::ROLE_MANAGER,
+        ], true));
+
         // Grants access to financial data (admin and financial roles).
         Gate::define('access-financial', fn (User $u) => in_array($u->role, [
             User::ROLE_ADMIN,
