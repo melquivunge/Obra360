@@ -37,7 +37,7 @@
     {{-- Tabs --}}
     <div class="tab-nav">
         @foreach($tabs as $key=>$label)
-        <button type="button" class="tab-btn" :class="tab==='{{ $key }}' ? 'active' : ''" @click="tab='{{ $key }}'">{{ $label }}</button>
+        <button type="button" class="tab-btn" :class="tab==='{{ $key }}' ? 'active' : ''" @click="select('{{ $key }}')">{{ $label }}</button>
         @endforeach
     </div>
 
@@ -495,7 +495,19 @@
 </div>
 
 <script>
-function projectShow(id, initialTab){ return { tab: initialTab || 'geral' }; }
+function projectShow(id, initialTab){ return {
+    tab: initialTab || 'geral',
+    // Reflectir o separador no URL: os POST desta página (fotos, fases, despesas,
+    // documentos…) voltam por back(), que usa o referer — sem isto cairiam em "geral".
+    select(key){
+        this.tab = key;
+        if(!window.history || !window.history.replaceState) return;
+        var url = new URL(window.location.href);
+        url.searchParams.set('tab', key);
+        // replaceState (e não pushState) para não encher o histórico do browser.
+        window.history.replaceState(window.history.state, '', url);
+    },
+}; }
 function openModal(id){ var m=document.getElementById(id);m.style.display='flex';var f=m.querySelector('select,input:not([type=hidden]):not([type=file]):not([type=checkbox]),textarea');if(f)setTimeout(function(){f.focus();},50); }
 function closeModal(id){ document.getElementById(id).style.display='none'; }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-overlay').forEach(function(m){m.style.display='none';});});
