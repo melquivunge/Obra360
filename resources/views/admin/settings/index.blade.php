@@ -81,6 +81,14 @@
                         @endforeach
                     </select>
                 </div>
+                <div style="margin-top:1rem;">
+                    <label class="field-label">Progresso da obra</label>
+                    <select name="progress_mode" style="max-width:20rem;">
+                        <option value="derivado" {{ ($settings['progress_mode'] ?? 'derivado') === 'derivado' ? 'selected' : '' }}>Derivado das fases (média)</option>
+                        <option value="manual" {{ ($settings['progress_mode'] ?? 'derivado') === 'manual' ? 'selected' : '' }}>Manual (definido na obra)</option>
+                    </select>
+                    <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.375rem;">No modo derivado a percentagem é a média das fases e não pode ser editada na obra.</p>
+                </div>
             </fieldset>
 
             <fieldset>

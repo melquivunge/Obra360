@@ -43,7 +43,7 @@
 - [x] **FASE-01**: Administrator/Manager can create phases for a project with: name, description, status, percentage, sort order, start date, expected end date, real end date
 - [x] **FASE-02**: Phase status can be: Pendente, Em andamento, Concluída, Pausada, Aguardando aprovação
 - [x] **FASE-03**: Phases are displayed in configurable sort order
-- [~] **FASE-04**: Progress percentage can be updated manually or derived from completed phases (configurable per system settings)
+- [x] **FASE-04**: Progress percentage can be updated manually or derived from completed phases (configurable per system settings)
 - [x] **FASE-05**: Changing a phase status triggers an automatic entry in the project update history
 
 ### Photo Management
@@ -196,7 +196,7 @@
 | FASE-01 | Phase 2 | ✅ Done |
 | FASE-02 | Phase 2 | ✅ Done |
 | FASE-03 | Phase 2 | ✅ Done |
-| FASE-04 | Phase 2 | 🟡 Partial |
+| FASE-04 | Phase 2 | ✅ Done |
 | FASE-05 | Phase 2 | ✅ Done |
 | FOTO-01 | Phase 3 | ✅ Done |
 | FOTO-02 | Phase 3 | ✅ Done |
@@ -259,13 +259,13 @@
 **Coverage (reconciled 2026-08-21):**
 
 - v1 requirements: 83
-- ✅ Done: 82
-- 🟡 Partial: 1 — FASE-04 (progress is derived from phases but is not configurable)
+- ✅ Done: 83
+- 🟡 Partial: 0
 - ❌ Not built: 0
 
-All five roadmap phases are delivered. FASE-04 is the single remaining partial:
-`Project::recalcProgress()` averages the phase percentages, but there is no setting
-to switch between derived and manual progress.
+All five roadmap phases are delivered. FASE-04 closed on 2026-08-22: the
+`progress_mode` setting switches between progress derived from the phase average
+and a value typed by hand on the project form.
 
 ## Scope Changes Since Definition
 

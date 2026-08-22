@@ -64,6 +64,13 @@
                         @foreach($managers as $m)<option value="{{ $m->id }}" {{ $project->manager_id==$m->id?'selected':'' }}>{{ $m->name }}</option>@endforeach
                     </select>
                 </div>
+                @if(\App\Models\Project::progressIsManual())
+                <div>
+                    <label class="field-label">Progresso (%)</label>
+                    <input type="number" name="progress" min="0" max="100" value="{{ old('progress', $project->progress) }}">
+                    @error('progress')<p style="font-size:0.75rem;color:var(--danger);margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                @endif
             </div>
             <div class="flex items-center gap-2">
                 <input type="checkbox" name="show_financials" value="1" id="sf" {{ $project->show_financials?'checked':'' }} style="width:auto;">

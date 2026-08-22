@@ -92,10 +92,24 @@ class Project extends Model
         return $this->hasMany(Payment::class)->latest();
     }
 
+    /**
+     * O progresso é derivado da média das fases, salvo quando a definição
+     * `progress_mode` está em `manual` — aí o valor é do gestor e as fases
+     * não lhe tocam (FASE-04).
+     */
     public function recalcProgress(): void
     {
+        if (static::progressIsManual()) {
+            return;
+        }
+
         $avg = $this->phases()->avg('percentage') ?? 0;
         $this->update(['progress' => (int) round($avg)]);
+    }
+
+    public static function progressIsManual(): bool
+    {
+        return Setting::get('progress_mode', 'derivado') === 'manual';
     }
 
     public function totalSpent(): float

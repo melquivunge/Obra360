@@ -20,6 +20,7 @@ class SettingController extends Controller
             'allow_comments' => Setting::get('allow_comments', '1'),
             'show_client_financials' => Setting::get('show_client_financials', '1'),
             'currency' => Setting::get('currency', 'BRL'),
+            'progress_mode' => Setting::get('progress_mode', 'derivado'),
             'notifications' => collect(ProjectUpdate::TYPES)
                 ->map(fn ($label, $type) => [
                     'label' => $label,
@@ -39,6 +40,7 @@ class SettingController extends Controller
             'company_email' => 'nullable|email|max:255',
             'company_phone' => 'nullable|string|max:40',
             'currency' => 'nullable|string|max:10',
+            'progress_mode' => 'nullable|in:derivado,manual',
             'logo' => 'nullable|image|max:4096',
         ]);
 
@@ -48,6 +50,9 @@ class SettingController extends Controller
         Setting::set('allow_comments', $request->boolean('allow_comments') ? '1' : '0');
         Setting::set('show_client_financials', $request->boolean('show_client_financials') ? '1' : '0');
         Setting::set('currency', $request->currency ?? 'BRL');
+        if ($request->filled('progress_mode')) {
+            Setting::set('progress_mode', $request->progress_mode);
+        }
 
         // Per-event notification toggles (CONF-04).
         foreach (array_keys(ProjectUpdate::TYPES) as $type) {

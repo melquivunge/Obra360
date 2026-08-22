@@ -125,6 +125,15 @@ class ProjectController extends Controller
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
         $data['show_financials'] = $request->boolean('show_financials');
+
+        // FASE-04: o progresso só é editável quando as definições o põem em manual;
+        // em modo derivado é a média das fases que manda.
+        if (Project::progressIsManual()) {
+            $data['progress'] = (int) $request->validate([
+                'progress' => 'required|integer|min:0|max:100',
+            ])['progress'];
+        }
+
         if (auth()->user()->isManager()) {
             $data['manager_id'] = auth()->id();
         }
