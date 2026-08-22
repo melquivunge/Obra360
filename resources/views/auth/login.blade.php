@@ -39,8 +39,8 @@
 
             <div>
                 <label for="password" class="field-label">Senha</label>
-                <input id="password" type="password" name="password" required autocomplete="current-password"
-                       placeholder="••••••••">
+                <x-password-input id="password" name="password" required autocomplete="current-password"
+                                  placeholder="••••••••" />
             </div>
 
             <div style="display:flex;align-items:center;justify-content:space-between;">

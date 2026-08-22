@@ -163,12 +163,12 @@
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label class="field-label">Senha</label>
-                        <input type="password" name="password" autocomplete="new-password" placeholder="Mín. 8 caracteres">
+                        <x-password-input name="password" autocomplete="new-password" placeholder="Mín. 8 caracteres" />
                         @error('password')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="field-label">Confirmar senha</label>
-                        <input type="password" name="password_confirmation" autocomplete="new-password">
+                        <x-password-input name="password_confirmation" autocomplete="new-password" />
                     </div>
                 </div>
             </div>
