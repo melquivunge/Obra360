@@ -6,6 +6,10 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\ProjectDocumentController;
+use App\Http\Controllers\Admin\ProjectExpenseController;
+use App\Http\Controllers\Admin\ProjectPhaseController;
+use App\Http\Controllers\Admin\ProjectPhotoController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
@@ -42,8 +46,8 @@ Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->na
     // Read project data + messages: all internal roles.
     Route::get('/obras', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/obras/{project}', [ProjectController::class, 'show'])->name('projects.show');
-    Route::get('/obras/{project}/capa', [ProjectController::class, 'cover'])->name('projects.cover');
-    Route::get('/obras/{project}/fotos/{photo}', [ProjectController::class, 'photo'])->name('projects.photos.show');
+    Route::get('/obras/{project}/capa', [ProjectPhotoController::class, 'cover'])->name('projects.cover');
+    Route::get('/obras/{project}/fotos/{photo}', [ProjectPhotoController::class, 'show'])->name('projects.photos.show');
     Route::get('/mensagens', [MessageController::class, 'index'])->name('messages.index');
     Route::get('/obras/{project}/mensagens', [MessageController::class, 'messages'])->name('projects.messages.index');
     Route::post('/obras/{project}/mensagens', [MessageController::class, 'store'])->name('projects.messages.store');
@@ -77,18 +81,18 @@ Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.
     Route::delete('/obras/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
     // Phases (nested under project)
-    Route::post('/obras/{project}/fases', [ProjectController::class, 'storePhase'])->name('projects.phases.store');
-    Route::put('/obras/{project}/fases/{phase}', [ProjectController::class, 'updatePhase'])->name('projects.phases.update');
-    Route::delete('/obras/{project}/fases/{phase}', [ProjectController::class, 'destroyPhase'])->name('projects.phases.destroy');
+    Route::post('/obras/{project}/fases', [ProjectPhaseController::class, 'store'])->name('projects.phases.store');
+    Route::put('/obras/{project}/fases/{phase}', [ProjectPhaseController::class, 'update'])->name('projects.phases.update');
+    Route::delete('/obras/{project}/fases/{phase}', [ProjectPhaseController::class, 'destroy'])->name('projects.phases.destroy');
 
     // Photos
-    Route::post('/obras/{project}/fotos', [ProjectController::class, 'storePhoto'])->name('projects.photos.store');
-    Route::delete('/obras/{project}/fotos/{photo}', [ProjectController::class, 'destroyPhoto'])->name('projects.photos.destroy');
+    Route::post('/obras/{project}/fotos', [ProjectPhotoController::class, 'store'])->name('projects.photos.store');
+    Route::delete('/obras/{project}/fotos/{photo}', [ProjectPhotoController::class, 'destroy'])->name('projects.photos.destroy');
 
     // Documents
-    Route::post('/obras/{project}/documentos', [ProjectController::class, 'storeDocument'])->name('projects.documents.store');
-    Route::get('/obras/{project}/documentos/{document}/download', [ProjectController::class, 'downloadDocument'])->name('projects.documents.download');
-    Route::delete('/obras/{project}/documentos/{document}', [ProjectController::class, 'destroyDocument'])->name('projects.documents.destroy');
+    Route::post('/obras/{project}/documentos', [ProjectDocumentController::class, 'store'])->name('projects.documents.store');
+    Route::get('/obras/{project}/documentos/{document}/download', [ProjectDocumentController::class, 'download'])->name('projects.documents.download');
+    Route::delete('/obras/{project}/documentos/{document}', [ProjectDocumentController::class, 'destroy'])->name('projects.documents.destroy');
 
     // Updates
     Route::post('/obras/{project}/atualizacoes', [ProjectController::class, 'storeUpdate'])->name('projects.updates.store');
@@ -96,9 +100,9 @@ Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.
 
 Route::middleware(['auth', 'role:admin,financial'])->prefix('admin')->name('admin.')->group(function () {
     // Expenses
-    Route::post('/obras/{project}/despesas', [ProjectController::class, 'storeExpense'])->name('projects.expenses.store');
-    Route::put('/obras/{project}/despesas/{expense}', [ProjectController::class, 'updateExpense'])->name('projects.expenses.update');
-    Route::delete('/obras/{project}/despesas/{expense}', [ProjectController::class, 'destroyExpense'])->name('projects.expenses.destroy');
+    Route::post('/obras/{project}/despesas', [ProjectExpenseController::class, 'store'])->name('projects.expenses.store');
+    Route::put('/obras/{project}/despesas/{expense}', [ProjectExpenseController::class, 'update'])->name('projects.expenses.update');
+    Route::delete('/obras/{project}/despesas/{expense}', [ProjectExpenseController::class, 'destroy'])->name('projects.expenses.destroy');
 
     // Payments
     Route::post('/obras/{project}/pagamentos', [PaymentController::class, 'store'])->name('projects.payments.store');

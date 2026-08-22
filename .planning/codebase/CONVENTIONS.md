@@ -1,155 +1,117 @@
-# Coding Conventions
+# Convenções de Código
 
-**Analysis Date:** 2026-08-20
+**Data da análise:** 2026-08-22
 
-## Naming Patterns
+## Padrões de nomenclatura
 
-**Files:**
-- PascalCase for all class files: `User.php`, `UserFactory.php`, `ProjectController.php`, `UserManagementTest.php`
-- snake_case for configuration files: `phpunit.xml`, `docker-compose.yml`
-- kebab-case for Blade components: `text-input.blade.php`, `primary-button.blade.php`, `data-table.blade.php`
-- Example structure: `app/Models/User.php`, `app/Http/Controllers/UserController.php`, `app/Http/Requests/StoreUserRequest.php`, `database/factories/UserFactory.php`
+**Ficheiros:**
+- PascalCase para ficheiros de classe: `User.php`, `ProjectPhotoController.php`, `AuditObserver.php`, `Thumbnail.php`, `UserManagementTest.php`
+- snake_case para configuração: `phpunit.xml`, `docker-compose.yml`
+- kebab-case para componentes Blade: `text-input.blade.php`, `primary-button.blade.php`, `data-table.blade.php`, `flash-message.blade.php`
+- `app/Support/helpers.php` é a excepção deliberada: ficheiro sem classe, carregado por `autoload.files`
 
-**Functions/Methods:**
-- camelCase for all method names: `definition()`, `unverified()`, `authenticate()`, `storePhoto()`, `updatePhase()`, `isAdmin()`, `totalSpent()`
-- Method names describe expected behavior: `canAuthenticate`, `isFinancial`, `invalidateUserSessions`, `guardCriticalAdminChange`
-- Test methods: `test_` prefix with snake_case, descriptive assertions. Example: `test_admin_can_create_user_with_valid_data()`, `test_client_cannot_download_internal_document()`, `test_inactive_user_cannot_login_with_correct_credentials()`
+**Funções e métodos:**
+- camelCase: `storeUpdate()`, `recalcProgress()`, `expensesByCategory()`, `authorizeProjectAccess()`, `assertBelongsToProject()`, `settingKey()`
+- Nomes descrevem o comportamento: `progressIsManual()`, `budgetUsedPercent()`, `isClientVisible()`, `invalidateUserSessions()`, `guardCriticalAdminChange()`
+- Funções globais em snake_case: `money()`, `currency_symbol()`
+- Métodos de teste: prefixo `test_` e snake_case — `test_a_cover_without_a_file_returns_404()`, `test_admin_can_download_every_report_as_pdf()`, `test_an_update_that_changes_nothing_is_not_recorded()`
 
-**Variables/Properties:**
-- camelCase for local variables: `$user`, `$response`, `$admin`, `$wouldDeactivate`, `$isSelfChange`, `$isLastActiveAdmin`
-- Private methods prefixed with underscore: `private function invalidateUserSessions()`, `private function guardCriticalAdminChange()`
-- Model constants use UPPER_SNAKE_CASE: `User::ROLE_ADMIN`, `User::ROLE_CLIENT`, `Project::STATUSES`
+**Variáveis e propriedades:**
+- camelCase para variáveis locais: `$totalSpent`, `$lateProjects`, `$canViewFinancials`, `$isLastActiveAdmin`
+- Métodos privados **sem** prefixo de sublinhado: `private function invalidateUserSessions()`, `private function mediaResponse()`, `private function photoPath()`
+- Constantes de classe em UPPER_SNAKE_CASE: `User::ROLE_ADMIN`, `Project::STATUSES`, `ProjectPhase::STATUSES`, `Expense::CATEGORIES`, `Document::TYPES`, `ProjectUpdate::TYPES`, `AuditLog::ACTIONS`, `AuditLog::LABELS`, `ReportController::TYPES`, `Thumbnail::MAX_EDGE`
 
 **Classes:**
-- PascalCase for all classes: `User`, `UserFactory`, `UserController`, `StoreUserRequest`, `AuthenticationTest`
-- Suffix classes with role: `*Factory`, `*Controller`, `*Request`, `*Test`
-- Nested resource controllers: `Admin\ProjectController`, `Admin\ClientController`, `Client\ProjectController` (namespace prefix follows functionality)
+- PascalCase, com sufixo pelo papel: `*Controller`, `*Factory`, `*Request`, `*Test`, `*Observer`, `*Channel`, `*Policy`
+- Controllers de recurso aninhado levam o prefixo do pai: `ProjectPhaseController`, `ProjectPhotoController`, `ProjectExpenseController`, `ProjectDocumentController`
+- Namespace por área: `Admin\`, `Client\`, `Auth\`, `Portal\`
 
-**Route Names:**
-- Route names in English, kebab-case: `route('users.index')`, `route('admin.projects.show')`, `route('portal.dashboard')`
-- Prefix groups with role: `admin.*`, `portal.*`
-- Nested resource naming: `admin.projects.phases.store`, `admin.projects.documents.download`
-- **URL paths in Portuguese:** routes/web.php uses Portuguese for user-facing URLs: `/clientes`, `/obras`, `/mensagens`, `/fotos`, `/documentos`, `/despesas`, `/pagamentos`, `/fases`, `/configuracoes` — but route **names** remain English for internal references
+**Nomes de rota:**
+- Nomes em inglês, agrupados por ponto e prefixados pelo grupo: `admin.projects.show`, `admin.projects.photos.store`, `admin.reports.pdf`, `admin.audit.index`, `portal.dashboard`, `portal.projects.messages`
+- Segmentos compostos em kebab-case: `users.toggle-active`, `admin.projects.payments.mark-paid`, `portal.messages.mark-read`
+- **URLs em português:** `/obras`, `/clientes`, `/fotos`, `/documentos`, `/despesas`, `/pagamentos`, `/fases`, `/mensagens`, `/relatorios`, `/configuracoes`, `/auditoria`, `/usuarios`
 
-## Code Style
+## Estilo de código
 
-**Formatting:**
-- Laravel Pint (`laravel/pint` v1.27) is the official formatter
-- Enforced in CI via `./vendor/bin/pint --test`
-- Run manually: `./vendor/bin/pint`
-- 4 spaces indentation (no tabs), enforced via `.editorconfig`
-- LF (Unix-style line endings), enforced via `.editorconfig`
-- UTF-8 encoding
-- Files trimmed of trailing whitespace, final newline on all files
+**Formatação:**
+- Laravel Pint (`laravel/pint` v1.30.5) é o formatador oficial
+- Verificado no CI com `./vendor/bin/pint --test`; correcção manual com `./vendor/bin/pint`
+- 4 espaços, sem tabs (`.editorconfig`)
+- Fim de linha LF, UTF-8, sem espaços em fim de linha, nova linha final
 
 **Linting:**
-- No separate ESLint or Prettier config detected; Laravel Pint is the sole PHP formatter
-- Frontend CSS/JS uses Vite default formatting with no explicit linter enforced in CI
-- Tailwind CSS v4 with Vite plugin (`@tailwindcss/vite`)
+- Não há ESLint nem Prettier; o Pint é o único formatador imposto
+- O CSS e o JS seguem o comportamento padrão do Vite, sem linter no CI
 
-**PHP Version Features:**
-- PHP 8.3+ required by composer.json; 8.4 used in Docker, 8.5 on HostGator production
-- PHP 8 **Attributes** used extensively in Models instead of property arrays:
+**Funcionalidades de PHP moderno:**
+- PHP 8.3+ exigido pelo `composer.json`; 8.4 no Docker e no CI; 8.5 em produção
+- **Atributos PHP 8** nos modelos, em vez de arrays de propriedades:
   ```php
   #[Fillable(['name', 'email', 'password', 'role', 'phone', 'active', 'client_id'])]
   #[Hidden(['password', 'remember_token'])]
   class User extends Authenticatable
   ```
-- Constructor property promotion supported: not used extensively, but available
-- Match expressions supported: not detected in codebase
-- Named arguments supported: commonly used in test assertions
+- **Promoção de propriedades no construtor** em uso: `public function __construct(public Message $message)` (`MessageSent`), `public function __construct(private readonly ProjectUpdate $update)` (`ProjectUpdateNotification`)
+- **Expressões `match`** em uso: `ReportController::data()` escolhe o conjunto de dados por tipo de relatório
+- **Enums nativos não são usados** — os conjuntos fechados vivem em constantes de classe (`Project::STATUSES` e afins)
+- Atributos de teste do PHPUnit 12: `#[DataProvider('reportTypes')]` em `ReportTest`
 
-## Import Organization
+## Organização de imports
 
-**Order (PHP):**
-1. Namespace declaration
-2. Traits (if using `use` for mixins within class)
-3. External/Framework imports: `use Illuminate\*`, `use Database\Factories\*`, `use App\Models\*`
-4. Internal app imports: `use App\Http\*`, `use App\Services\*` (organized by responsibility)
+**Ordem (PHP):** declaração de namespace, depois um único bloco `use` ordenado alfabeticamente (é o Pint que o mantém assim), misturando `App\` e `Illuminate\`.
 
-Example from `app/Http/Controllers/UserController.php`:
+Exemplo de `app/Http/Controllers/Admin/ProjectPhotoController.php`:
 ```php
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\StoreUserRequest;
-use App\Http\Requests\UpdateUserRequest;
-use App\Models\Client;
-use App\Models\User;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
+use App\Http\Controllers\Controller;
+use App\Models\Photo;
+use App\Models\Project;
+use App\Models\ProjectUpdate;
+use App\Support\Thumbnail;
+use App\Traits\AuthorizesProjectAccess;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 ```
 
-**Path Aliases:**
-- `App\` maps to `app/`
-- `App\Models\` maps to `app/Models/`
-- `App\Http\Controllers\` maps to `app/Http/Controllers/`
-- `App\Http\Requests\` maps to `app/Http/Requests/`
-- `App\Providers\` maps to `app/Providers/`
-- `Database\Factories\` maps to `database/factories/`
-- `Database\Seeders\` maps to `database/seeders/`
-- `Tests\` maps to `tests/`
+**Mapeamento PSR-4 (`composer.json`):**
+- `App\` → `app/`
+- `Database\Factories\` → `database/factories/`
+- `Database\Seeders\` → `database/seeders/`
+- `Tests\` → `tests/`
+- `autoload.files`: `app/Support/helpers.php`
 
 **Frontend (JavaScript/ESM):**
-- ES Modules (import/export)
-- Alpine.js imported directly: `import Alpine from 'alpinejs'`
-- Laravel Echo for WebSocket: `import Echo from 'laravel-echo'`
-- Pusher for WebSocket transport: `import Pusher from 'pusher-js'`
+- Módulos ES: `import Alpine from 'alpinejs'`, `import Echo from 'laravel-echo'`, `import Pusher from 'pusher-js'`
+- `Alpine.start()` corre antes da ligação ao Reverb, que por sua vez está dentro de `try/catch` para não bloquear a UI se falhar
 
-## Return Type Declarations
+## Declarações de tipo de retorno
 
-**Mandatory on all public/private methods:**
-- Primitive types: `: void`, `: string`, `: bool`, `: int`, `: float`
-- Array types: `: array`, `: array<string, mixed>`, `: array<string, string>`
-- Model types: `: User`, `: View`, `: RedirectResponse`
-- Static return: `: static` (used in factories)
-- Union types supported: `: User|null` (though not extensively used)
+A prática não é uniforme e a diferença é intencionalmente visível:
 
-Example:
-```php
-public function definition(): array
-public function unverified(): static
-public function index(): View
-public function store(StoreUserRequest $request): RedirectResponse
-public function invalidateUserSessions(User $user): void
-protected function casts(): array
-```
+- **Com tipo de retorno:** modelos (`: BelongsTo`, `: HasMany`, `: bool`, `: float`, `: array`, `: void`), `FormRequest` (`: bool`, `: array`), `UserController` (`: View`, `: RedirectResponse`, `: void`), middleware (`: Response`), observers, canais, `Thumbnail` (`: ?string`, `: string`), comandos (`: int`), `ClientLayoutComposer` (`: void`, `: array`, `: int`, `: mixed`, `: bool`)
+- **Sem tipo de retorno:** todos os métodos públicos dos controllers de `Admin/` e `Client/` — devolvem `View`, `RedirectResponse` ou `JsonResponse` conforme o caso, mas a assinatura não o declara. Os métodos privados desses mesmos controllers já declaram (`private function mediaResponse(string $path): StreamedResponse`)
 
-## PHPDoc Blocks
+## Blocos PHPDoc
 
-**Usage:**
-- Used on classes, public methods, and complex logic
-- JSDoc-style `@return`, `@param`, `@throws`
-- Template types documented: `@extends Factory<User>`, `@use HasFactory<UserFactory>`
-- Example:
-```php
-/**
- * @extends Factory<User>
- */
-class UserFactory extends Factory
+- Usados em classes e métodos cuja intenção não se lê no código
+- Tipos genéricos documentados: `@extends Factory<User>`, `@use HasFactory<UserFactory>`, `@return array<string, mixed>`, `@return array<int, array{key: string, label: string, total: float, percent: float}>`
+- Muitos blocos explicam a decisão, não a mecânica — por exemplo, o cabeçalho de `ClientLayoutComposer` explica porque é que nunca se guardam modelos Eloquent na cache, e o de `AuditObserver` explica porque é que o observer é genérico
 
-/**
- * Define the model's default state.
- *
- * @return array<string, mixed>
- */
-public function definition(): array
-```
+**Comentários:**
+- Poucos comentários inline; o código é escrito para se ler sozinho
+- Referências a requisitos são frequentes e servem de rasto: `SEC-05`, `FOTO-03`, `FOTO-04`, `FASE-04`, `FIN-02`, `FIN-03`, `FIN-04`, `NOTF-01/03`, `CONF-04`, `DASH-01`, `AUTH-01`, `AUTH-04`, `T-04-02`, `SEC-01`, `D-16`
+- Marcador `ponytail:` para decisões de engenharia deliberadas com alternativa registada (`Thumbnail`, `helpers.php`, `SecurityHeaders`, `Project::expensesByMonth()`)
+- Os comentários mais recentes estão em português; os mais antigos em inglês
 
-**Comments:**
-- Minimal inline comments; code is expected to be self-documenting
-- Auth logic marked with references: `// AUTH-01`, `// T-04-02` (from traceability docs)
-- Comments used for non-obvious business logic, e.g., "Block inactive users — log out immediately so no session is persisted"
+## Desenho dos modelos
 
-## Model Design
+**Padrão:**
+- Extensão de `Illuminate\Database\Eloquent\Model` ou `Illuminate\Foundation\Auth\User`
+- `#[Fillable]` e `#[Hidden]` em vez de `$fillable`/`$hidden`
+- `protected function casts(): array` explícito
 
-**Pattern:**
-- All models extend `Illuminate\Database\Eloquent\Model` or `Illuminate\Foundation\Auth\User`
-- Use PHP 8 Attributes for `#[Fillable]`, `#[Hidden]`, `#[Cast]` declarations (not property arrays)
-- Explicit `protected function casts(): array` for type casting
-
-Example from `app/Models/User.php`:
 ```php
 #[Fillable(['name', 'email', 'password', 'role', 'phone', 'active', 'client_id'])]
 #[Hidden(['password', 'remember_token'])]
@@ -174,242 +136,146 @@ class User extends Authenticatable
 }
 ```
 
-**Relationships:**
-- Return type declarations mandatory: `: BelongsTo`, `: HasMany`, `: HasOne`
-- Methods chain fluent interface: `return $this->belongsTo(Client::class);`
-- Eager loading constraints: `$this->hasMany(Photo::class)->latest()`
+**Relações:**
+- Sempre com tipo de retorno: `: BelongsTo`, `: HasMany`, `: HasOne`
+- Ordenação por omissão na própria relação: `hasMany(Photo::class)->latest()`, `hasMany(ProjectPhase::class)->orderBy('sort_order')`, `hasMany(Message::class)->oldest()`
+- Onde essa ordenação atrapalha uma agregação, é anulada com `->reorder()` (ver `Project::expensesByCategory()` e `filteredPhotos()`)
 
-**Soft Deletes:**
-- Use `SoftDeletes` trait on models requiring archival: `User`, `Project`, `Photo`, `Document`, etc.
-- Accessed via `Model::withTrashed()->find()` or `Model::onlyTrashed()`
+**Ganchos de ciclo de vida:**
+- `protected static function booted()` em `ProjectPhase` recalcula o progresso da obra em `saved` e `deleted`
 
-## Controller Design
+**Soft deletes:**
+- `User`, `Project`, `Client`, `Photo`, `Document`, `Expense`
+- Consulta com `withTrashed()` / `onlyTrashed()`
 
-**Pattern:**
-- Extend base `Controller` class
-- Use `AuthorizesRequests` trait for policy checks
-- Method names map to RESTful verbs: `index()`, `show()`, `create()`, `store()`, `edit()`, `update()`, `destroy()`
-- Additional actions: `cover()`, `photo()`, `storePhoto()`, `toggleActive()`, `markPaid()`
+**Lógica de domínio no modelo:**
+- `Project` guarda o cálculo do progresso e as agregações financeiras, em vez de as espalhar pelos controllers
 
-Example from `app/Http/Controllers/UserController.php`:
+## Desenho dos controllers
+
+**Padrão:**
+- Estendem `App\Http\Controllers\Controller`
+- `UserController` usa o trait `AuthorizesRequests` e chama `$this->authorize()`
+- Os controllers de obra usam o trait `AuthorizesProjectAccess` e começam sempre por `$this->authorizeProjectAccess($project)`, seguido de `$this->assertBelongsToProject($project, $filho)` quando a rota é aninhada
+- Métodos RESTful (`index`, `create`, `store`, `show`, `edit`, `update`, `destroy`); acções extra com nome explícito: `cover()`, `download()`, `markPaid()`, `toggleActive()`, `linkUser()`, `unlinkUser()`, `storeUpdate()`, `pdf()`
+- Um controller por recurso aninhado: fases, fotos, despesas e documentos têm classes próprias, e o `Admin\ProjectController` fica com o CRUD da obra, a galeria filtrada e as actualizações manuais
+
+## Validação de pedidos
+
+Coexistem dois estilos, e a escolha segue a origem do código:
+
+**`FormRequest` (`app/Http/Requests/`)** — usado na gestão de utilizadores, no perfil e no login. Regras em **sintaxe de array**, com `authorize()`, `rules()` e `messages()` em português:
 ```php
-class UserController extends Controller
+public function rules(): array
 {
-    use AuthorizesRequests;
-
-    public function index(): View
-    {
-        $this->authorize('viewAny', User::class);
-        return view('users.index', compact('users'));
-    }
-
-    public function store(StoreUserRequest $request): RedirectResponse
-    {
-        $user = User::create($request->validated() + ['active' => true]);
-        return redirect()->route('users.index')->with('success', 'Usuário criado...');
-    }
+    return [
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'email', 'unique:users,email'],
+        'password' => ['required', 'confirmed', 'min:8'],
+    ];
 }
 ```
 
-**Authorization:**
-- `$this->authorize()` called at method start to check policies
-- Returns 403 if not authorized
-- Policies defined in `app/Policies/` (if complex authorization required)
-- Middleware enforced at route level via `middleware(['auth', 'role:admin'])` in routes/web.php
-
-## Request Validation
-
-**Pattern:**
-- Use `FormRequest` classes extending `Illuminate\Foundation\Http\FormRequest`
-- Location: `app/Http/Requests/`
-- Implement `authorize(): bool` to check if user can make request
-- Implement `rules(): array` with validation rules
-- Implement `messages(): array` with Portuguese error messages
-
-Example from `app/Http/Requests/StoreUserRequest.php`:
+**`$request->validate()` no controller** — usado em todo o resto (obras, fases, fotos, despesas, documentos, pagamentos, definições, relatórios). Regras em **string com barras verticais**:
 ```php
-class StoreUserRequest extends FormRequest
-{
-    public function authorize(): bool
-    {
-        return $this->user()->isAdmin();
-    }
-
-    public function rules(): array
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'confirmed', 'min:8'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'name.required' => 'Este campo é obrigatório.',
-            'email.unique' => 'Este e-mail já está em uso.',
-        ];
-    }
-}
+$data = $request->validate([
+    'name' => 'required|string|max:200',
+    'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
+    'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+]);
 ```
 
-**Validation Rules:**
-- Use array syntax for rules (not pipe-delimited strings): `['required', 'email', 'unique:users,email']`
-- Use `Rule::in()` for enum-style validation: `Rule::in([User::ROLE_ADMIN, User::ROLE_CLIENT])`
-- File validation with MIME types: `mimetypes:application/pdf` for documents
-- Password confirmation: `'password' => ['required', 'confirmed', 'min:8']`
+**Regras recorrentes:**
+- Conjuntos fechados derivados das constantes: `'in:'.implode(',', array_keys(Expense::CATEGORIES))`
+- Uploads sempre com `mimes:` e `max:` explícitos — recibos `pdf,jpg,jpeg,png,webp|max:10240`, documentos `pdf,docx,xlsx,xls,doc,jpg,jpeg,png,webp|max:51200`, fotos e vídeos `jpeg,jpg,png,webp,gif,mp4,mov,avi|max:51200`
+- Filhos validados contra o pai na própria regra: `'phase_id' => 'nullable|exists:project_phases,id,project_id,'.$project->id`
 
-## Error Handling
+## Tratamento de erros
 
-**Strategy:**
-- Exception rendering configured in `bootstrap/app.php` via `->withExceptions()`
-- No custom exception classes defined; use Laravel's built-in exceptions
-- Framework automatically handles HTTP exceptions (401, 403, 404, 422, 500)
-- JSON responses sent only for `api/*` routes (none currently exist)
+**Estratégia:**
+- Configurado em `bootstrap/app.php` com `shouldRenderJsonWhen(fn ($r) => $r->is('api/*'))`
+- Não existem classes de excepção próprias
+- As excepções HTTP do framework tratam 401/403/404/422/500
 
-**Patterns:**
-- `abort(403)` for permission denied (used in middleware)
-- `abort(422, 'Custom message')` for validation failures with specific messages (e.g., cannot demote last admin)
-- `ValidationException::withMessages([...])` for form validation errors with Portuguese messages
-- Soft failures: inactive users logged out immediately during auth without persisting session
-
-Example from `app/Http/Middleware/EnsureUserRole.php`:
-```php
-if (! auth()->check() || ! in_array(auth()->user()->role, $roles, true)) {
-    abort(403);
-}
-```
-
-Example from `app/Http/Requests/Auth/LoginRequest.php`:
-```php
-if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-    throw ValidationException::withMessages([
-        'email' => 'E-mail ou senha incorretos.',
-    ]);
-}
-
-if (! Auth::user()->active) {
-    Auth::logout();
-    throw ValidationException::withMessages([
-        'email' => 'Sua conta está inativa. Entre em contato com o administrador.',
-    ]);
-}
-```
+**Padrões:**
+- `abort(403)` no `EnsureUserRole`
+- `abort_unless(...)` / `abort_if(...)` nos controllers, com o código explícito: 403 para acesso indevido, 404 para recursos de outra obra, para tipos de relatório desconhecidos e para media sem ficheiro em disco
+- `ValidationException::withMessages()` no `LoginRequest`, com mensagens em português
+- Falhas que não devem partir o pedido são apanhadas e registadas: `Thumbnail::generate()` devolve `null` e regista um aviso; o `ClientLayoutComposer` apanha `Throwable` em torno de cada leitura e escrita de cache
 
 ## Logging
 
-**Framework:** 
-- Laravel's logging system (Monolog-based)
-- PSR-3 interface via `Illuminate\Support\Facades\Log`
-- Real-time log tailing in dev: `php artisan pail` (or `composer run dev` includes it)
-- Log files: `storage/logs/` (one file per day by default)
-
-**Patterns:**
-- Not extensively logged in current codebase (focus on core auth/authorization)
-- Available for custom logging via `Log::info()`, `Log::error()`, `Log::warning()`
-- Queue job failures logged automatically by Laravel queue system
+- Sistema de logging do Laravel (Monolog), via `Illuminate\Support\Facades\Log`
+- Leitura em tempo real durante o desenvolvimento: `php artisan pail`
+- Usado com parcimónia e sempre com contexto: `Log::warning('Thumbnail generation failed', ['path' => ..., 'error' => ...])`
+- Dados de pagamento nunca chegam ao trilho de auditoria (`AuditObserver::REDACTED`)
 
 ## Middleware
 
-**Pattern:**
-- Located in `app/Http/Middleware/`
-- Implement `handle(Request $request, Closure $next): Response`
-- Return `$next($request)` to pass to next middleware or controller
-- Return HTTP response to short-circuit pipeline
+**Padrão:**
+- Em `app/Http/Middleware/`, com `handle(Request $request, Closure $next): Response`
+- Registo em `bootstrap/app.php`: `EnsureUserIsActive` e `SecurityHeaders` são anexados ao grupo `web`; `EnsureUserRole` fica com o alias `role`
+- Aplicação nas rotas por `middleware(['auth', 'role:admin,manager'])`
 
-Example from `app/Http/Middleware/EnsureUserRole.php`:
-```php
-public function handle(Request $request, Closure $next, string ...$roles): Response
-{
-    if (! auth()->check() || ! in_array(auth()->user()->role, $roles, true)) {
-        abort(403);
-    }
-    return $next($request);
-}
-```
+## Componentes Blade
 
-**Registration:**
-- Registered in `bootstrap/app.php` via `$middleware->alias()` or `appendToGroup()`
-- Applied in routes via `middleware(['role:admin,manager'])` syntax
+**Padrão:**
+- Ficheiros em `resources/views/components/`, em kebab-case
+- `@props` para declarar atributos esperados
+- `{{ $attributes->merge([...]) }}` para deixar o chamador acrescentar classes Tailwind
+- Conteúdo por `{{ $slot }}`
 
-## Blade Components
-
-**Pattern:**
-- Located in `resources/views/components/`
-- Kebab-case filenames: `text-input.blade.php`, `primary-button.blade.php`, `data-table.blade.php`
-- Use `@props` to declare expected attributes
-- Spread attributes with `{{ $attributes->merge([...]) }}` for TailwindCSS classes
-- Slot content via `{{ $slot }}`
-
-Example from `resources/views/components/text-input.blade.php`:
 ```blade
 @props(['disabled' => false])
-<input @disabled($disabled) {{ $attributes->merge(['class' => 'border-gray-300 focus:border-indigo-500...']) }}>
+<input @disabled($disabled) {{ $attributes->merge(['class' => '...']) }}>
 ```
 
-Example from `resources/views/components/data-table.blade.php`:
-```blade
-@props(['head' => null])
-<div {{ $attributes->merge(['class' => 'bg-white rounded-xl shadow-sm...']) }}>
-    <table>
-        @if ($head) <thead>{{ $head }}</thead> @endif
-        <tbody>{{ $slot }}</tbody>
-    </table>
-</div>
-```
+- Os layouts têm classe em `app/View/Components/` e são usados como `<x-admin-layout>`, `<x-client-layout>`, `<x-guest-layout>`
 
-**Usage in Views:**
-- Invoked with `<x-component-name>` tag
-- Pass attributes: `<x-text-input :disabled="$isDisabled" />`
-- Pass slots: `<x-data-table><thead>...</thead></x-data-table>`
+## Idioma e localização
 
-## Language & Localization
+**Dualidade deliberada:**
+- **Identificadores PHP** (classes, métodos, variáveis): inglês — `Project`, `storeUpdate()`, `$manager`
+- **URLs visíveis ao utilizador:** português — `/obras`, `/clientes`, `/relatorios`, `/auditoria`
+- **Nomes de rota:** inglês — `admin.projects.show`
+- **Texto de interface, mensagens flash e de validação:** português, escrito directamente nas vistas e nos controllers
+- **Etiquetas de domínio:** constantes em português dentro das classes — `Project::STATUSES`, `AuditLog::LABELS`, `ReportController::TYPES`
 
-**Naming Convention Duality:**
-- **PHP identifiers (classes, methods, variables):** English — `User`, `Project`, `storePhoto()`, `$manager`
-- **User-facing routes/URLs:** Portuguese — `/obras`, `/clientes`, `/fotos`, `/mensagens`, `/pagamentos`
-- **UI/Form messages:** Portuguese — "Este campo é obrigatório", "Sua conta está inativa", "Usuário criado com sucesso"
-- **Route names:** English — `route('admin.projects.show')`, `route('portal.dashboard')`
+**Ficheiros de tradução:**
+- Existe um único ficheiro: `lang/pt_BR.json`, com as mensagens do framework, de autenticação e de validação
+- As strings das vistas **não** passam por `__()`; estão escritas literalmente no Blade
+- `APP_LOCALE` no `.env.example` está a `en`
 
-**Translation Files:**
-- Laravel `resources/lang/pt/` and `resources/lang/en/` (if applicable)
-- Laravel's `trans()` function used for rate-limit messages: `trans('auth.throttle', ['seconds' => $seconds])`
+## Base de dados e consultas
 
-## Database & Query Patterns
+**Query builder:**
+- Interface fluente com `when()` para condicionais: `Project::query()->when($isManager, fn ($q) => $q->where('manager_id', auth()->id()))`
+- Filtros de pesquisa condicionados por `$request->filled(...)`
+- Paginação com `->paginate(n)->withQueryString()` — 20 em obras, clientes e relatórios, 50 na auditoria; `UserController` usa `paginate(15)` sem `withQueryString()`
+- Agregações em SQL, não em memória: `selectRaw()` no dashboard e em `Project::expensesByCategory()` / `expensesByMonth()`
+- `SUBSTR(spent_at, 1, 7)` em vez de `DATE_FORMAT`/`strftime`, para o mesmo SQL funcionar em MySQL e SQLite
+- `(clone $statsQuery)` para reutilizar uma base de consulta sem a contaminar
 
-**Query Builder:**
-- Fluent interface: `User::query()->latest()->paginate(15)`
-- Method chaining for filtering: `User::where('role', User::ROLE_ADMIN)->where('active', true)`
-- Soft delete queries: `User::withTrashed()->find()`, `User::onlyTrashed()`
+## Padrões específicos
 
-**Example from UserController:**
-```php
-$users = User::query()->latest()->paginate(15);
-$found = User::withTrashed()->find($user->id);
-$isLastActiveAdmin = User::where('role', User::ROLE_ADMIN)
-    ->where('active', true)
-    ->whereKeyNot($user->id)
-    ->doesntExist();
-```
+**Controlo de acesso por papel:**
+- Constantes `User::ROLE_ADMIN|ROLE_MANAGER|ROLE_FINANCIAL|ROLE_CLIENT` e os métodos `isAdmin()`, `isManager()`, `isFinancial()`, `isClient()`
+- Três níveis: middleware `role:` na rota, Gates (`access-admin`, `manage-users`, `access-financial`) e o trait `AuthorizesProjectAccess` ao nível da obra
 
-## Special Patterns
+**Definições:**
+- Lidas por `Setting::get('chave', 'omissão')`, com cache `rememberForever`; escritas por `Setting::set()`, que invalida a chave
+- Chaves em uso: `company_name`, `company_email`, `company_phone`, `allow_comments`, `show_client_financials`, `currency`, `progress_mode`, `logo_url` e `notify_{tipo}` por cada tipo de `ProjectUpdate::TYPES`
 
-**Role-Based Access Control (RBAC):**
-- User model constants: `User::ROLE_ADMIN`, `User::ROLE_CLIENT`, `User::ROLE_MANAGER`, `User::ROLE_FINANCIAL`
-- Helper methods: `$user->isAdmin()`, `$user->isClient()`, `$user->isManager()`, `$user->isFinancial()`
-- Middleware: `middleware(['role:admin,manager'])` enforces multiple roles
-- Policies in routes: `$this->authorize('viewAny', User::class)` checks policy rules
+**Formatação de dinheiro:**
+- Nunca `number_format()` directo nas vistas — usa-se sempre `money($valor)`, que resolve o símbolo a partir da definição `currency`
 
-**Rate Limiting:**
-- Built-in login throttling: 5 attempts per email|IP before lockout
-- Configured via `RateLimiter::tooManyAttempts()` and `RateLimiter::hit()` in LoginRequest
+**Limitação de taxa:**
+- Login com bloqueio ao fim de 5 tentativas por `email|IP` (`LoginRequest`)
+- `throttle:20,1` no envio de mensagens do cliente, `throttle:60,1` em marcar como lidas, `throttle:10,1`/`throttle:30,1` nas subscrições push, `throttle:6,1` nas rotas de verificação de e-mail
 
-**Session Management:**
-- Database-backed sessions via `config('session.driver')` 
-- Manual session invalidation: `DB::table('sessions')->where('user_id', $user->id)->delete()`
-- Used when deactivating users to force logout
+**Gestão de sessão:**
+- Sessões em base de dados; invalidação manual com `DB::table('sessions')->where('user_id', $user->id)->delete()` ao desactivar um utilizador
 
 ---
 
-*Convention analysis: 2026-08-20*
+*Análise de convenções: 2026-08-22*

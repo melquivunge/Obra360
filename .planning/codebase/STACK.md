@@ -1,158 +1,158 @@
-# Technology Stack
+# Stack Tecnológica
 
-**Analysis Date:** 2026-08-20
+**Data da análise:** 2026-08-22
 
-## Languages
+## Linguagens
 
-**Primary:**
-- PHP 8.3+ (required by `composer.json`), PHP 8.4 (Docker), PHP 8.5 (HostGator production) - Server-side application logic, routing, ORM, queue processing, WebSocket handling
-- JavaScript ES Modules - Frontend asset entry point at `resources/js/app.js`
-- CSS via Tailwind v4 - Styling entry point at `resources/css/app.css`
+**Principais:**
+- PHP 8.3+ (exigido pelo `composer.json`), PHP 8.4 (Docker e CI), PHP 8.5 (produção HostGator, forçada no deploy via `uapi LangPHP php_set_vhost_versions version=ea-php85`) — lógica de servidor, routing, ORM, filas, WebSockets
+- JavaScript (módulos ES) — ponto de entrada em `resources/js/app.js`
+- CSS via Tailwind v4 — ponto de entrada em `resources/css/app.css`
 
 ## Runtime
 
-**Environment:**
-- PHP-FPM 8.4 (Docker container `obra360_app`, image `php:8.4-fpm`)
-- Node.js v24 (Docker build stage), v24-26 (host development)
-- Composer 2 (latest, COPY from composer official image in Dockerfile)
-- npm (host only, used for build tooling — not a runtime server)
+**Ambiente:**
+- PHP-FPM 8.4 (contentor Docker `obra360_app`, imagem `php:8.4-fpm`)
+- Node.js 24-Alpine (fase de build do `Dockerfile`), Node 24 no CI (`.github/workflows/laravel.yml`)
+- Composer 2 (`COPY --from=composer:latest` no `Dockerfile`)
+- npm (só ferramenta de build; não é servidor em runtime)
 
-**Package Manager:**
-- Composer 2 - PHP dependency manager
-  - Lockfile: `composer.lock` (present and committed)
-  - Vendor directory included in production deployment (`docker-compose.yml`, GitHub Actions workflow)
-- npm - Node dependency manager
-  - Lockfile: NOT committed (only `package.json` present)
-  - `package-lock.json` excluded from deployment tar
+**Gestor de pacotes:**
+- Composer 2 — dependências PHP
+  - Lockfile: `composer.lock` presente e versionado
+  - O `vendor/` vai no pacote de deploy (`composer install --no-dev --optimize-autoloader` antes do `tar`)
+  - `autoload.files` carrega `app/Support/helpers.php` em todos os processos
+- npm — dependências Node
+  - Lockfile: `package-lock.json` presente e versionado; `npm ci` é usado no `Dockerfile` e no CI
+  - O pacote de deploy exclui `.git`, `.github`, `.env`, `node_modules`, `storage/app`, `storage/logs` e `*.docx`
 
 ## Frameworks
 
-**Core:**
-- Laravel v13.8+ (`laravel/framework`) - Full-stack MVC PHP framework; routing, ORM (Eloquent), queues, events, broadcasting, mail, validation
-- Laravel Reverb ^1.10 (`laravel/reverb`) - First-party WebSocket server for real-time broadcasting; replaces Pusher as primary
-- Laravel Breeze ^2.4 (`laravel/breeze`) - Scaffolded authentication (dev dependency only)
+**Núcleo:**
+- Laravel v13.26.1 (`laravel/framework`, requisito `^13.8`) — routing, Eloquent, filas, eventos, broadcasting, mail, validação
+- Laravel Reverb v1.11.1 (`laravel/reverb`) — servidor WebSocket de primeira parte para broadcasting
+- Laravel Breeze v2.4.2 (`laravel/breeze`, só em `require-dev`) — scaffolding de autenticação. O registo público está desactivado: não existe `RegisteredUserController` nem rota `/register` (ver `routes/auth.php` e `tests/Feature/Auth/RegistrationTest.php`)
 
 **Frontend:**
-- Vite 8.0 (`vite`) - Frontend asset bundler; config at `vite.config.js`
-- laravel-vite-plugin 3.1 (`laravel-vite-plugin`) - Bridges Vite with Laravel's asset manifest
-- Tailwind CSS v4 (`tailwindcss`, `@tailwindcss/vite`) - Utility-first CSS framework integrated via Vite plugin
-- Alpine.js v3.4.2 (`alpinejs`) - Minimal JavaScript framework for DOM manipulation; used for modals, toggles, form validation
+- Vite 8 (`vite` ^8.2.1) — bundler; configuração em `vite.config.js`
+- `laravel-vite-plugin` ^3.2 — liga o Vite ao manifest de assets do Laravel
+- Tailwind CSS v4 (`tailwindcss` ^4.0.0, `@tailwindcss/vite` ^4.3.3) — integrado como plugin do Vite
+- Alpine.js ^3.16.2 — usado em modais, dropdowns e toggles
 
-**Broadcasting/WebSockets (Client-side):**
-- Laravel-Echo ^2.3.7 (`laravel-echo`) - WebSocket event broadcasting client
-- Pusher.js ^8.5.0 (`pusher-js`) - Pusher-protocol client that Laravel Echo uses to talk to Reverb (Reverb speaks the Pusher protocol) — not a fallback transport
+**Broadcasting/WebSockets (cliente):**
+- `laravel-echo` ^2.4.0 — cliente de broadcasting; instanciado com `broadcaster: 'reverb'` em `resources/js/app.js`, dentro de um `try/catch` para não bloquear a UI
+- `pusher-js` ^8.6.0 — cliente do protocolo Pusher que o Echo usa para falar com o Reverb
 
-**Testing:**
-- PHPUnit 12.5.12 (`phpunit/phpunit`) - PHP unit/feature test runner; config at `phpunit.xml`
-- Mockery 1.6 (`mockery/mockery`) - Mock object library for PHPUnit
-- FakerPHP 1.23 (`fakerphp/faker`) - Test data generation
-
-**Build/Dev:**
-- Laravel Pint 1.27 (`laravel/pint`) - PHP code style fixer (PSR-12); run via `./vendor/bin/pint`
-- Laravel Pail 1.2.5 (`laravel/pail`) - Real-time log tailing in terminal
-- Laravel Pao 1.0.6 (`laravel/pao`) - Process orchestration companion
-- Concurrently 9.0.1 (`concurrently`) - Runs multiple dev processes in parallel; orchestrates artisan serve, queue, pail, vite, reverb
-- Nunomaduro Collision 8.6 (`nunomaduro/collision`) - CLI error reporting and formatting
-
-## Key Dependencies
-
-**Critical:**
-- `laravel/framework` v13.8+ - Core framework; provides everything (Eloquent, Blade, HTTP kernel, queues, events, broadcasting)
-- `laravel/reverb` ^1.10 - WebSocket server for real-time features (notifications, live updates)
-- `guzzlehttp/guzzle` 7.12.3 - HTTP client; used for WhatsApp Business API integration via Meta Graph API
-
-**Infrastructure & Logging:**
-- `monolog/monolog` 3.10.0 - PSR-3 logging library used by Laravel's logging system
-- `laravel/tinker` v3.0.2 - REPL for interactive shell access
-- `vlucas/phpdotenv` 5.6.3 - `.env` file parsing
-
-**Filesystem & Storage:**
-- `league/flysystem` 3.35.1 - Filesystem abstraction layer
-- `league/flysystem-local` 3.31.0 - Local disk driver
-- (S3 not currently in composer.json but available via flysystem-aws-s3-v3)
-
-**Utilities:**
-- `nesbot/carbon` 3.13.0 - Date/time library; Laravel datetime standard
-- `symfony/routing`, `symfony/process`, `symfony/translation`, `symfony/uid` v8.1.0 - Symfony components bundled with Laravel
-- `psy/psysh` v0.12.23 - Shell REPL used by `artisan tinker`
+**Relatórios PDF:**
+- `barryvdh/laravel-dompdf` v3.1.2 (sobre `dompdf/dompdf` v3.1.6) — exportação PDF dos relatórios em `App\Http\Controllers\Admin\ReportController::pdf()`; `setIsRemoteEnabled(false)` impede o PDF de ir buscar recursos remotos
 
 **Web Push:**
-- `minishlink/web-push` — **NOT installed**. `app/Channels/WebPushChannel.php` guards on `class_exists(WebPush::class)` and logs "WebPush skipped", so **no push notification is ever delivered** until `composer require minishlink/web-push` is run. Subscriptions are still captured and stored.
+- `minishlink/web-push` v8.0.0 — instalado. `app/Channels/WebPushChannel.php` continua a guardar em `class_exists(WebPush::class)`, mas o pacote existe, pelo que o envio ocorre quando `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` estão definidas e o utilizador tem registos em `push_subscriptions`
 
-## PHP Extensions (Installed in Docker)
+**Testes:**
+- PHPUnit 12.5.30 (`phpunit/phpunit`) — configuração em `phpunit.xml`
+- Mockery 1.6.14 (`mockery/mockery`)
+- FakerPHP 1.24.1 (`fakerphp/faker`)
 
-- `pdo_mysql` - MySQL database driver
-- `mbstring` - Multibyte string handling (UTF-8)
-- `exif` - Image metadata reading
-- `pcntl` - Process control (required for queue workers)
-- `bcmath` - Arbitrary precision math
-- `gd` - Image processing (photo manipulation, thumbnails)
-- `zip` - Archive handling (export/import)
+**Build/Dev:**
+- Laravel Pint v1.30.5 (`laravel/pint`) — formatador PHP; `./vendor/bin/pint --test` no CI
+- Laravel Pail v1.2.7 (`laravel/pail`) — leitura de logs em tempo real
+- Laravel Pao v1.1.4 (`laravel/pao`)
+- Concurrently ^10.0.5 — corre `artisan serve`, `queue:listen`, `pail`, `npm run dev` e `reverb:start` em paralelo (script `dev` do `composer.json`)
+- Nunomaduro Collision v8.9.5 — formatação de erros em CLI
 
-## Configuration
+## Dependências-chave
 
-**Environment:**
-- Configured via `.env` file; template at `.env.example`
-- Key variables: `APP_NAME`, `APP_KEY`, `APP_ENV`, `APP_URL`, `APP_DEBUG`, `APP_LOCALE`
-- Database: `DB_CONNECTION` (mysql), `DB_HOST` (db), `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
-- Queue: `QUEUE_CONNECTION` (database)
+**Críticas:**
+- `laravel/framework` v13.26.1
+- `laravel/reverb` v1.11.1 — WebSockets (mensagens em tempo real)
+- `barryvdh/laravel-dompdf` v3.1.2 — geração de PDF
+- `minishlink/web-push` v8.0.0 — notificações push
+- `guzzlehttp/guzzle` 7.15.3 — cliente HTTP; usado em `app/Channels/WhatsAppChannel.php` contra a Meta Graph API
+
+**Infraestrutura e logging:**
+- `monolog/monolog` 3.10.0 — logging PSR-3
+- `laravel/tinker` v3.0.2 e `psy/psysh` v0.12.23 — REPL
+- `vlucas/phpdotenv` v5.6.4 — leitura do `.env`
+
+**Ficheiros e armazenamento:**
+- `league/flysystem` 3.35.2 e `league/flysystem-local` 3.31.0
+- `league/flysystem-aws-s3-v3` **não está instalado**. O disco `s3` está declarado em `config/filesystems.php`, mas usá-lo exige `composer require league/flysystem-aws-s3-v3`
+
+**Utilitários:**
+- `nesbot/carbon` 3.13.2 — datas
+- Componentes Symfony v7.4.x (`symfony/routing` v7.4.15, entre outros) trazidos pelo Laravel
+
+## Extensões PHP (instaladas no Docker)
+
+- `pdo_mysql` — driver MySQL
+- `mbstring` — strings multibyte (UTF-8)
+- `exif` — metadados de imagem
+- `pcntl` — controlo de processos (necessário aos workers de fila)
+- `bcmath` — aritmética de precisão arbitrária
+- `gd` — processamento de imagem; é o que `App\Support\Thumbnail` usa para gerar as miniaturas
+- `zip` — arquivos
+
+## Configuração
+
+**Ambiente:**
+- Configurado por `.env`; modelo em `.env.example`
+- Aplicação: `APP_NAME`, `APP_KEY`, `APP_ENV`, `APP_URL`, `APP_DEBUG`, `APP_LOCALE` (valor de exemplo: `en`)
+- Base de dados: `DB_CONNECTION` (mysql), `DB_HOST` (db), `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `DB_ROOT_PASSWORD`
+- Filas: `QUEUE_CONNECTION` (database)
 - Cache: `CACHE_STORE` (database)
-- Session: `SESSION_DRIVER` (database), `SESSION_LIFETIME` (120 min), `SESSION_ENCRYPT` (true)
-- Broadcasting: `BROADCAST_CONNECTION` (log in dev, reverb in production)
-- Filesystem: `FILESYSTEM_DISK` (local)
-- Mail: `MAIL_MAILER` (log in dev, configurable in production)
-- Reverb: `REVERB_ALLOWED_ORIGINS`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_APP_ID`, `REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME`
-- WebSockets (frontend): `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT`, `VITE_REVERB_SCHEME`
-- WhatsApp: `WHATSAPP_PHONE_ID`, `WHATSAPP_TOKEN`
+- Sessão: `SESSION_DRIVER` (database), `SESSION_LIFETIME` (120), `SESSION_ENCRYPT` (true)
+- Broadcasting: `BROADCAST_CONNECTION` (log no exemplo), `REVERB_ALLOWED_ORIGINS`
+- Ficheiros: `FILESYSTEM_DISK` (local)
+- Mail: `MAIL_MAILER` (log no exemplo)
+- WhatsApp: `WHATSAPP_PHONE_ID`, `WHATSAPP_TOKEN` (lidos por `config/services.php`)
 - Web Push VAPID: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+- Seeding: `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` (o `DatabaseSeeder` recusa correr em produção sem a segunda)
+- AWS: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_USE_PATH_STYLE_ENDPOINT`
 
-**Frontend Build:**
-- Vite config: `vite.config.js`
-  - Entry points: `resources/css/app.css`, `resources/js/app.js`
-  - Tailwind CSS v4 plugin enabled
-  - Font: Bunny Fonts CDN (Instrument Sans, weights 400/500/600)
-  - Hot reload enabled
-  - Excludes view cache from watch
+**Build de frontend:**
+- `vite.config.js`
+  - Entradas: `resources/css/app.css`, `resources/js/app.js`
+  - Plugin Tailwind CSS v4 activo
+  - Fonte `Instrument Sans` (pesos 400/500/600) via helper `bunny` do `laravel-vite-plugin/fonts`
+  - `refresh: true`; `server.watch.ignored` exclui `storage/framework/views`
 
-**PHP Runtime Config (Docker):**
-- File: `docker/php/local.ini`
-- Upload limit: `upload_max_filesize = 64M`
-- Post data limit: `post_max_size = 64M`
-- Execution: `max_execution_time = 300s`
-- Memory: `memory_limit = 256M`
+**Configuração PHP (Docker):**
+- `docker/php/local.ini`
+- `upload_max_filesize = 64M`, `post_max_size = 64M`, `max_execution_time = 300`, `memory_limit = 256M`
 
 **Docker Compose:**
-- File: `docker-compose.yml`
-- Services: `app` (PHP-FPM), `webserver` (Nginx Alpine), `db` (MySQL 8.0)
-- Network: `obra360_network` (bridge)
-- Volume: `db_data` (persistent MySQL data)
-- Port: 8000 (Nginx)
+- `docker-compose.yml`
+- Serviços: `app` (PHP-FPM), `webserver` (Nginx Alpine), `db` (MySQL 8.0)
+- Rede `obra360_network` (bridge), volume `db_data`
+- Porta exposta: 8000 (Nginx)
+- As variáveis de MySQL são obrigatórias (`${DB_DATABASE:?...}`) — o compose falha se faltarem no `.env`
 
-**Dockerfile (Multi-stage):**
-- Frontend build stage: Node.js 24-Alpine, builds CSS/JS via Vite
-- App stage: PHP 8.4-FPM, copies built frontend, installs PHP deps with `--no-dev`
-- Exposes: Port 9000 (PHP-FPM)
-- Entrypoint: `php-fpm`
+**Dockerfile (multi-stage):**
+- Fase `frontend`: `node:24-alpine`, `npm ci` a partir de `package.json` + `package-lock.json`, `npm run build`
+- Fase de aplicação: `php:8.4-fpm`, copia `public/build` da fase anterior, `composer install --no-dev`
+- Expõe a porta 9000; comando `php-fpm`
 
-## Platform Requirements
+## Requisitos de plataforma
 
-**Development:**
-- Docker + Docker Compose (recommended via `docker-compose.yml`)
-- PHP 8.3+ and Composer 2 (for host-level artisan commands)
-- Node.js v24+ and npm (for frontend build)
-- Run via `composer run dev` (starts artisan serve, queue worker, pail, vite, reverb in parallel via concurrently)
+**Desenvolvimento:**
+- Docker + Docker Compose (`docker-compose.yml`)
+- PHP 8.3+ e Composer 2 para comandos artisan no host
+- Node.js 24+ e npm para o build de frontend
+- `composer run dev` levanta serve, queue, pail, vite e reverb em paralelo
 
-**Production (HostGator/cPanel):**
-- PHP 8.5 (ea-php85 via cPanel API)
-- SSH access (for GitHub Actions deployment)
-- Deployed to: `obra360app.com` (via HostGator shared hosting)
-- Deployment mechanism: GitHub Actions workflow builds assets, compresses files, uploads via SCP, extracts, and runs artisan commands
+**Produção (HostGator/cPanel):**
+- PHP 8.5 (`/opt/cpanel/ea-php85/root/usr/bin/php`)
+- Acesso SSH para o deploy do GitHub Actions
+- Domínio: `obra360app.com`
+- Pós-deploy: `optimize:clear`, `migrate --force`, `config:cache`, `route:cache`, `view:cache`, `event:cache`, `storage:link --force`
 
 **CI/CD:**
 - GitHub Actions (`.github/workflows/laravel.yml`)
-- Test job: PHP 8.4, Node 24, SQLite database, runs Pint, tests, audits
-- Deploy job: Builds production assets, deploys to HostGator via SSH (only on main branch push)
+- Job `test`: PHP 8.4, Node 24, SQLite, `pint --test`, `npm run build`, `php artisan test`, `composer audit --abandoned=report`, `npm audit --audit-level=moderate`
+- Job `deploy`: só em push para `main`; build de assets, `tar` com `vendor/`, `scp` e comandos artisan por SSH
+- `.github/dependabot.yml` está presente — as actualizações de dependências têm PR automático
 
 ---
 
-*Stack analysis: 2026-08-20*
+*Análise de stack: 2026-08-22*

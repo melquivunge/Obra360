@@ -14,7 +14,7 @@ The final PHP image receives `public/build` from that build stage and does not i
 
 New project covers and photos are stored on the private `local` disk and served through authenticated routes.
 
-Existing files that were previously stored in `storage/app/public/covers` or `storage/app/public/projects/*/photos` should be migrated before removing the temporary public-disk fallback.
+Files that were previously stored under `storage/app/public` — covers, photos, thumbnails and documents — are migrated by the command below. The public-disk fallback was removed on 2026-08-22: media is now read only from the private `local` disk, and a record whose file is missing answers 404 instead of 500. Run the migration in any environment that still has media on the public disk **before** deploying that change there.
 
 Preview the migration:
 
@@ -34,7 +34,7 @@ After validating that media works through the application, remove the public sou
 php artisan obra360:media:migrate-public --commit --delete-source
 ```
 
-Keep the fallback from `public` to `local` until the migration has been run and verified in the target environment.
+Production was migrated on 2026-08-22. The dry-run found eight media records whose files were on neither disk — the production database had been copied from a local environment and the files never followed. They were uploaded by hand into `storage/app/private`; the dry-run now reports `already_private: 8`, `missing_public: 0`.
 
 ## Access and deletion decisions
 

@@ -1,275 +1,222 @@
-# Architecture
+# Arquitectura
 
-**Analysis Date:** 2026-08-20
+**Data da análise:** 2026-08-22
 
-## Pattern Overview
+## Visão do padrão
 
-**Overall:** Layered MVC with role-based access control and real-time event broadcasting
+**Geral:** MVC em camadas, com controlo de acesso por papel e broadcasting de eventos em tempo real
 
-**Key Characteristics:**
-- Server-side rendering (Blade templating) — no SPA/API-first architecture
-- Role-based authorization (admin, manager, financial, client) enforced at middleware and trait levels
-- Multi-tenant portal (clients and projects isolated per user role)
-- Real-time messaging via Laravel Broadcasting (private channels per project)
-- Event-driven notifications (ProjectUpdateObserver → ProjectUpdateNotification → WhatsApp/WebPush channels)
-- Soft deletes on core models (User, Project, Client) for audit compliance
-- Filesystem abstraction ready for S3 (local disk primary, public/private storage separated)
+**Características principais:**
+- Renderização no servidor (Blade) — não existe SPA nem camada de API (`bootstrap/app.php` só devolve JSON para `api/*`, e não há rotas `api/*`)
+- Quatro papéis (`admin`, `manager`, `financial`, `client`), aplicados por middleware, por Gates e pelo trait `AuthorizesProjectAccess`
+- Isolamento por cliente: o portal só devolve obras cujo `client_id` coincide com o do utilizador autenticado
+- Mensagens em tempo real por canais privados de broadcasting (`project.{projectId}`)
+- Notificações accionadas por observer (`ProjectUpdateObserver` → `ProjectUpdateNotification` → canais WhatsApp, WebPush e `mail`)
+- Trilho de auditoria genérico (`AuditObserver` sobre nove modelos → tabela `audit_logs`)
+- Soft deletes em `User`, `Project`, `Client`, `Photo`, `Document`, `Expense`
+- Media servida exclusivamente do disco privado `local`, através de rotas autenticadas
 
-## Layers
+## Camadas
 
-**HTTP Request Layer:**
-- Purpose: Receives requests, routes to controllers, enforces middleware
-- Location: `routes/web.php`, `bootstrap/app.php`
-- Contains: Route definitions, middleware aliases (`role`, `EnsureUserIsActive`), exception config
-- Depends on: Middleware, Controllers, Models
-- Used by: Browser / HTTP clients
+**Camada HTTP:**
+- Objectivo: recebe pedidos, encaminha para controllers, aplica middleware
+- Localização: `routes/web.php`, `routes/auth.php`, `bootstrap/app.php`
+- Contém: definições de rota, alias de middleware (`role`), grupo `web` com `EnsureUserIsActive` e `SecurityHeaders`, configuração de excepções, registo do comando `MigratePublicProjectMedia`
+- Depende de: middleware, controllers, modelos
 
-**Middleware Layer:**
-- Purpose: Authentication, role-based access control, user status validation
-- Location: `app/Http/Middleware/`
-- Contains: `EnsureUserRole.php` (role gate at route level), `EnsureUserIsActive.php` (logout inactive users)
-- Depends on: Authenticatable User model, session state
-- Used by: Route middleware groups
+**Camada de middleware:**
+- Localização: `app/Http/Middleware/`
+- Contém: `EnsureUserRole.php` (403 quando o papel não está na lista), `EnsureUserIsActive.php` (termina a sessão de utilizadores desactivados), `SecurityHeaders.php` (nosniff, SAMEORIGIN, Referrer-Policy, Permissions-Policy, X-Permitted-Cross-Domain-Policies e HSTS só sobre HTTPS)
 
-**Authorization & Traits:**
-- Purpose: Fine-grained project-level access control
-- Location: `app/Traits/AuthorizesProjectAccess.php`, `app/Policies/UserPolicy.php`
-- Contains: Manager/financial role checks against project.manager_id, Laravel Policy pattern
-- Depends on: Authenticated user, Project model relationships
-- Used by: Controllers (Admin\ProjectController, Client\ProjectController)
+**Autorização e traits:**
+- Localização: `app/Traits/AuthorizesProjectAccess.php`, `app/Policies/UserPolicy.php`
+- `authorizeProjectAccess()` restringe `manager` e `financial` às obras onde são `manager_id`
+- `assertBelongsToProject()` devolve 404 quando o filho de uma rota aninhada não pertence à obra do URL
+- `Admin\MessageController` tem uma verificação própria e privada que só cobre o papel `manager`
 
-**Controller Layer:**
-- Purpose: Handles HTTP requests, orchestrates business logic, returns views/JSON
-- Location: `app/Http/Controllers/`
-- Contains: Four namespaces — `Admin/` (6 controllers), `Client/` (2 controllers), `Auth/` (8 controllers), `Portal/` (1 controller)
-- Depends on: Models, Traits, Requests, Views
-- Used by: Routes
+**Camada de controllers:**
+- Localização: `app/Http/Controllers/`
+- `Admin/` (12): `DashboardController`, `ProjectController`, `ProjectPhaseController`, `ProjectPhotoController`, `ProjectExpenseController`, `ProjectDocumentController`, `PaymentController`, `ClientController`, `MessageController`, `SettingController`, `ReportController`, `AuditLogController`
+- `Auth/` (8): sessão, confirmação de palavra-passe, verificação de e-mail, reposição e alteração de palavra-passe
+- `Client/` (2): `DashboardController`, `ProjectController`
+- `Portal/` (1): `PushSubscriptionController`
+- Raiz: `Controller.php` (base abstracta), `ProfileController.php`, `UserController.php`
+- O `Admin\ProjectController` ficou com o CRUD da obra, a galeria filtrada (`filteredPhotos()`) e `storeUpdate()`; fases, fotos, despesas e documentos foram extraídos para controllers próprios
 
-**Model Layer (Eloquent ORM):**
-- Purpose: Represents database entities, relationships, business logic
-- Location: `app/Models/`
-- Contains: 12 models — User, Client, Project, ProjectPhase, Photo, Expense, Document, ProjectUpdate, Message, Payment, Setting, PushSubscription
-- Depends on: Database, Factory definitions
-- Used by: Controllers, Seeders, Events/Notifications, Observers
+**Camada de modelos (Eloquent):**
+- Localização: `app/Models/` — 13 modelos: `User`, `Client`, `Project`, `ProjectPhase`, `Photo`, `Expense`, `Document`, `ProjectUpdate`, `Message`, `Payment`, `Setting`, `PushSubscription`, `AuditLog`
+- `Project` concentra a lógica de negócio: `recalcProgress()`, `progressIsManual()`, `totalSpent()`, `remainingBalance()`, `budgetUsedPercent()`, `expensesByCategory()`, `expensesByMonth()`
+- `ProjectPhase::booted()` chama `recalcProgress()` da obra em `saved` e `deleted`
 
-**Event & Notification Layer:**
-- Purpose: Triggers side effects (notifications, broadcasts) when domain events occur
-- Location: `app/Events/` (MessageSent), `app/Notifications/ProjectUpdateNotification`, `app/Observers/ProjectUpdateObserver`
-- Contains: Event classes (ShouldBroadcast), Notification class (ShouldQueue), Eloquent observers
-- Depends on: Models, Channels, Settings
-- Used by: Controllers (store methods), Observers (ProjectUpdate.created)
+**Suporte (funções e utilitários):**
+- Localização: `app/Support/`
+- `helpers.php` — carregado por `autoload.files`; define `currency_symbol()` e `money()`, que leem a definição `currency` (BRL, USD, EUR, GBP, AOA, MZN) e formatam com agrupamento de dígitos pt-BR
+- `Thumbnail.php` — geração de miniaturas em GD puro, aresta máxima 480 px, JPEG a qualidade 78, escrita em `<dir>/thumbs/<nome>.jpg` no mesmo disco; falha em silêncio (`Log::warning`) para nunca partir um upload
 
-**Broadcasting Channels:**
-- Purpose: Authorizes real-time message delivery to WebSocket subscribers
-- Location: `routes/channels.php`
-- Contains: Role-based channel guards (project.{projectId} gated by admin/manager/client status)
-- Depends on: User model roles, Project relationships
-- Used by: Events (MessageSent broadcasts to project channel)
+**Eventos e notificações:**
+- `app/Events/MessageSent.php` (`ShouldBroadcast`)
+- `app/Notifications/ProjectUpdateNotification.php` (`ShouldQueue`) — `via()` devolve `[WhatsAppChannel, WebPushChannel]` e acrescenta `mail` quando o destinatário tem um e-mail válido
+- `app/Observers/ProjectUpdateObserver.php` — em `ProjectUpdate::created`, verifica a definição `notify_{tipo}` e notifica os utilizadores do cliente, excepto quem originou a acção
+- `app/Observers/AuditObserver.php` — genérico; grava `created`, `updated`, `deleted` e `restored`, redige credenciais e dados de pagamento (`password`, `remember_token`, `two_factor_*`, `pix_key`, `pix_qrcode`, `barcode`) e ignora `created_at`/`updated_at`
 
-**Notification Channels:**
-- Purpose: Delivers notifications via custom transport (WhatsApp, WebPush)
-- Location: `app/Channels/WebPushChannel.php`, `app/Channels/WhatsAppChannel.php`
-- Contains: Custom channel implementations extending Illuminate\Notifications\Channels
-- Depends on: External APIs (WhatsApp, Web Push service), User phone/push subscriptions
-- Used by: ProjectUpdateNotification.via()
+**Canais de broadcasting:**
+- `routes/channels.php` — `project.{projectId}` autorizado a `admin` e `financial` (qualquer obra), a `manager` (obras suas) e a `client` (obras do seu cliente); `App.Models.User.{id}` para o próprio
 
-**View Layer:**
-- Purpose: Renders HTML responses via Blade templating
-- Location: `resources/views/`
-- Contains: 40+ Blade templates organized by role (admin/, client/, auth/, profile/)
-- Depends on: Controllers passing data, Components (AdminLayout, ClientLayout, AppLayout, GuestLayout)
-- Used by: Controllers, View Composers
+**Canais de notificação:**
+- `app/Channels/WhatsAppChannel.php` — Meta Graph API via Guzzle
+- `app/Channels/WebPushChannel.php` — usa `minishlink/web-push`; sai cedo se faltarem as chaves VAPID ou se o utilizador não tiver subscrições
 
-**View Components & Composers:**
-- Purpose: Reusable layout shells and pre-computed view data
-- Location: `app/View/Components/`, `app/Http/View/Composers/`
-- Contains: Layout components (AdminLayout, ClientLayout) render Blade templates; ClientLayoutComposer queries messages/updates/projects with caching
-- Depends on: Models, Cache facade, Routes
-- Used by: Views (client.blade.php uses x-client-layout component)
+**Camada de vistas:**
+- `resources/views/` — 59 ficheiros Blade, organizados por papel (`admin/`, `client/`, `auth/`, `profile/`, `users/`) mais `components/`
+- `admin/reports/` tem `index`, `show`, `pdf` e os parciais `geral`, `financeiro`, `fotos`, `fases`, `fases-table`
+- `admin/audit/index.blade.php` é a página `/admin/auditoria`
 
-**Service Provider:**
-- Purpose: Bootstrap application services, define authorization gates, register observers
-- Location: `app/Providers/AppServiceProvider.php`
-- Contains: ProjectUpdateObserver registration, Gate definitions (access-admin, manage-users, access-financial), ClientLayoutComposer binding
-- Depends on: Models, Observers, View facade
-- Used by: Application bootstrap (routes/web.php loads via bootstrap/app.php)
+**Componentes e view composers:**
+- `app/View/Components/` — `AdminLayout` → `components.layouts.admin`, `ClientLayout` → `components.layouts.client`, `GuestLayout` → `components.layouts.guest`, `AppLayout` → `layouts.app`
+- `app/Http/View/Composers/ClientLayoutComposer.php` — ligado a `components.layouts.client` no `AppServiceProvider`
 
-**Database & Seeding:**
-- Purpose: Schema versioning and test data generation
-- Location: `database/migrations/`, `database/factories/`, `database/seeders/`
-- Contains: Migrations for `users`, `cache`, `jobs`, `sessions` tables; `UserFactory`; `DatabaseSeeder`
-- Depends on: Schema facade, Models
-- Used by: Artisan migrate/seed commands, tests
+**Service provider:**
+- `app/Providers/AppServiceProvider.php` — regista `ProjectUpdateObserver` em `ProjectUpdate`, regista `AuditObserver` em `Project`, `Client`, `User`, `Expense`, `Payment`, `Photo`, `Document`, `ProjectPhase` e `Setting`, liga o view composer e define os Gates `access-admin`, `manage-users` e `access-financial`
+- `ProjectUpdate` está deliberadamente fora da auditoria — é conteúdo visível ao cliente, já presente no histórico da obra
 
-**Console:**
-- Purpose: Artisan commands for maintenance tasks
-- Location: `app/Console/Commands/`, `routes/console.php`
-- Contains: MigratePublicProjectMedia (migrate legacy media from public to private storage)
-- Depends on: Storage facade, Models
-- Used by: `php artisan obra360:media:migrate-public`
+**Base de dados e seeding:**
+- `database/migrations/` — 18 migrações (4 do framework, 14 de domínio, a última `2026_08_21_100000_create_audit_logs_table.php`)
+- `database/factories/` — 8 factories: `User`, `Client`, `Project`, `ProjectPhase`, `Photo`, `Expense`, `Document`, `Payment`
+- `database/seeders/DatabaseSeeder.php` — cria o administrador inicial e as definições base; lança excepção se `SEED_ADMIN_PASSWORD` faltar em produção
 
-## Data Flow
+**Consola:**
+- `app/Console/Commands/MigratePublicProjectMedia.php` — `obra360:media:migrate-public`, migra capas, fotos, miniaturas e documentos do disco `public` para o `local`; dry-run por omissão, `--commit` copia, `--delete-source` (que exige `--commit`) apaga a origem depois de verificar a cópia
+- `app/Console/Commands/GeneratePhotoThumbnails.php` — `obra360:photos:thumbnails`, gera miniaturas em falta (`--force` regenera as existentes), ignorando vídeos
+- `routes/console.php` — comando `inspire` de exemplo
 
-**New Project Creation (Admin/Manager):**
+## Fluxos de dados
 
-1. Admin clicks "Nova obra" → routes/web.php routes to `Admin\ProjectController@create`
-2. Controller queries clients + managers, renders `admin/projects/create.blade.php`
-3. Form POST to `Admin\ProjectController@store`
-4. Validate request data (client_id, name, budget, manager_id, cover image)
-5. Create Project (Eloquent model.create()), auto-set progress=0, status=planejada
-6. ProjectUpdate::log() creates audit entry (type='status')
-7. Redirect to project show view
-8. Observer triggers on ProjectUpdate.created? → Notifies client users (WhatsApp/WebPush)
+**Criação de obra (admin/gestor):**
 
-**Photo Upload (Admin/Manager):**
+1. `GET /admin/obras/nova` → `Admin\ProjectController@create` carrega clientes e gestores
+2. `POST /admin/obras` → `@store` valida os dados e a capa (`image|mimes:jpg,jpeg,png,webp|max:4096`)
+3. A capa é guardada em `covers/` no disco `local`; `progress` é fixado a 0
+4. Se quem cria for `manager`, `manager_id` é forçado ao próprio
+5. `Project::create()` e `ProjectUpdate::log($id, 'Obra criada', 'status')`
+6. O `AuditObserver` grava a criação em `audit_logs`; o `ProjectUpdateObserver` notifica os utilizadores do cliente
+7. Redirecção para `admin.projects.show`
 
-1. Admin uploads photo on project show page
-2. POST to `Admin\ProjectController@storePhoto`
-3. Validate image (jpg/jpeg/png/webp, max 4096)
-4. Store to `storage/app/private/projects/{project_id}/` (local disk)
-5. Create Photo record (project_id, path, media_type=image)
-6. ProjectUpdate::log() creates 'foto' entry
-7. Observer notifies client → WebPush/WhatsApp sent to client users
+**Upload de fotos (admin/gestor):**
 
-**Client Portal Access (Client User):**
+1. `POST /admin/obras/{project}/fotos` → `Admin\ProjectPhotoController@store`
+2. Validação: `photos` é um array com pelo menos um ficheiro `jpeg,jpg,png,webp,gif,mp4,mov,avi`, no máximo 51200 KB cada
+3. Cada ficheiro vai para `projects/{id}/photos` no disco `local`
+4. Se não for vídeo, `Thumbnail::generate()` escreve `projects/{id}/photos/thumbs/<nome>.jpg` e o caminho é guardado em `thumbnail_path`
+5. `ProjectUpdate::log($id, 'Fotos adicionadas', 'foto')` dispara a notificação
 
-1. Client logs in, redirected to `portal.dashboard`
-2. Client\DashboardController@index queries `Project::where('client_id', $user->client_id)`
-3. Loads latestImage per project, computes cover_url
-4. Renders `client/dashboard.blade.php` with project cards
-5. Each project card links to `portal.projects.show` (Client\ProjectController@show)
-6. Controller validates $project->client_id === $user->client_id (aborts 403 if false)
-7. Loads project + phases, photos (limit 200), expenses (if financial enabled), messages (limit 100)
-8. Renders `client/projects/show.blade.php` with rich project data
+**Leitura de media:**
 
-**Message Broadcasting (Realtime):**
+1. `GET /admin/obras/{project}/fotos/{photo}` → `Admin\ProjectPhotoController@show` (ou o equivalente do portal, `Client\ProjectController@photo`)
+2. Autorização, depois `assertBelongsToProject`
+3. Com `?thumb=1`, devolve a miniatura se existir; caso contrário o original
+4. `mediaResponse()` faz `abort_unless(Storage::disk('local')->exists($path), 404)` e só depois `Storage::disk('local')->response($path)` — não há fallback para o disco `public`, e um registo sem ficheiro é 404, não 500
 
-1. Client posts message via `portal.projects.messages.store`
-2. Client\ProjectController@storeMessage validates, creates Message record
-3. Message.created event triggered → dispatch(new MessageSent($msg))->toOthers()
-4. MessageSent event implements ShouldBroadcast, broadcastOn() returns PrivateChannel("project.{$project_id}")
-5. Pusher/Laravel Echo broadcasts to all authenticated users in that channel
-6. Admin/manager/other clients subscribed to project receive message in real-time (no page reload)
+**Acesso ao portal do cliente:**
 
-**Project Update Audit & Notification:**
+1. Depois do login, o cliente é encaminhado para `portal.dashboard`
+2. `Client\DashboardController@index` carrega `Project::where('client_id', $user->client_id)` com `latestImage` e calcula `cover_url`
+3. `Client\ProjectController@show` aborta com 403 se `client_id` não corresponder; carrega fases, mensagens (limite 100), fotos (limite 200), documentos com `visibility = cliente` e, se `show_financials` da obra e a definição `show_client_financials` o permitirem, despesas e pagamentos
 
-1. Controller creates ProjectUpdate (e.g., ProjectUpdate::log('Obra criada', 'status'))
-2. ProjectUpdateObserver.created() triggered
-3. Query project + client.users (N+1 optimized with eager loading)
-4. For each client user (except creator): `$user->notify(new ProjectUpdateNotification($update))`
-5. ProjectUpdateNotification.via() returns [WhatsAppChannel, WebPushChannel]
-6. WhatsAppChannel queues async request to WhatsApp API with templated message
-7. WebPushChannel queries user's PushSubscription records, sends web push payload
-8. Queued jobs processed by `php artisan queue:work`
+**Mensagens em tempo real:**
 
-**State Management:**
+1. `POST /portal/obras/{project}/mensagens` (limitado a `throttle:20,1`) → `Client\ProjectController@storeMessage`
+2. A definição `allow_comments` tem de estar a `1`, senão 403
+3. `Message::create()` seguido de `broadcast(new MessageSent($msg))->toOthers()`
+4. `MessageSent` transmite no `PrivateChannel("project.{id}")`; o Echo/Reverb entrega aos subscritores autorizados por `routes/channels.php`
 
-- Session state stored in database (`sessions` table, Laravel default)
-- Client layout state (unread messages, recent updates) cached via ClientLayoutComposer
-  - Cache key: `client_unread_msgs_{$userId}_{$bucket}` (30-second TTL for real-time feel)
-  - Separate COUNT query for badge accuracy
-- No client-side state framework; form submissions reload page or return JSON
+**Relatórios e PDF:**
 
-## Key Abstractions
+1. `GET /admin/relatorios` → `ReportController@index` lista as obras (restritas a `manager_id` para `manager` e `financial`) com pesquisa por nome
+2. `GET /admin/obras/{project}/relatorios/{type}` → `@show`; `{type}` tem de estar em `ReportController::TYPES` (`geral`, `financeiro`, `fotos`, `fases`), senão 404
+3. `@data()` agrega o que cada tipo precisa: fases, `totalSpent()`, `expensesByCategory()`, `expensesByMonth()`, despesas, pagamentos, fotos e as últimas 20 actualizações
+4. `GET .../pdf` → `@pdf` gera o documento com DomPDF em A4, com recursos remotos desligados, e devolve `relatorio-{tipo}-{slug}-{data}.pdf`
+5. As imagens são embebidas como data URI por `ReportController::embed()`, porque o PDF não consegue autenticar-se nas rotas de media; o limite é 24 fotos (`PDF_PHOTO_LIMIT`)
 
-**Eloquent Models:**
-- Purpose: Active Record ORM pattern — maps PHP objects to rows, encapsulates relationships
-- Examples: `app/Models/Project.php`, `app/Models/User.php`, `app/Models/Message.php`
-- Pattern: Extend `Illuminate\Database\Eloquent\Model` or `Authenticatable`; use PHP 8 attributes (#[Fillable], #[Hidden]) for field config
+**Progresso da obra (FASE-04):**
 
-**Service Providers:**
-- Purpose: Register bindings into IoC container, perform boot-time configuration
-- Examples: `app/Providers/AppServiceProvider.php`
-- Pattern: Extend `Illuminate\Support\ServiceProvider`, implement register() and boot()
+1. A definição `progress_mode` vale `derivado` (omissão) ou `manual`
+2. Em modo derivado, `ProjectPhase::booted()` chama `Project::recalcProgress()` sempre que uma fase é guardada ou removida, e o progresso passa a ser a média arredondada de `percentage`
+3. Em modo manual, `recalcProgress()` sai imediatamente e `Admin\ProjectController@update` valida e grava o campo `progress` submetido no formulário
 
-**Migrations:**
-- Purpose: Version-controlled schema changes
-- Examples: `database/migrations/2026_06_27_100002_create_projects_table.php`
-- Pattern: Anonymous class extending Migration with up()/down() methods; uses Schema facade for DDL
+**Auditoria:**
 
-**Traits:**
-- Purpose: Share authorization logic across controllers
-- Examples: `app/Traits/AuthorizesProjectAccess.php` (project manager validation)
-- Pattern: Provide protected methods that abort(403) on unauthorized access
+1. Qualquer escrita nos nove modelos observados dispara `AuditObserver`
+2. `updated` só grava quando `getChanges()` (já redigido) não fica vazio, e guarda `['de' => ..., 'para' => ...]`
+3. Cada registo fica com `user_id`, `user_name` (preservado para sobreviver à remoção do utilizador), `action`, `auditable_type`, `auditable_id`, `description`, `changes` (JSON) e `ip_address`
+4. `GET /admin/auditoria` (só `admin`) → `AuditLogController@index` filtra por acção, tipo e utilizador, 50 por página
 
-**View Components:**
-- Purpose: Reusable Blade template shells with layout logic
-- Examples: `app/View/Components/AdminLayout.php`, `ClientLayout.php`
-- Pattern: Extend Component, render() returns view('components.layouts.admin')
+**Estado de sessão:**
 
-**View Composers:**
-- Purpose: Pre-compute and cache view data (messages, updates, projects)
-- Examples: `app/Http/View/Composers/ClientLayoutComposer.php`
-- Pattern: Implement compose(View $view), bind via View::composer() in AppServiceProvider
+- Sessões na base de dados (tabela `sessions`), cifradas (`SESSION_ENCRYPT=true` no `.env.example`)
+- `messages_last_viewed_at` é guardado na sessão pela rota `portal.messages.mark-read`
+- Não há framework de estado no cliente
 
-**Observers:**
-- Purpose: Hook into Eloquent model lifecycle events (created, updated, deleted)
-- Examples: `app/Observers/ProjectUpdateObserver.php` (listens to ProjectUpdate.created)
-- Pattern: Implement methods for each hook, register via Model::observe() in provider
+## Abstracções principais
 
-**Events:**
-- Purpose: Dispatch domain events for side-effect handling
-- Examples: `app/Events/MessageSent.php` (implements ShouldBroadcast)
-- Pattern: Extend Event, implement broadcastOn()/broadcastAs() for channel + event name
+**Modelos Eloquent:** padrão Active Record; atributos PHP 8 `#[Fillable]` e `#[Hidden]` em vez de arrays de propriedades; `protected function casts(): array` explícito
 
-**Notifications:**
-- Purpose: Multi-channel message delivery (mail, SMS, WhatsApp, WebPush)
-- Examples: `app/Notifications/ProjectUpdateNotification.php` (implements ShouldQueue)
-- Pattern: Extend Notification, implement via(), toWhatsApp(), toWebPush() methods
+**Service providers:** `AppServiceProvider` com `register()` e `boot()`
 
-**Custom Channels:**
-- Purpose: Transport notifications via non-standard channels (WhatsApp, WebPush)
-- Examples: `app/Channels/WhatsAppChannel.php`, `WebPushChannel.php`
-- Pattern: Implement Illuminate\Notifications\Channels\Channel, send() method dispatches to external API
+**Migrações:** classe anónima que estende `Migration`, com `up()` e `down()`
 
-## Entry Points
+**Traits:** `AuthorizesProjectAccess` — partilhado por `Admin\ProjectController`, `ProjectPhaseController`, `ProjectPhotoController`, `ProjectExpenseController`, `ProjectDocumentController`, `PaymentController` e `ReportController`
 
-**Web Request Entry Point:**
-- Location: `public/index.php`
-- Triggers: Every HTTP request via Nginx/PHP-FPM
-- Responsibilities: Loads Composer autoloader, creates Laravel Application instance via `bootstrap/app.php`, dispatches HTTP request through middleware/routing pipeline
+**Componentes de vista:** classes em `app/View/Components/` que devolvem um layout Blade
 
-**Artisan CLI Entry Point:**
-- Location: `artisan` (symlink to `vendor/bin/artisan`)
-- Triggers: `php artisan <command>` invocation
-- Responsibilities: Loads Composer autoloader, bootstraps app, dispatches Artisan command
+**View composers:** `ClientLayoutComposer::compose(View $view)`, registado por `View::composer()`
 
-**Health Check Endpoint:**
-- Location: Defined in `bootstrap/app.php` as `health: '/up'`
-- Triggers: GET `/up`
-- Responsibilities: Returns 200 OK if application is running (used by Docker/load balancer)
+**Observers:** `ProjectUpdateObserver` (específico) e `AuditObserver` (genérico, um por nove modelos)
 
-## Error Handling
+**Eventos:** `MessageSent` com `broadcastOn()`
 
-**Strategy:** Server-side rendering of error views (HTML) except for API routes
+**Notificações:** `ProjectUpdateNotification` com `via()`, `toMail()`, `toWhatsApp()` e `toWebPush()`
 
-**Configuration:** `bootstrap/app.php` via `->withExceptions(fn(Exceptions $e) => $e->shouldRenderJsonWhen(fn(Request $r) => $r->is('api/*')))`
+**Canais personalizados:** classes com um método `send(mixed $notifiable, Notification $notification)`
 
-**Patterns:**
-- `abort(403)` in middleware/traits for unauthorized access (renders error view)
-- `$request->validate()` throws ValidationException (renders form with errors)
-- Uncaught exceptions logged via Monolog and rendered by Laravel's exception handler (from vendor package)
-- No custom exception classes defined yet; relying on framework defaults
+**Funções globais:** `money()` e `currency_symbol()` em `app/Support/helpers.php`, usadas em `admin/dashboard`, `admin/projects/index`, `admin/projects/show`, `client/dashboard`, `client/projects/show` e nos parciais de relatório
 
-## Cross-Cutting Concerns
+## Pontos de entrada
 
-**Logging:** Laravel Monolog integration (app/logs/), logged via Log facade in exception handler
+**Pedido web:** `public/index.php` — carrega o autoloader, cria a aplicação a partir de `bootstrap/app.php` e despacha o pedido
 
-**Validation:** Form validation via `$request->validate()` in controller actions; FormRequest classes in `app/Http/Requests/` for user/profile updates
+**CLI:** `artisan` — carrega o autoloader, arranca a aplicação e despacha o comando
 
-**Authentication:** Laravel Breeze (built-in auth scaffold); session-based with remember_token; enforced by `auth` middleware
+**Health check:** `GET /up`, declarado em `bootstrap/app.php`
 
-**Authorization:** 
-- Middleware-level: `middleware(['auth', 'role:admin,manager'])`
-- Model-level: Traits (AuthorizesProjectAccess), Policies (UserPolicy.php)
-- Application-level: Gates (access-admin, manage-users, access-financial) in AppServiceProvider
+## Tratamento de erros
 
-**Real-Time:** Laravel Broadcasting + Pusher/Redis (MessageSent events), Web Push API (PushSubscriptionController stores subscriptions)
+**Estratégia:** vistas de erro HTML; JSON apenas para `api/*` (`shouldRenderJsonWhen` em `bootstrap/app.php`)
 
-**Queuing:** Laravel Queue (ShouldQueue on Notifications); backed by database or Redis; workers run via `php artisan queue:work`
+**Padrões:**
+- `abort(403)` no middleware e no trait de autorização
+- `abort_unless(..., 404)` para filhos que não pertencem à obra e para media sem ficheiro
+- `$request->validate()` lança `ValidationException` e devolve o formulário com erros
+- `ValidationException::withMessages()` no `LoginRequest`, com mensagens em português
+- Não existem classes de excepção próprias
 
-**Caching:** Laravel Cache facade; used in ClientLayoutComposer (30-second TTL), DashboardController (project stats)
+## Preocupações transversais
+
+**Logging:** Monolog através do Laravel; `Log::warning` em `Thumbnail`, `Log::info` no `WebPushChannel`
+
+**Validação:** `$request->validate()` nos controllers; `FormRequest` em `app/Http/Requests/` para utilizadores, perfil e login
+
+**Autenticação:** Laravel Breeze, sessão em base de dados; registo público desactivado
+
+**Autorização:** middleware `role:`, Gates (`access-admin`, `manage-users`, `access-financial`), `UserPolicy` e o trait `AuthorizesProjectAccess`
+
+**Tempo real:** Reverb + Laravel Echo; canais privados por obra
+
+**Filas:** `ShouldQueue` em `ProjectUpdateNotification`; conector `database`; worker via `php artisan queue:work`
+
+**Cache:** `Setting::get()` usa `rememberForever("setting:{$key}")`, invalidado por `Setting::set()`; o `ClientLayoutComposer` usa janelas de 30 s (mensagens não lidas e contagem), 60 s (actualizações) e 120 s (primeira obra), e **só guarda escalares e arrays de escalares** — nunca modelos Eloquent
+
+**Auditoria:** `AuditObserver` sobre nove modelos, com redacção de credenciais e de dados de pagamento
 
 ---
 
-*Architecture analysis: 2026-08-20*
+*Análise de arquitectura: 2026-08-22*

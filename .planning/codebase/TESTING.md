@@ -1,69 +1,103 @@
-# Testing Patterns
+# Padrões de Teste
 
-**Analysis Date:** 2026-08-20
+**Data da análise:** 2026-08-22
 
-## Test Framework
+## Framework de teste
 
-**Runner:**
-- PHPUnit 12.5.12 (`phpunit/phpunit`)
-- Config: `phpunit.xml`
+**Executor:**
+- PHPUnit 12.5.30 (`phpunit/phpunit`)
+- Configuração: `phpunit.xml`
 - Bootstrap: `vendor/autoload.php`
-- Test suites: `Unit` (tests/Unit/), `Feature` (tests/Feature/)
+- Suites: `Unit` (`tests/Unit/`) e `Feature` (`tests/Feature/`)
+- Cobertura declarada em `<source><include><directory>app</directory>` — não há limiar imposto
 
-**Assertion Library:**
-- PHPUnit's built-in assertions: `$this->assertTrue()`, `$this->assertFalse()`, `$this->assertSame()`, `$this->assertNotNull()`, etc.
-- Laravel's HTTP testing assertions: `$response->assertStatus(200)`, `$response->assertRedirect()`, `$response->assertSessionHasErrors()`
-- Database assertions: `$this->assertDatabaseHas()`, `$this->assertDatabaseMissing()`, `$this->assertSoftDeleted()`
+**Dimensão actual:**
+- 32 ficheiros de teste: 30 em `Feature/` (8 dos quais em `Feature/Auth/`) e 2 em `Unit/`
+- **221 testes** (`./vendor/bin/phpunit --list-tests`). A diferença face ao número de métodos `test_` vem dos casos gerados por `#[DataProvider]` em `ReportTest`
 
-**Run Commands:**
+**Biblioteca de asserções:**
+- Asserções do PHPUnit: `assertTrue()`, `assertSame()`, `assertNotNull()`, `assertIsArray()`, `assertGreaterThan()`, `assertStringContainsString()`, `assertInstanceOf()`
+- Asserções HTTP do Laravel: `assertOk()`, `assertStatus()`, `assertRedirect()`, `assertForbidden()`, `assertNotFound()`, `assertSessionHasErrors()`, `assertSee()`, `assertHeader()`
+- Asserções de base de dados: `assertDatabaseHas()`, `assertDatabaseMissing()`, `assertSoftDeleted()`
+- Asserções de ficheiros: `Storage::disk('local')->assertExists()` / `assertMissing()`
+- Asserções de consola: `$this->artisan(...)->assertSuccessful()` / `assertFailed()`
+
+**Comandos:**
 ```bash
-php artisan test                 # Run all tests
-php artisan test --filter=Auth   # Run tests matching filter
-php artisan test --env=testing   # Explicitly set testing environment
-composer test                    # Run via composer (same as above)
-./vendor/bin/phpunit --testdox   # Run with verbose output
+php artisan test                    # Corre tudo
+php artisan test --filter=Report    # Filtra por nome
+composer test                       # config:clear seguido de artisan test
+./vendor/bin/phpunit --list-tests   # Lista os testes sem os correr
+./vendor/bin/phpunit --testdox      # Saída legível
 ```
 
-## Test Environment
+## Ambiente de teste
 
-**Database:**
-- SQLite in-memory for speed (`:memory:` via `phpunit.xml`)
-- Configured via `phpunit.xml` environment variables:
+**Base de dados:**
+- SQLite em memória, definido em `phpunit.xml`:
   ```xml
   <env name="DB_CONNECTION" value="sqlite"/>
   <env name="DB_DATABASE" value=":memory:"/>
   ```
-- Each test class using `RefreshDatabase` trait auto-migrates and cleans up after each test
+- Todas as classes usam `RefreshDatabase`, que migra e limpa por teste
+- Consequência prática: as consultas com SQL cru têm de funcionar em SQLite **e** em MySQL — daí o `SUBSTR(spent_at, 1, 7)` em `Project::expensesByMonth()`
 
-**Other Test Config (phpunit.xml):**
+**Restante configuração (`phpunit.xml`):**
 ```xml
 <env name="APP_ENV" value="testing"/>
+<env name="APP_MAINTENANCE_DRIVER" value="file"/>
+<env name="BCRYPT_ROUNDS" value="4"/>
+<env name="BROADCAST_CONNECTION" value="null"/>
 <env name="CACHE_STORE" value="array"/>
-<env name="SESSION_DRIVER" value="array"/>
-<env name="QUEUE_CONNECTION" value="sync"/>
 <env name="MAIL_MAILER" value="array"/>
-<env name="BCRYPT_ROUNDS" value="4"/>  <!-- Faster hashing for tests -->
+<env name="QUEUE_CONNECTION" value="sync"/>
+<env name="SESSION_DRIVER" value="array"/>
 ```
+`BROADCAST_CONNECTION=null` evita ligações ao Reverb nos testes; `QUEUE_CONNECTION=sync` faz as notificações em fila correrem em linha.
 
-## Test File Organization
+## Organização dos ficheiros
 
-**Location:**
-- Co-located in `tests/` directory separate from `app/`
-- Organized by test type: `tests/Unit/`, `tests/Feature/`, `tests/Feature/Auth/`
-- Directory structure mirrors feature structure
+**Localização:** `tests/`, separado de `app/`, com `tests/Unit/`, `tests/Feature/` e `tests/Feature/Auth/`
 
-**Naming:**
-- Class files: PascalCase ending in `Test`: `UserRoleTest.php`, `AuthenticationTest.php`, `SecurityHardeningTest.php`
-- Test methods: `test_` prefix followed by snake_case describing behavior: `test_admin_can_create_user_with_valid_data()`, `test_inactive_user_cannot_login_with_correct_credentials()`
+**Nomenclatura:**
+- Classes em PascalCase terminadas em `Test`
+- Métodos com prefixo `test_` e snake_case, a descrever o comportamento esperado
 
-**File Paths:**
-- Feature tests: `tests/Feature/Auth/AuthenticationTest.php`, `tests/Feature/Auth/RoleRedirectTest.php`, `tests/Feature/UserManagementTest.php`, `tests/Feature/SecurityHardeningTest.php`, `tests/Feature/SchemaTest.php`
-- Unit tests: `tests/Unit/UserRoleTest.php`, `tests/Unit/ExampleTest.php`
-- Base class: `tests/TestCase.php` (extends `Illuminate\Foundation\Testing\TestCase`)
+**Inventário:**
 
-## Test Structure
+| Ficheiro | Cobre |
+|----------|-------|
+| `Feature/Auth/AuthenticationTest.php` | Ecrã de login e autenticação |
+| `Feature/Auth/RegistrationTest.php` | Confirma que o registo público está desactivado (404) |
+| `Feature/Auth/InactiveLoginTest.php` | Bloqueio de utilizadores inactivos e mensagem em português |
+| `Feature/Auth/RoleRedirectTest.php` | Encaminhamento por papel depois do login e 403 em rotas alheias |
+| `Feature/Auth/PasswordResetTest.php`, `PasswordUpdateTest.php`, `PasswordConfirmationTest.php`, `EmailVerificationTest.php` | Fluxos de palavra-passe e verificação de e-mail |
+| `Feature/ProjectCrudTest.php` | CRUD de obras e âmbito de escrita do gestor |
+| `Feature/ProjectPhaseTest.php` | CRUD de fases, ordenação e recálculo do progresso |
+| `Feature/ProgressModeTest.php` | `progress_mode` derivado vs. manual (FASE-04) |
+| `Feature/ProjectFinancialsTest.php` | Totais, agregação por categoria e por mês |
+| `Feature/ExpenseUpdateTest.php` | Edição de despesa e substituição de recibo |
+| `Feature/PaymentTest.php` | Criação, edição, marcação como pago e totais |
+| `Feature/PhotoGalleryTest.php` | Miniaturas (FOTO-03) e filtros da galeria (FOTO-04) |
+| `Feature/DocumentAccessTest.php` | Visibilidade e download de documentos |
+| `Feature/MissingMediaTest.php` | Registo de media sem ficheiro devolve 404, não 500 |
+| `Feature/MigratePublicMediaTest.php` | Comando `obra360:media:migrate-public` |
+| `Feature/ReportTest.php` | Quatro relatórios em ecrã e em PDF, tipo desconhecido, âmbito por papel |
+| `Feature/AuditLogTest.php` | Trilho de auditoria (SEC-05) |
+| `Feature/NotificationToggleTest.php` | Interruptores `notify_{tipo}` (CONF-04) |
+| `Feature/ProjectNotificationTest.php` | Notificação de actualização de obra |
+| `Feature/ClientLayoutCacheTest.php` | A cache do layout do cliente nunca guarda modelos Eloquent |
+| `Feature/DashboardKpiTest.php` | KPIs de atraso e de obras quase concluídas (DASH-01) |
+| `Feature/SecurityHardeningTest.php` | Autorização, disco privado, uploads e rotas aninhadas |
+| `Feature/SecurityHeadersTest.php` | Cabeçalhos de segurança |
+| `Feature/SchemaTest.php` | Existência de tabelas e colunas |
+| `Feature/ProfileTest.php` | Perfil do utilizador |
+| `Feature/UserManagementTest.php` | CRUD de utilizadores e regras de administrador |
+| `Unit/UserRoleTest.php` | Métodos `isAdmin()`, `isClient()`, ... |
 
-**Base TestCase:**
+## Estrutura dos testes
+
+**Classe base:**
 ```php
 namespace Tests;
 
@@ -75,46 +109,30 @@ abstract class TestCase extends BaseTestCase
 }
 ```
 
-**Feature Test Pattern:**
+**Teste de feature:**
 ```php
-namespace Tests\Feature\Auth;
+namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class AuthenticationTest extends TestCase
+class ProjectCrudTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_screen_can_be_rendered(): void
+    public function test_admin_can_open_the_project_list(): void
     {
-        $response = $this->get('/login');
-        $response->assertStatus(200);
-    }
-
-    public function test_users_can_authenticate_using_the_login_screen(): void
-    {
-        $user = User::factory()->create();
-
-        $response = $this->post('/login', [
-            'email' => $user->email,
-            'password' => 'password',
-        ]);
-
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('portal.dashboard', absolute: false));
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('admin.projects.index'))
+            ->assertOk();
     }
 }
 ```
 
-**Unit Test Pattern:**
+**Teste unitário:**
 ```php
 namespace Tests\Unit;
-
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 class UserRoleTest extends TestCase
 {
@@ -131,257 +149,108 @@ class UserRoleTest extends TestCase
 }
 ```
 
-## Traits & Setup
+## Traits e preparação
 
-**RefreshDatabase:**
-- Used in almost all tests to ensure clean state
-- Automatically runs migrations before each test, rolls back after
-- Enables `$this->assertDatabaseHas()`, `$this->assertDatabaseMissing()`, etc.
+**RefreshDatabase:** usado em todos os testes com base de dados; migra antes e reverte depois de cada método.
 
-**Setup Helpers (in test classes):**
+**`setUp()` partilhado:** as classes mais recentes preparam o cenário uma vez, em vez de o repetir por método. Exemplo de `MissingMediaTest`:
 ```php
-private function adminUser(): User
+protected function setUp(): void
 {
-    return User::factory()->admin()->create();
-}
+    parent::setUp();
 
-private function managerUser(): User
-{
-    return User::factory()->manager()->create();
-}
+    Storage::fake('local');
+    Storage::fake('public');
 
-private function validCreatePayload(array $overrides = []): array
-{
-    return array_merge([
-        'name' => 'João Silva',
-        'email' => 'joao@example.com',
-        'phone' => '11999990000',
-        'role' => User::ROLE_MANAGER,
-        'password' => 'secret1234',
-        'password_confirmation' => 'secret1234',
-    ], $overrides);
-}
-```
-
-## HTTP Testing
-
-**HTTP Assertions (from Laravel):**
-```php
-$response = $this->post('/login', ['email' => $user->email, 'password' => 'password']);
-
-$response->assertStatus(200);              // HTTP status
-$response->assertRedirect(route('...'));   // Redirect destination
-$response->assertSessionHasErrors(['field']); // Validation errors
-$response->assertSee('String in HTML');    // Content visible
-$response->assertDontSee('Hidden string'); // Content hidden
-$response->assertOk();                     // 200 status
-$response->assertForbidden();              // 403 status
-$response->assertNotFound();               // 404 status
-```
-
-**Authentication Helpers:**
-```php
-$user = User::factory()->create();
-$this->actingAs($user);                    // Authenticate as user
-$this->assertAuthenticated();              // User is logged in
-$this->assertGuest();                      // No user authenticated
-```
-
-**Example from RoleRedirectTest:**
-```php
-public function test_admin_is_redirected_to_admin_dashboard_after_login(): void
-{
-    $admin = User::factory()->admin()->create();
-
-    $response = $this->post('/login', [
-        'email' => $admin->email,
-        'password' => 'password',
+    $client = Client::factory()->create();
+    $this->clientUser = User::factory()->create([
+        'role' => User::ROLE_CLIENT,
+        'client_id' => $client->id,
     ]);
-
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('admin.dashboard'));
-}
-
-public function test_client_hitting_admin_route_receives_403(): void
-{
-    $client = User::factory()->create();
-
-    $response = $this->actingAs($client)->get('/admin');
-
-    $response->assertStatus(403);
+    $this->project = Project::factory()->create([
+        'client_id' => $client->id,
+        'cover_image_path' => 'covers/desaparecida.png',
+    ]);
 }
 ```
 
-## Database Assertions
+**Auxiliares privados:** construção de cenário e de payload em métodos privados — `private function project(): Project`, `private function payload(Project $project, array $overrides = []): array`, `private function validCreatePayload(array $overrides = []): array`.
 
-**Patterns:**
+## Data providers
+
+`ReportTest` usa o atributo do PHPUnit 12 para cobrir os quatro tipos de relatório sem duplicar código:
+
 ```php
-// Check record exists with specific attributes
-$this->assertDatabaseHas('users', [
-    'email' => 'joao@example.com',
-    'role' => User::ROLE_MANAGER,
-]);
+public static function reportTypes(): array
+{
+    return [['geral'], ['financeiro'], ['fotos'], ['fases']];
+}
 
-// Check record does NOT exist
+#[DataProvider('reportTypes')]
+public function test_admin_can_download_every_report_as_pdf(string $type): void
+{
+    $response = $this->actingAs(User::factory()->admin()->create())
+        ->get(route('admin.reports.pdf', [$this->project(), $type]));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    $this->assertStringStartsWith('%PDF', $response->getContent());
+}
+```
+
+## Testes HTTP
+
+**Asserções e auxiliares:**
+```php
+$this->actingAs($user);                     // Autenticar
+$this->assertAuthenticated();               // Sessão activa
+$this->assertGuest();                       // Sem sessão
+
+$response->assertOk();                      // 200
+$response->assertForbidden();               // 403
+$response->assertNotFound();                // 404
+$response->assertRedirect(route('...'));    // Destino da redirecção
+$response->assertSessionHasErrors(['campo']);
+$response->assertSee('texto');
+$response->assertDontSee('texto');
+$response->assertHeader('content-type', 'application/pdf');
+```
+
+## Asserções de base de dados
+
+```php
+$this->assertDatabaseHas('users', ['email' => 'joao@example.com']);
 $this->assertDatabaseMissing('users', ['email' => 'joao@example.com']);
-
-// Check soft-deleted record
 $this->assertSoftDeleted('users', ['id' => $user->id]);
-
-// Verify record was deleted after soft delete
-$found = User::withTrashed()->find($user->id);
-$this->assertNotNull($found);
-$this->assertNotNull($found->deleted_at);
-```
-
-**Example from UserManagementTest:**
-```php
-public function test_admin_can_create_user_with_valid_data(): void
-{
-    $admin = $this->adminUser();
-
-    $this->actingAs($admin)
-        ->post(route('users.store'), $this->validCreatePayload())
-        ->assertRedirect(route('users.index'));
-
-    $this->assertDatabaseHas('users', [
-        'email' => 'joao@example.com',
-        'role' => User::ROLE_MANAGER,
-    ]);
-}
-
-public function test_delete_soft_deletes_user(): void
-{
-    $admin = $this->adminUser();
-    $user = User::factory()->create();
-
-    $this->actingAs($admin)
-        ->delete(route('users.destroy', $user))
-        ->assertRedirect(route('users.index'));
-
-    $this->assertSoftDeleted('users', ['id' => $user->id]);
-}
 ```
 
 ## Factories
 
-**Pattern:**
-- Located in `database/factories/`
-- Extend `Illuminate\Database\Eloquent\Factories\Factory<Model>`
-- Implement `definition(): array` for default state
-- Chain factory methods for variations
+Oito factories em `database/factories/`: `UserFactory`, `ClientFactory`, `ProjectFactory`, `ProjectPhaseFactory`, `PhotoFactory`, `ExpenseFactory`, `DocumentFactory`, `PaymentFactory`.
 
-**Example from UserFactory.php:**
+`UserFactory` tem os estados `admin()`, `manager()`, `financial()` e `unverified()`:
 ```php
-namespace Database\Factories;
-
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-
-class UserFactory extends Factory
-{
-    protected static ?string $password;
-
-    public function definition(): array
-    {
-        return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
-            'role' => User::ROLE_CLIENT,
-            'phone' => fake()->phoneNumber(),
-            'active' => true,
-        ];
-    }
-
-    public function unverified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
-    }
-
-    public function admin(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => User::ROLE_ADMIN,
-        ]);
-    }
-
-    public function manager(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => User::ROLE_MANAGER,
-        ]);
-    }
-}
-```
-
-**Factory Usage in Tests:**
-```php
-// Create single instance
-$user = User::factory()->create();
 $admin = User::factory()->admin()->create();
-
-// Create multiple instances
-$users = User::factory()->count(5)->create();
-
-// Create without persisting
-$user = User::factory()->make();
-
-// Chain factory methods
-$unverifiedManager = User::factory()->manager()->unverified()->create();
+$manager = User::factory()->manager()->create();
+$financial = User::factory()->financial()->create();
+$client = User::factory()->create(['role' => User::ROLE_CLIENT, 'client_id' => $client->id]);
 ```
 
-## Test Data & Fixtures
-
-**FakerPHP Integration:**
-- Installed as `fakerphp/faker` v1.23
-- Used via `fake()` helper in factories: `fake()->name()`, `fake()->unique()->safeEmail()`, `fake()->phoneNumber()`
-- Provides realistic dummy data without manual fixture files
-
-**Test Payloads (from UserManagementTest):**
+As factories compõem-se por chave estrangeira, tanto por id como por instância:
 ```php
-private function validCreatePayload(array $overrides = []): array
-{
-    return array_merge([
-        'name' => 'João Silva',
-        'email' => 'joao@example.com',
-        'phone' => '11999990000',
-        'role' => User::ROLE_MANAGER,
-        'password' => 'secret1234',
-        'password_confirmation' => 'secret1234',
-    ], $overrides);
-}
-
-// Usage:
-$this->post(route('users.store'), $this->validCreatePayload());
-
-// With overrides:
-$this->post(route('users.store'), $this->validCreatePayload([
-    'role' => 'superuser'  // Invalid role to test validation
-]));
+$project = Project::factory()->create(['client_id' => Client::factory(), 'progress' => 0]);
+Expense::factory()->create(['project_id' => $project->id, 'category' => 'material', 'amount' => 750]);
 ```
 
-## Storage Faking
+## Simulação de armazenamento
 
-**Pattern:**
-- Use `Storage::fake('disk')` to mock filesystem in tests
-- Prevents writing to actual disk during tests
-- Assert file operations without side effects
+`Storage::fake('local')` (e `Storage::fake('public')` quando o teste também tem de provar que **nada** foi escrito no disco público) é o padrão em todos os testes de upload e de media.
 
-**Example from SecurityHardeningTest:**
 ```php
 public function test_documents_are_stored_on_private_disk(): void
 {
     Storage::fake('local');
     Storage::fake('public');
-
-    $admin = User::factory()->admin()->create();
-    $project = Project::factory()->create();
 
     $this->actingAs($admin)
         ->post(route('admin.projects.documents.store', $project), [
@@ -398,169 +267,85 @@ public function test_documents_are_stored_on_private_disk(): void
 }
 ```
 
-## Validation Testing
+**Miniaturas** — `PhotoGalleryTest` inspecciona os bytes gerados, não apenas o caminho:
+```php
+$photo = Photo::first();
+$size = getimagesizefromstring(Storage::disk('local')->get($photo->thumbnail_path));
 
-**Testing Form Validation:**
+$this->assertSame(Thumbnail::MAX_EDGE, $size[0]);
+$this->assertLessThanOrEqual(Thumbnail::MAX_EDGE, $size[1]);
+$this->assertStringContainsString('/thumbs/', $photo->thumbnail_path);
+```
+
+**Media em falta** — o comportamento correcto é 404, e está coberto dos dois lados (portal e área interna):
+```php
+public function test_a_cover_without_a_file_returns_404(): void
+{
+    $this->actingAs($this->clientUser)
+        ->get(route('portal.projects.cover', $this->project))
+        ->assertNotFound();
+}
+```
+
+## Simulação de notificações e eventos
+
+```php
+Notification::fake();
+Event::fake();
+```
+`NotificationToggleTest` e `ProjectNotificationTest` usam `Notification::fake()` para verificar que a definição `notify_{tipo}` silencia (ou não) o envio; `EmailVerificationTest` usa `Event::fake()`.
+
+## Testes de comandos artisan
+
+`MigratePublicMediaTest` exercita o comando de migração de media com discos falsos:
+```php
+Storage::fake('local');
+Storage::fake('public');
+
+$this->artisan('obra360:media:migrate-public --commit --delete-source')->assertSuccessful();
+$this->artisan('obra360:media:migrate-public')->assertSuccessful();       // dry-run
+$this->artisan('obra360:media:migrate-public --delete-source')->assertFailed();  // exige --commit
+```
+
+## Testes de cache
+
+`ClientLayoutCacheTest` prova a regra crítica do `ClientLayoutComposer` — nunca guardar modelos Eloquent — e reproduz a falha de produção com um `__PHP_Incomplete_Class` fabricado por `unserialize()`:
+
+```php
+private function incompleteClass(): object
+{
+    $class = 'App\\Models\\ClasseQueNaoExiste';
+
+    return unserialize(sprintf('O:%d:"%s":1:{s:2:"id";i:1;}', strlen($class), $class));
+}
+
+public function test_a_corrupted_cache_value_does_not_break_the_page(): void
+{
+    foreach ($this->cacheKeys() as $key) {
+        Cache::put($key, $this->incompleteClass(), 120);
+    }
+
+    $this->actingAs($this->clientUser)
+        ->get(route('portal.dashboard'))
+        ->assertOk();
+}
+```
+O teste que percorre as chaves conta quantas foram escritas e falha se não encontrar nenhuma — impede que a asserção passe por não ter nada para verificar.
+
+## Testes de validação
+
 ```php
 public function test_create_with_invalid_role_fails_validation(): void
 {
-    $admin = $this->adminUser();
-
-    $this->actingAs($admin)
+    $this->actingAs($this->adminUser())
         ->post(route('users.store'), $this->validCreatePayload(['role' => 'superuser']))
         ->assertSessionHasErrors('role');
 
     $this->assertDatabaseMissing('users', ['email' => 'joao@example.com']);
 }
 
-public function test_create_with_duplicate_email_fails_validation(): void
-{
-    $admin = $this->adminUser();
-    User::factory()->create(['email' => 'joao@example.com']);
-
-    $this->actingAs($admin)
-        ->post(route('users.store'), $this->validCreatePayload())
-        ->assertSessionHasErrors('email');
-}
-```
-
-## JSON API Testing (Reserved)
-
-**Pattern Not Currently Used:**
-- No API routes exist yet (all routes render HTML)
-- When API routes are added, use `postJson()`, `getJson()` instead of `post()`, `get()`
-- Example (for future implementation):
-```php
-$this->postJson(route('api.projects.store'), $payload)
-    ->assertStatus(201)
-    ->assertJson(['id' => 1, 'name' => 'Project']);
-```
-
-## Test Coverage
-
-**Target:** Not enforced by CI (no coverage requirement in phpunit.xml)
-
-**View Coverage:**
-```bash
-./vendor/bin/phpunit --coverage-html coverage/
-# Open coverage/index.html in browser
-```
-
-**Coverage Config (if added to phpunit.xml):**
-```xml
-<coverage processUncoveredFiles="true">
-    <include>
-        <directory suffix=".php">app</directory>
-    </include>
-    <report>
-        <html outputDirectory="coverage"/>
-        <text outputFile="php://stdout" showUncoveredFiles="true"/>
-    </report>
-</coverage>
-```
-
-## Test Categories
-
-**Unit Tests (`tests/Unit/`):**
-- Test model logic in isolation
-- No database required (though `RefreshDatabase` still used for consistency)
-- Example: `UserRoleTest` — verifies role helper methods
-
-**Feature Tests (`tests/Feature/`):**
-- Test full request/response cycles
-- Database integration
-- Auth flow, redirects, permissions
-- Examples:
-  - `Auth/AuthenticationTest.php` — login/logout
-  - `Auth/RoleRedirectTest.php` — role-based redirects
-  - `Auth/InactiveLoginTest.php` — inactive user blocking
-  - `UserManagementTest.php` — CRUD operations
-  - `SecurityHardeningTest.php` — authorization, file storage
-  - `SchemaTest.php` — database schema validation
-
-## Common Testing Patterns
-
-**Authorization Testing (from SecurityHardeningTest):**
-```php
-public function test_manager_cannot_access_admin_only_settings_or_clients(): void
-{
-    $manager = User::factory()->manager()->create();
-
-    $this->actingAs($manager)
-        ->get(route('admin.settings.index'))
-        ->assertForbidden();
-
-    $this->actingAs($manager)
-        ->get(route('admin.clients.index'))
-        ->assertForbidden();
-}
-
-public function test_client_cannot_download_internal_document(): void
-{
-    $client = Client::factory()->create();
-    $user = User::factory()->create([
-        'role' => User::ROLE_CLIENT,
-        'client_id' => $client->id,
-    ]);
-    $project = Project::factory()->create(['client_id' => $client->id]);
-    $document = Document::factory()->create([
-        'project_id' => $project->id,
-        'visibility' => 'interno',
-    ]);
-
-    $this->actingAs($user)
-        ->get(route('portal.projects.documents.download', [$project, $document]))
-        ->assertForbidden();
-}
-```
-
-**Scope Testing (from SecurityHardeningTest):**
-```php
-public function test_manager_only_sees_assigned_projects(): void
-{
-    $manager = User::factory()->manager()->create();
-    $ownProject = Project::factory()->create([
-        'name' => 'Assigned project',
-        'manager_id' => $manager->id,
-    ]);
-    Project::factory()->create(['name' => 'Other manager project']);
-
-    $this->actingAs($manager)
-        ->get(route('admin.projects.index'))
-        ->assertOk()
-        ->assertSee($ownProject->name)
-        ->assertDontSee('Other manager project');
-}
-```
-
-**Nested Route Protection (from SecurityHardeningTest):**
-```php
-public function test_nested_phase_cannot_be_updated_through_another_project(): void
-{
-    $admin = User::factory()->admin()->create();
-    $projectA = Project::factory()->create();
-    $projectB = Project::factory()->create();
-    $phase = ProjectPhase::factory()->create(['project_id' => $projectB->id]);
-
-    $this->actingAs($admin)
-        ->put(route('admin.projects.phases.update', [$projectA, $phase]), [
-            'name' => 'Tampered',
-            'status' => 'pendente',
-            'percentage' => 10,
-        ])
-        ->assertNotFound();
-
-    $this->assertNotSame('Tampered', $phase->fresh()->name);
-}
-```
-
-**File Upload Testing (from SecurityHardeningTest):**
-```php
 public function test_receipt_upload_rejects_unapproved_file_types(): void
 {
-    $admin = User::factory()->admin()->create();
-    $project = Project::factory()->create();
-
     $this->actingAs($admin)
         ->post(route('admin.projects.expenses.store', $project), [
             'category' => 'material',
@@ -573,82 +358,101 @@ public function test_receipt_upload_rejects_unapproved_file_types(): void
 }
 ```
 
-**Portuguese Error Messages Testing (from InactiveLoginTest):**
+## Testes de autorização e de âmbito
+
 ```php
-public function test_inactive_user_sees_portuguese_inactive_error_message(): void
+public function test_manager_cannot_access_admin_only_settings_or_clients(): void
 {
-    $user = User::factory()->create(['active' => false]);
+    $manager = User::factory()->manager()->create();
 
-    $response = $this->post('/login', [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
+    $this->actingAs($manager)->get(route('admin.settings.index'))->assertForbidden();
+    $this->actingAs($manager)->get(route('admin.clients.index'))->assertForbidden();
+}
 
-    $response->assertSessionHasErrors(['email']);
-    $errors = session('errors');
-    $this->assertStringContainsString('Sua conta está inativa', $errors->first('email'));
+public function test_manager_only_sees_assigned_projects(): void
+{
+    $manager = User::factory()->manager()->create();
+    $ownProject = Project::factory()->create(['name' => 'Assigned project', 'manager_id' => $manager->id]);
+    Project::factory()->create(['name' => 'Other manager project']);
+
+    $this->actingAs($manager)
+        ->get(route('admin.projects.index'))
+        ->assertOk()
+        ->assertSee($ownProject->name)
+        ->assertDontSee('Other manager project');
+}
+
+public function test_nested_phase_cannot_be_updated_through_another_project(): void
+{
+    $this->actingAs($admin)
+        ->put(route('admin.projects.phases.update', [$projectA, $phase]), [...])
+        ->assertNotFound();
 }
 ```
 
-**Schema Validation Testing (from SchemaTest):**
-```php
-public function test_all_application_tables_exist(): void
-{
-    $this->assertTrue(Schema::hasTable('users'));
-    $this->assertTrue(Schema::hasTable('clients'));
-    $this->assertTrue(Schema::hasTable('projects'));
-    $this->assertTrue(Schema::hasTable('documents'));
-    $this->assertTrue(Schema::hasTable('messages'));
-}
+## Testes de auditoria
 
-public function test_users_table_has_role_and_relations_columns(): void
+```php
+public function test_updating_records_before_and_after(): void
 {
-    $this->assertTrue(Schema::hasColumns('users', [
-        'role',
-        'phone',
-        'active',
-        'client_id',
-        'deleted_at',
-    ]));
+    $this->actingAs(User::factory()->admin()->create());
+    $project = Project::factory()->create(['name' => 'Antes']);
+
+    $project->update(['name' => 'Depois']);
+
+    $log = AuditLog::where('action', 'updated')->latest('id')->first();
+
+    $this->assertSame('Antes', $log->changes['de']['name']);
+    $this->assertSame('Depois', $log->changes['para']['name']);
 }
 ```
+Cobre também que uma actualização sem alterações reais não gera registo e que os campos redigidos nunca aparecem em `changes`.
 
-## Running Tests in CI
+## Testes JSON
 
-**GitHub Actions Workflow (`.github/workflows/laravel.yml`):**
+Não existem rotas `api/*`. As respostas JSON que existem vêm de rotas web (`Client\ProjectController@messages` com `wantsJson()`, `@storeMessage`, `Admin\MessageController@messages`, `portal.messages.mark-read`) e são testadas com `get()`/`post()` normais.
+
+## Cobertura
+
+- Sem limiar imposto no CI; `phpunit.xml` declara `<source>` sobre `app/`, o que basta para gerar relatório quando pedido
+- Relatório local:
+  ```bash
+  ./vendor/bin/phpunit --coverage-html coverage/
+  ```
+
+## Testes no CI
+
+`.github/workflows/laravel.yml`, job `test` (PHP 8.4, Node 24):
 ```bash
-# Migrations run automatically before tests
-php artisan migrate --force
-
-# Tests run with SQLite :memory:
-php artisan test
-
-# Syntax check
-./vendor/bin/pint --test
-
-# Both checked in CI/CD pipeline
+php artisan migrate --force          # DB_CONNECTION=sqlite, ficheiro database/database.sqlite
+./vendor/bin/pint --test             # Estilo
+npm run build                        # Build de assets
+php artisan test                     # Suite completa
+composer audit --abandoned=report    # Advisories PHP (pacotes abandonados não falham o build)
+npm audit --audit-level=moderate     # Advisories npm
 ```
+O job `deploy` depende do `test` e só corre em push para `main`.
 
-## Test Assertions Quick Reference
+## Referência rápida de asserções
 
-| Assertion | Purpose |
-|-----------|---------|
-| `$response->assertStatus(200)` | HTTP status code |
-| `$response->assertRedirect(route(...))` | Redirect destination |
-| `$response->assertOk()` | 200 status |
-| `$response->assertForbidden()` | 403 status |
-| `$response->assertNotFound()` | 404 status |
-| `$response->assertSee('text')` | Text in response |
-| `$response->assertDontSee('text')` | Text NOT in response |
-| `$response->assertSessionHasErrors(['field'])` | Validation errors |
-| `$this->assertDatabaseHas('table', [...])` | Record exists |
-| `$this->assertDatabaseMissing('table', [...])` | Record doesn't exist |
-| `$this->assertSoftDeleted('table', ['id' => 1])` | Soft-deleted record |
-| `$this->assertAuthenticated()` | User is logged in |
-| `$this->assertGuest()` | No user logged in |
-| `Storage::disk('local')->assertExists($path)` | File exists |
-| `Storage::disk('local')->assertMissing($path)` | File doesn't exist |
+| Asserção | Objectivo |
+|----------|-----------|
+| `$response->assertOk()` | 200 |
+| `$response->assertForbidden()` | 403 |
+| `$response->assertNotFound()` | 404 |
+| `$response->assertRedirect(route(...))` | Destino da redirecção |
+| `$response->assertHeader('content-type', ...)` | Cabeçalho da resposta |
+| `$response->assertSee('texto')` / `assertDontSee()` | Conteúdo visível |
+| `$response->assertSessionHasErrors(['campo'])` | Erros de validação |
+| `$this->assertDatabaseHas('tabela', [...])` | Registo existe |
+| `$this->assertDatabaseMissing('tabela', [...])` | Registo não existe |
+| `$this->assertSoftDeleted('tabela', ['id' => 1])` | Registo removido em soft delete |
+| `$this->assertAuthenticated()` / `assertGuest()` | Estado de sessão |
+| `Storage::disk('local')->assertExists($path)` | Ficheiro escrito |
+| `Storage::disk('public')->assertMissing($path)` | Ficheiro não escrito no disco público |
+| `$this->artisan('...')->assertSuccessful()` / `assertFailed()` | Código de saída de um comando |
+| `Notification::assertSentTo()` / `assertNotSentTo()` | Notificações enviadas ou silenciadas |
 
 ---
 
-*Testing analysis: 2026-08-20*
+*Análise de testes: 2026-08-22*
