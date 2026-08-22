@@ -124,19 +124,17 @@ class ReportController extends Controller
             return null;
         }
 
-        foreach (['local', 'public'] as $disk) {
-            if (Storage::disk($disk)->exists($path)) {
-                $mime = Storage::disk($disk)->mimeType($path) ?: 'image/jpeg';
-
-                if (! str_starts_with($mime, 'image/')) {
-                    return null;
-                }
-
-                return 'data:'.$mime.';base64,'.base64_encode(Storage::disk($disk)->get($path));
-            }
+        if (! Storage::disk('local')->exists($path)) {
+            return null;
         }
 
-        return null;
+        $mime = Storage::disk('local')->mimeType($path) ?: 'image/jpeg';
+
+        if (! str_starts_with($mime, 'image/')) {
+            return null;
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode(Storage::disk('local')->get($path));
     }
 
     public static function photoLimit(): int

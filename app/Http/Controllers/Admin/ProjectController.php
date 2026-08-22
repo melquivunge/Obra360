@@ -16,6 +16,7 @@ use App\Traits\AuthorizesProjectAccess;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProjectController extends Controller
 {
@@ -300,9 +301,7 @@ class ProjectController extends Controller
         $this->authorizeProjectAccess($project);
         abort_unless($project->cover_image_path, 404);
 
-        $disk = $this->mediaDisk($project->cover_image_path);
-
-        return Storage::disk($disk)->response($project->cover_image_path);
+        return $this->mediaResponse($project->cover_image_path);
     }
 
     public function photo(Request $request, Project $project, Photo $photo)
@@ -310,10 +309,7 @@ class ProjectController extends Controller
         $this->authorizeProjectAccess($project);
         $this->assertBelongsToProject($project, $photo);
 
-        $path = $this->photoPath($photo, $request->boolean('thumb'));
-        $disk = $this->mediaDisk($path);
-
-        return Storage::disk($disk)->response($path);
+        return $this->mediaResponse($this->photoPath($photo, $request->boolean('thumb')));
     }
 
     /**
@@ -321,7 +317,7 @@ class ProjectController extends Controller
      */
     private function photoPath(Photo $photo, bool $wantsThumb): string
     {
-        if ($wantsThumb && $photo->thumbnail_path && Storage::disk($this->mediaDisk($photo->thumbnail_path))->exists($photo->thumbnail_path)) {
+        if ($wantsThumb && $photo->thumbnail_path && Storage::disk('local')->exists($photo->thumbnail_path)) {
             return $photo->thumbnail_path;
         }
 
@@ -448,9 +444,9 @@ class ProjectController extends Controller
         $this->authorizeProjectAccess($project);
         $this->assertBelongsToProject($project, $document);
 
-        $disk = Storage::disk('local')->exists($document->path) ? 'local' : 'public';
+        abort_unless(Storage::disk('local')->exists($document->path), 404);
 
-        return Storage::disk($disk)->download($document->path, $document->name);
+        return Storage::disk('local')->download($document->path, $document->name);
     }
 
     // ── Manual Updates ────────────────────────────────────────
@@ -473,8 +469,14 @@ class ProjectController extends Controller
         abort_unless((int) $child->project_id === (int) $project->id, 404);
     }
 
-    private function mediaDisk(string $path): string
+    /**
+     * Media vive só no disco privado. Um registo sem ficheiro é um 404 — sem
+     * isto o `response()` sobre um caminho inexistente devolve 500.
+     */
+    private function mediaResponse(string $path): StreamedResponse
     {
-        return Storage::disk('local')->exists($path) ? 'local' : 'public';
+        abort_unless(Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path);
     }
 }
