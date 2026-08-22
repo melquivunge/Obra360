@@ -26,11 +26,11 @@
 
                 <div style="margin-bottom:1.25rem;">
                     <label for="password_delete" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Password</label>
-                    <input id="password_delete" name="password" type="password"
-                           placeholder="Password"
-                           style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
-                           onfocus="this.style.borderColor='oklch(0.62 0.21 25)'"
-                           onblur="this.style.borderColor='var(--color-border)'">
+                    <x-password-input id="password_delete" name="password"
+                                      placeholder="Password"
+                                      style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
+                                      onfocus="this.style.borderColor='oklch(0.62 0.21 25)'"
+                                      onblur="this.style.borderColor='var(--color-border)'" />
                     @error('password', 'userDeletion')
                         <p style="font-size:0.75rem;color:oklch(0.62 0.21 25);margin-top:0.375rem;">{{ $message }}</p>
                     @enderror

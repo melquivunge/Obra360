@@ -130,12 +130,12 @@
                 </div>
                 <div>
                     <label class="field-label">Senha <span style="color:var(--destructive)">*</span></label>
-                    <input type="password" name="password" required>
+                    <x-password-input name="password" required autocomplete="new-password" />
                     @error('password')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="field-label">Confirmar senha <span style="color:var(--destructive)">*</span></label>
-                    <input type="password" name="password_confirmation" required>
+                    <x-password-input name="password_confirmation" required autocomplete="new-password" />
                 </div>
             </div>
             <div style="display:flex;gap:0.5rem;padding-top:0.5rem;">

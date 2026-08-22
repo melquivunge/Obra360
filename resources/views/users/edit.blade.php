@@ -34,13 +34,13 @@
                 </div>
                 <div>
                     <label class="field-label">Nova senha</label>
-                    <input type="password" name="password">
+                    <x-password-input name="password" autocomplete="new-password" />
                     <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">Deixe em branco para manter a senha atual.</p>
                     @error('password')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="field-label">Confirmar nova senha</label>
-                    <input type="password" name="password_confirmation">
+                    <x-password-input name="password_confirmation" autocomplete="new-password" />
                 </div>
             </div>
             <div style="padding-top:0.5rem;border-top:1px solid var(--border);margin-top:0.5rem;display:flex;align-items:center;gap:0.75rem;">

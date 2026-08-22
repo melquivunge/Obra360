@@ -29,14 +29,16 @@
             {{-- Password --}}
             <div>
                 <x-input-label for="password" :value="__('Senha')" />
-                <x-text-input
-                    id="password"
-                    class="block mt-1 w-full"
-                    type="password"
-                    name="password"
-                    required
-                    autocomplete="current-password"
-                />
+                {{-- mt-1 fica no invólucro: uma margem no próprio input desalinharia o botão do olho --}}
+                <div class="mt-1">
+                    <x-password-input
+                        id="password"
+                        class="block w-full"
+                        name="password"
+                        required
+                        autocomplete="current-password"
+                    />
+                </div>
                 <x-input-error :messages="$errors->get('password')" class="mt-1" />
             </div>
 
