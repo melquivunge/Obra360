@@ -86,9 +86,4 @@ class PaymentController extends Controller
 
         return back()->with('success', 'Cobrança removida.');
     }
-
-    private function assertBelongsToProject(Project $project, Payment $payment): void
-    {
-        abort_unless((int) $payment->project_id === (int) $project->id, 404);
-    }
 }

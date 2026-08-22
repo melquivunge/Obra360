@@ -18,4 +18,13 @@ trait AuthorizesProjectAccess
             abort_unless((int) $project->manager_id === auth()->id(), 403);
         }
     }
+
+    /**
+     * As rotas aninhadas resolvem o filho pelo id, sem o ligar à obra do URL —
+     * sem esta verificação seria possível chegar a filhos de outra obra.
+     */
+    protected function assertBelongsToProject(Project $project, object $child): void
+    {
+        abort_unless((int) $child->project_id === (int) $project->id, 404);
+    }
 }
