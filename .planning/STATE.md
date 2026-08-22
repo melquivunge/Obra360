@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: All v1 feature gaps closed; Phase 6 (financial regression tests) outstanding
-last_updated: "2026-08-21"
-last_activity: 2026-08-21 -- Phase 5 completed and every remaining v1 gap built
+stopped_at: All 83 v1 requirements done; media still needs migrating off the public disk in production
+last_updated: "2026-08-22"
+last_activity: 2026-08-22 -- document access/upload tests, FASE-04 closed
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 8
   completed_plans: 8
-  percent: 95
+  percent: 100
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-21)
 
 **Core value:** A client logs in, immediately sees the current state of their construction project (phase, progress %, recent photos, money spent), and feels informed — without needing to contact the company.
-**Current focus:** Phase 06 — financial regression test net (the last outstanding item)
+**Current focus:** production hardening — migrate legacy media off the public disk, then drop the fallback
 
 ## Current Position
 
-Phase: 06 (rede de testes do fluxo financeiro) — NOT STARTED
-Status: Phases 1-5 delivered. 82 of 83 v1 requirements done, 1 partial, 0 not built.
-Last activity: 2026-08-21 -- all remaining feature gaps built and committed
+Phase: 06 (rede de testes) — DELIVERED
+Status: Phases 1-6 delivered. 83 of 83 v1 requirements done, 0 partial, 0 not built.
+Last activity: 2026-08-22 -- document access control and upload validation covered; FASE-04 closed
 
-Progress: [█████████▌] 95%
+Progress: [██████████] 100%
 
 > **Working mode:** Phases 2-5 and the 2026-08-21 gap-closure work were built
 > directly, outside the GSD workflow, at the user's direction. There are no
@@ -64,16 +64,27 @@ Six commits closed every outstanding v1 gap:
 
 ## Remaining Work
 
-1. **Phase 6 — financial regression tests.** 131 tests exist, but the older paths
-   (project CRUD, payments, document access control, upload validation on the
-   pre-existing routes) are still uncovered. This is the top debt.
-2. **FASE-04** — progress is derived from phases but there is no setting to choose
-   derived vs. manual. The only partial requirement left.
-3. Run `obra360:media:migrate-public` in production, then drop the public-disk fallback.
-4. Decide the exact surface the `financial` role should reach (`docs/production-readiness.md`).
-5. Split `ProjectController` — over 400 lines covering projects, phases, photos,
+1. **Run `obra360:media:migrate-public --commit` in production**, validate, re-run with
+   `--delete-source`, then drop the `'local' ?: 'public'` fallback in
+   `Admin/ProjectController`, `Client/ProjectController` and `ReportController`.
+   Until then legacy media stays reachable on the public disk. Top item.
+2. Decide the exact surface the `financial` role should reach (`docs/production-readiness.md`).
+   Today `AuthorizesProjectAccess` treats it like a manager, which is a placeholder.
+3. Split `Admin/ProjectController` — 471 lines covering projects, phases, photos,
    documents, expenses and updates.
-6. S3 migration (Flysystem already abstracts it).
+4. Regenerate `.planning/codebase/*.md` — stale since 2026-08-20.
+5. S3 migration (Flysystem already abstracts it).
+
+## What Was Built on 2026-08-22
+
+- `DocumentAccessTest` (15 tests): who can download what (client sees only documents
+  released to them, 404 across projects, managers limited to their own projects) and
+  what the app accepts as an upload (extension, size, visibility, private disk).
+- `obra360:media:migrate-public` now also migrates thumbnails and documents — it only
+  covered covers and photos, and those were exactly the paths still on the fallback.
+- FASE-04 closed: `progress_mode` setting switches derived vs. manual progress.
+
+Tests: 192 -> 216, all passing. Pint clean.
 
 ## Accumulated Context
 

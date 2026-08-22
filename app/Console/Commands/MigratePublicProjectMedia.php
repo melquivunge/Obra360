@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Document;
 use App\Models\Photo;
 use App\Models\Project;
 use Illuminate\Console\Command;
@@ -14,7 +15,7 @@ class MigratePublicProjectMedia extends Command
         {--commit : Copy legacy public media into the private local disk}
         {--delete-source : Delete public files after a verified copy; requires --commit}';
 
-    protected $description = 'Safely migrate legacy project covers and photos from public storage to private local storage.';
+    protected $description = 'Safely migrate legacy project covers, photos, thumbnails and documents from public storage to private local storage.';
 
     public function handle(): int
     {
@@ -100,6 +101,8 @@ class MigratePublicProjectMedia extends Command
             ->whereNotNull('cover_image_path')
             ->pluck('cover_image_path')
             ->merge(Photo::query()->whereNotNull('path')->pluck('path'))
+            ->merge(Photo::query()->whereNotNull('thumbnail_path')->pluck('thumbnail_path'))
+            ->merge(Document::withTrashed()->whereNotNull('path')->pluck('path'))
             ->filter()
             ->unique()
             ->values();
