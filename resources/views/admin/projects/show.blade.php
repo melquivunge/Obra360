@@ -1,5 +1,11 @@
+@php
+    $tabs = ['geral' => 'Geral', 'fases' => 'Fases', 'fotos' => 'Fotos', 'despesas' => 'Despesas', 'pagamentos' => 'Pagamentos', 'documentos' => 'Documentos', 'historico' => 'Histórico', 'mensagens' => 'Mensagens'];
+    // Os filtros das fotos recarregam a página por GET; sem isto o separador activo voltava sempre a "geral".
+    $requestedTab = request('tab');
+    $activeTab = is_string($requestedTab) && isset($tabs[$requestedTab]) ? $requestedTab : 'geral';
+@endphp
 <x-admin-layout>
-<div class="p-6 md:p-8 space-y-6" x-data="projectShow({{ $project->id }})">
+<div class="p-6 md:p-8 space-y-6" x-data="projectShow({{ $project->id }}, '{{ $activeTab }}')">
 
     {{-- Header --}}
     <div>
@@ -30,8 +36,8 @@
 
     {{-- Tabs --}}
     <div class="tab-nav">
-        @foreach(['geral'=>'Geral','fases'=>'Fases','fotos'=>'Fotos','despesas'=>'Despesas','pagamentos'=>'Pagamentos','documentos'=>'Documentos','historico'=>'Histórico','mensagens'=>'Mensagens'] as $key=>$label)
-        <button type="button" class="tab-btn" :class="tab==='{{ $key }}' ? 'active' : ''" @click="tab='{{ $key }}'">{{ $label }}</button>
+        @foreach($tabs as $key=>$label)
+        <button type="button" class="tab-btn" :class="tab==='{{ $key }}' ? 'active' : ''" @click="select('{{ $key }}')">{{ $label }}</button>
         @endforeach
     </div>
 
@@ -156,6 +162,7 @@
         </div>
         {{-- Filtros da galeria (FOTO-04) --}}
         <form method="GET" action="{{ route('admin.projects.show', $project) }}" class="flex flex-wrap gap-2" style="margin-bottom:0.75rem;">
+            <input type="hidden" name="tab" value="fotos">
             <select name="photo_phase" style="max-width:14rem;" onchange="this.form.submit()">
                 <option value="">Todas as fases</option>
                 @foreach($phases as $ph)
@@ -169,7 +176,7 @@
                 <option value="antigas" {{ request('photo_order') === 'antigas' ? 'selected' : '' }}>Mais antigas</option>
             </select>
             @if(request()->hasAny(['photo_phase','photo_from','photo_to','photo_order']))
-                <a href="{{ route('admin.projects.show', $project) }}" style="align-self:center;font-size:0.8125rem;color:var(--muted-foreground);">Limpar filtros</a>
+                <a href="{{ route('admin.projects.show', [$project, 'tab' => 'fotos']) }}" style="align-self:center;font-size:0.8125rem;color:var(--muted-foreground);">Limpar filtros</a>
             @endif
         </form>
 
@@ -488,7 +495,19 @@
 </div>
 
 <script>
-function projectShow(id){ return { tab: 'geral' }; }
+function projectShow(id, initialTab){ return {
+    tab: initialTab || 'geral',
+    // Reflectir o separador no URL: os POST desta página (fotos, fases, despesas,
+    // documentos…) voltam por back(), que usa o referer — sem isto cairiam em "geral".
+    select(key){
+        this.tab = key;
+        if(!window.history || !window.history.replaceState) return;
+        var url = new URL(window.location.href);
+        url.searchParams.set('tab', key);
+        // replaceState (e não pushState) para não encher o histórico do browser.
+        window.history.replaceState(window.history.state, '', url);
+    },
+}; }
 function openModal(id){ var m=document.getElementById(id);m.style.display='flex';var f=m.querySelector('select,input:not([type=hidden]):not([type=file]):not([type=checkbox]),textarea');if(f)setTimeout(function(){f.focus();},50); }
 function closeModal(id){ document.getElementById(id).style.display='none'; }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-overlay').forEach(function(m){m.style.display='none';});});
