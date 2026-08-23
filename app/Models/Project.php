@@ -141,6 +141,20 @@ class Project extends Model
     }
 
     /**
+     * Como nomear um conjunto de projectos do mesmo cliente — no título do
+     * painel e na navegação do portal. Quem só contratou arquitectura ou
+     * design de interiores não tem obra nenhuma para ver ali (TIPO-04).
+     */
+    public static function collectionLabel(bool $hasSiteWork, bool $hasDesignWork): string
+    {
+        return match (true) {
+            $hasSiteWork && $hasDesignWork => 'Minhas Obras e Projectos',
+            $hasDesignWork => 'Meus Projectos',
+            default => 'Minhas Obras',
+        };
+    }
+
+    /**
      * O mesmo substantivo com o artigo concordado — «a obra», «o projecto» —
      * para as frases da interface que o antecedem de uma preposição.
      */

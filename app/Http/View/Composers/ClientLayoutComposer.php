@@ -35,12 +35,43 @@ class ClientLayoutComposer
         $firstProject = $clientId
             ? ($this->cachedArray("client_first_project_{$clientId}", 120, function () use ($clientId) {
                 $project = Project::where('client_id', $clientId)
-                    ->select(['id', 'client_id', 'name'])
+                    ->select(['id', 'client_id', 'name', 'type'])
                     ->first();
 
-                return $project ? ['id' => $project->id, 'name' => $project->name] : [];
+                // Guardamos a palavra já formada — uma string —, não o modelo
+                // nem o tipo em bruto: o menu só precisa dela e a regra de
+                // concordância continua a viver no modelo.
+                return $project
+                    ? [
+                        'id' => $project->id,
+                        'name' => $project->name,
+                        'noun_with_article' => $project->nounWithArticle(),
+                    ]
+                    : [];
             }) ?: null)
             : null;
+
+        // TIPO-04: o menu não pode chamar «obras» ao que o cliente contratou
+        // quando ele só tem projectos de arquitectura ou de design de
+        // interiores. Guardamos dois booleanos — nunca modelos.
+        $projectMix = $clientId
+            ? $this->cachedArray("client_project_mix_{$clientId}", 120, function () use ($clientId) {
+                $types = Project::where('client_id', $clientId)
+                    ->distinct()
+                    ->pluck('type')
+                    ->all();
+
+                return [
+                    'has_site_work' => array_intersect($types, Project::SITE_TYPES) !== [],
+                    'has_design_work' => array_diff($types, Project::SITE_TYPES) !== [],
+                ];
+            })
+            : [];
+
+        $projectsNavLabel = Project::collectionLabel(
+            (bool) ($projectMix['has_site_work'] ?? false),
+            (bool) ($projectMix['has_design_work'] ?? false),
+        );
 
         $lastViewed = session('messages_last_viewed_at')
             ? Carbon::createFromTimestamp(session('messages_last_viewed_at'))
@@ -113,13 +144,17 @@ class ClientLayoutComposer
             });
 
         $msgHref = $firstProject ? route('portal.projects.messages', $firstProject['id']) : route('portal.dashboard');
+        // Uma cache escrita antes desta versão não traz a palavra; «a obra» é o
+        // valor de recurso, o mesmo que todos os projectos antigos têm.
+        $msgNounWithArticle = $firstProject['noun_with_article'] ?? 'a obra';
         $onDash = request()->routeIs('portal.dashboard');
         $onMessages = request()->routeIs('portal.projects.messages');
         $onProfile = request()->routeIs('profile.edit');
 
         $view->with(compact(
             'firstProject', 'recentUnreadMsgs', 'unreadMessages',
-            'recentUpdates', 'msgHref', 'onDash', 'onMessages', 'onProfile'
+            'recentUpdates', 'msgHref', 'msgNounWithArticle', 'projectsNavLabel',
+            'onDash', 'onMessages', 'onProfile'
         ));
     }
 

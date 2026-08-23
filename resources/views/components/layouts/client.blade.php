@@ -43,7 +43,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21" />
                 </svg>
-                Minhas Obras
+                {{ $projectsNavLabel }}
             </a>
 
             @if($firstProject)
@@ -126,7 +126,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21" />
                 </svg>
-                Minhas Obras
+                {{ $projectsNavLabel }}
             </a>
 
             @if($firstProject)
@@ -275,7 +275,7 @@
                                style="display:block;text-align:center;font-size:0.8125rem;font-weight:600;color:var(--color-primary);text-decoration:none;padding:0.5rem;border-radius:0.5rem;transition:background-color 0.15s;"
                                onmouseover="this.style.backgroundColor='oklch(0.74 0.135 78 / 0.1)'"
                                onmouseout="this.style.backgroundColor=''">
-                                Ir para mensagens da obra
+                                Ir para mensagens d{{ $msgNounWithArticle }}
                             </a>
                         </div>
                     @endif

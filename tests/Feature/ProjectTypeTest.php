@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\Message;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -219,7 +220,73 @@ class ProjectTypeTest extends TestCase
             ->get(route('portal.dashboard'))
             ->assertOk()
             ->assertSee('Meus Projectos')
-            ->assertDontSee('Minhas Obras</h1>', false);
+            ->assertDontSee('Minhas Obras');
+    }
+
+    public function test_the_portal_nav_does_not_call_a_design_project_an_obra(): void
+    {
+        $project = Project::factory()->architecture()->create();
+
+        $this->actingAs($this->clientUserFor($project))
+            ->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('Meus Projectos')
+            ->assertDontSee('Minhas Obras');
+    }
+
+    public function test_the_portal_nav_still_says_obras_for_a_construction_client(): void
+    {
+        $project = Project::factory()->create();
+
+        $this->actingAs($this->clientUserFor($project))
+            ->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('Minhas Obras')
+            ->assertDontSee('Meus Projectos');
+    }
+
+    /**
+     * O atalho para as mensagens só aparece no menu quando há mensagens por
+     * ler — daí a mensagem da equipa antes de abrir o painel.
+     */
+    public function test_the_messages_shortcut_does_not_call_a_design_project_an_obra(): void
+    {
+        $project = Project::factory()->architecture()->create();
+
+        Message::create([
+            'project_id' => $project->id,
+            'user_id' => User::factory()->manager()->create()->id,
+            'body' => 'A planta revista segue em anexo.',
+        ]);
+
+        $this->actingAs($this->clientUserFor($project))
+            ->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('Ir para mensagens do projecto')
+            ->assertDontSee('Ir para mensagens da obra');
+    }
+
+    public function test_the_portal_nav_names_both_when_the_client_has_both(): void
+    {
+        $client = Client::factory()->create();
+        Project::factory()->create(['client_id' => $client->id]);
+        $design = Project::factory()->interiorDesign()->create(['client_id' => $client->id]);
+
+        $this->actingAs($this->clientUserFor($design))
+            ->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('Minhas Obras e Projectos');
+    }
+
+    public function test_the_messages_page_of_a_design_project_does_not_say_obra(): void
+    {
+        $project = Project::factory()->architecture()->create();
+
+        $this->actingAs($this->clientUserFor($project))
+            ->get(route('portal.projects.messages', $project))
+            ->assertOk()
+            ->assertSee('Voltar para o projecto')
+            ->assertDontSee('Voltar para a obra');
     }
 
     public function test_the_history_of_a_design_project_does_not_say_obra_criada(): void

@@ -6,11 +6,9 @@
     @php
         $hasSiteWork = $projects->contains(fn ($p) => $p->isSiteWork());
         $hasDesignWork = $projects->contains(fn ($p) => ! $p->isSiteWork());
-        $heading = match (true) {
-            $hasSiteWork && $hasDesignWork => 'Minhas Obras e Projectos',
-            $hasDesignWork => 'Meus Projectos',
-            default => 'Minhas Obras',
-        };
+        // A mesma regra que nomeia a entrada do menu, no modelo — aqui sobre a
+        // colecção real, sem passar pela cache do layout.
+        $heading = \App\Models\Project::collectionLabel($hasSiteWork, $hasDesignWork);
     @endphp
     <div>
         <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">{{ $heading }}</h1>
