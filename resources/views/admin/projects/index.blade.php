@@ -27,13 +27,19 @@
             <option value="{{ $c->id }}" {{ request('client_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
             @endforeach
         </select>
+        <select name="type" style="max-width:14rem;" onchange="this.form.submit()">
+            <option value="">Todos os tipos</option>
+            @foreach(\App\Models\Project::TYPES as $k => $v)
+            <option value="{{ $k }}" {{ request('type') === $k ? 'selected' : '' }}>{{ $v }}</option>
+            @endforeach
+        </select>
         <select name="status" style="max-width:14rem;" onchange="this.form.submit()">
             <option value="">Todos os status</option>
             @foreach(\App\Models\Project::STATUSES as $k => $v)
             <option value="{{ $k }}" {{ request('status') === $k ? 'selected' : '' }}>{{ $v }}</option>
             @endforeach
         </select>
-        @if(request('client_id') || request('status'))
+        @if(request('client_id') || request('status') || request('type'))
         <a href="{{ route('admin.projects.index') }}" class="btn-secondary">Limpar</a>
         @endif
     </form>
@@ -58,7 +64,10 @@
                         <p style="font-size:0.8125rem;color:var(--muted-foreground)" class="truncate">{{ $project->client?->name }} · {{ $project->location ?: '—' }}</p>
                     </div>
                 </div>
-                <span class="badge badge-{{ $project->status }} shrink-0">{{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}</span>
+                <div class="flex flex-col items-end gap-1 shrink-0">
+                    <span class="badge badge-{{ $project->status }} shrink-0">{{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}</span>
+                    <x-project-type :project="$project" />
+                </div>
             </div>
             <div class="mt-4">
                 <div class="flex justify-between" style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.375rem;">
@@ -87,7 +96,7 @@
                        onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
                     </a>
-                    <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir esta obra e todos os dados?')">
+                    <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projecto' }} e todos os dados?')">
                         @csrf @method('DELETE')
                         <button type="submit" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;display:inline-flex;"
                                 onmouseover="this.style.backgroundColor='oklch(0.62 0.21 25 / 0.15)';this.style.color='var(--destructive)'"
@@ -163,6 +172,15 @@
                 </div>
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="field-label">Tipo <span style="color:var(--destructive)">*</span></label>
+                    <select name="type" required>
+                        @foreach(\App\Models\Project::TYPES as $k => $v)
+                        <option value="{{ $k }}" {{ old('type','construcao')===$k?'selected':'' }}>{{ $v }}</option>
+                        @endforeach
+                    </select>
+                    @error('type')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
                 <div>
                     <label class="field-label">Status</label>
                     <select name="status">

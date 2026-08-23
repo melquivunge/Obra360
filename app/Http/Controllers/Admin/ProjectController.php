@@ -29,6 +29,10 @@ class ProjectController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+        // TIPO-05: filtrar a lista por tipo, ao lado do cliente e do estado.
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
         $projects = $query->paginate(20)->withQueryString();
         $clients = Client::orderBy('name')->get();
         $managers = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_MANAGER])->orderBy('name')->get();
@@ -56,6 +60,7 @@ class ProjectController extends Controller
             'expected_end_date' => 'nullable|date',
             'budget' => 'nullable|numeric|min:0',
             'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
+            'type' => 'required|in:'.implode(',', array_keys(Project::TYPES)),
             'manager_id' => 'nullable|exists:users,id',
             'show_financials' => 'boolean',
             'notes' => 'nullable|string|max:2000',
@@ -73,9 +78,12 @@ class ProjectController extends Controller
 
         $project = Project::create($data);
 
-        ProjectUpdate::log($project->id, 'Obra criada', 'status');
+        // O histórico é visível ao cliente: quem contratou só o projecto de
+        // arquitectura não pode ler «Obra criada».
+        ProjectUpdate::log($project->id, $project->isSiteWork() ? 'Obra criada' : 'Projecto criado', 'status');
 
-        return redirect()->route('admin.projects.show', $project)->with('success', 'Obra criada com sucesso.');
+        return redirect()->route('admin.projects.show', $project)
+            ->with('success', $project->isSiteWork() ? 'Obra criada com sucesso.' : 'Projecto criado com sucesso.');
     }
 
     public function show(Request $request, Project $project)
@@ -115,6 +123,7 @@ class ProjectController extends Controller
             'expected_end_date' => 'nullable|date',
             'budget' => 'nullable|numeric|min:0',
             'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
+            'type' => 'required|in:'.implode(',', array_keys(Project::TYPES)),
             'manager_id' => 'nullable|exists:users,id',
             'show_financials' => 'boolean',
             'notes' => 'nullable|string|max:2000',
@@ -150,16 +159,20 @@ class ProjectController extends Controller
             ProjectUpdate::log($project->id, 'Status alterado para: '.Project::STATUSES[$data['status']], 'status');
         }
 
-        return redirect()->route('admin.projects.show', $project)->with('success', 'Obra atualizada.');
+        return redirect()->route('admin.projects.show', $project)
+            ->with('success', $project->isSiteWork() ? 'Obra atualizada.' : 'Projecto atualizado.');
     }
 
     public function destroy(Project $project)
     {
         $this->authorizeProjectAccess($project);
 
+        $wasSiteWork = $project->isSiteWork();
+
         $project->delete();
 
-        return redirect()->route('admin.projects.index')->with('success', 'Obra removida.');
+        return redirect()->route('admin.projects.index')
+            ->with('success', $wasSiteWork ? 'Obra removida.' : 'Projecto removido.');
     }
 
     // ── Manual Updates ────────────────────────────────────────

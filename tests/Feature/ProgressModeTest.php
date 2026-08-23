@@ -33,6 +33,7 @@ class ProgressModeTest extends TestCase
         return array_merge([
             'client_id' => $project->client_id,
             'name' => $project->name,
+            'type' => $project->type,
             'status' => $project->status,
             'show_financials' => '1',
         ], $overrides);

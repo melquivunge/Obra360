@@ -16,9 +16,12 @@
                 <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">{{ $project->name }}</h1>
                 <p style="color:var(--color-muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ $project->location ?: '—' }}</p>
             </div>
-            <span class="badge badge-{{ $project->status }} shrink-0">
-                {{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}
-            </span>
+            <div class="flex flex-col items-end gap-1 shrink-0">
+                <span class="badge badge-{{ $project->status }} shrink-0">
+                    {{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}
+                </span>
+                <x-project-type :project="$project" />
+            </div>
         </div>
     </div>
 
@@ -27,7 +30,7 @@
          uma moldura vazia nem o ícone de imagem partida. --}}
     <div style="border:1px solid var(--color-border);border-radius:0.875rem;overflow:hidden;background-color:var(--color-surface);">
         <x-project-cover :src="$project->cover_image_path ? route('portal.projects.cover', $project) : null"
-                         alt="Capa da obra"
+                         alt="Capa d{{ $project->nounWithArticle() }}"
                          style="width:100%;height:180px;object-fit:cover;display:block;" />
     </div>
 
@@ -199,7 +202,7 @@
         {{-- Tab: Fases --}}
         <div x-show="tab === 'fases'" style="display:none;">
             <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
-                <h2 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">Fases da obra</h2>
+                <h2 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">Fases d{{ $project->nounWithArticle() }}</h2>
                 @if($project->phases->isEmpty())
                     <p style="color:var(--color-muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">Nenhuma fase cadastrada.</p>
                 @else

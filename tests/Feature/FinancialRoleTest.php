@@ -75,6 +75,7 @@ class FinancialRoleTest extends TestCase
         return [
             'client_id' => $client->id,
             'name' => 'Obra criada pelo financeiro',
+            'type' => 'construcao',
             'status' => 'planejada',
             'budget' => 50000,
         ];

@@ -26,6 +26,7 @@ class ProjectCrudTest extends TestCase
             'client_id' => $client->id,
             'name' => 'Residência Alfa',
             'code' => 'OBR-001',
+            'type' => 'construcao',
             'status' => 'planejada',
             'budget' => 50000,
             'location' => 'Luanda',
