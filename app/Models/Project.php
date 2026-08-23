@@ -119,6 +119,33 @@ class Project extends Model
         return $this->hasMany(Payment::class)->latest();
     }
 
+    /** PLAN-01: as plantas deste projecto, da mais recente para a mais antiga. */
+    public function plans(): HasMany
+    {
+        return $this->hasMany(Plan::class)->latest();
+    }
+
+    /**
+     * Se o separador «Plantas» faz sentido neste projecto.
+     *
+     * Num projecto de arquitectura ou de design de interiores as plantas são o
+     * produto: está sempre lá. Numa obra de construção ou remodelação são
+     * material de apoio — existe muitas vezes, mas nem sempre — por isso só
+     * aparece quando já há plantas. Quem as pode criar vê-o de qualquer forma
+     * (a vista junta o `manage-projects` a esta condição), senão a primeira
+     * planta de uma obra nunca poderia ser criada.
+     */
+    public function showsPlans(): bool
+    {
+        if (! $this->isSiteWork()) {
+            return true;
+        }
+
+        return $this->relationLoaded('plans')
+            ? $this->plans->isNotEmpty()
+            : $this->plans()->exists();
+    }
+
     public function typeLabel(): string
     {
         return self::TYPES[$this->type] ?? $this->type;

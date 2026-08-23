@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\ProjectDocumentController;
 use App\Http\Controllers\Admin\ProjectExpenseController;
 use App\Http\Controllers\Admin\ProjectPhaseController;
 use App\Http\Controllers\Admin\ProjectPhotoController;
+use App\Http\Controllers\Admin\ProjectPlanController;
+use App\Http\Controllers\Admin\ProjectPlanVersionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
@@ -75,6 +77,10 @@ Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->na
     Route::get('/obras/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('/obras/{project}/capa', [ProjectPhotoController::class, 'cover'])->name('projects.cover');
     Route::get('/obras/{project}/fotos/{photo}', [ProjectPhotoController::class, 'show'])->name('projects.photos.show');
+    // PLAN-04/PLAN-06: descarregar qualquer versão, corrente ou substituída.
+    // É leitura, por isso fica ao lado das fotos e acessível ao financeiro, que
+    // lê a obra toda para contexto mas não lhe toca na estrutura.
+    Route::get('/obras/{project}/plantas/{plan}/versoes/{version}/download', [ProjectPlanVersionController::class, 'download'])->name('projects.plans.versions.download');
     Route::get('/mensagens', [MessageController::class, 'index'])->name('messages.index');
     Route::get('/obras/{project}/mensagens', [MessageController::class, 'messages'])->name('projects.messages.index');
     Route::post('/obras/{project}/mensagens', [MessageController::class, 'store'])
@@ -130,6 +136,13 @@ Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.
 
         // Updates
         Route::post('/obras/{project}/atualizacoes', [ProjectController::class, 'storeUpdate'])->name('projects.updates.store');
+
+        // Plantas — a planta é uma linha na base de dados; o ficheiro é a
+        // versão, que tem tecto próprio mais abaixo.
+        Route::post('/obras/{project}/plantas', [ProjectPlanController::class, 'store'])->name('projects.plans.store');
+        Route::put('/obras/{project}/plantas/{plan}', [ProjectPlanController::class, 'update'])->name('projects.plans.update');
+        Route::delete('/obras/{project}/plantas/{plan}', [ProjectPlanController::class, 'destroy'])->name('projects.plans.destroy');
+        Route::post('/obras/{project}/plantas/{plan}/versoes/{version}/enviar', [ProjectPlanVersionController::class, 'send'])->name('projects.plans.versions.send');
     });
 
     // Uploads: os dois pedidos pesados do sistema, com tecto próprio.
@@ -139,6 +152,11 @@ Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.
     Route::post('/obras/{project}/documentos', [ProjectDocumentController::class, 'store'])
         ->middleware('throttle:30,1')
         ->name('projects.documents.store');
+    // Uma versão de planta é um ficheiro de até 64 MB por pedido — o mesmo
+    // perfil do upload de documentos, logo o mesmo tecto.
+    Route::post('/obras/{project}/plantas/{plan}/versoes', [ProjectPlanVersionController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('projects.plans.versions.store');
 });
 
 Route::middleware(['auth', 'role:admin,financial', 'throttle:120,1'])->prefix('admin')->name('admin.')->group(function () {

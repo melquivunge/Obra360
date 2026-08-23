@@ -90,7 +90,13 @@ class ProjectController extends Controller
     {
         $this->authorizeProjectAccess($project);
 
-        $project->load(['client', 'manager', 'phases', 'expenses', 'documents', 'updates.user', 'messages.user', 'payments']);
+        $project->load([
+            'client', 'manager', 'phases', 'expenses', 'documents', 'updates.user',
+            'messages.user', 'payments',
+            // As versões vêm juntas: o separador das plantas mostra o histórico
+            // inteiro, e sem isto seriam duas consultas por planta.
+            'plans.versions.uploader',
+        ]);
         $phases = $project->phases;
         $totalSpent = $project->totalSpent();
         $payments = $project->payments;

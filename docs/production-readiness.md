@@ -48,7 +48,60 @@ The scope is enforced by the `role:` middleware groups in `routes/web.php`, not 
 
 One consequence is unresolved: a financial user reads all project data (photos, documents, messages) for context, so the role is not a money-only silo. If a future requirement needs per-project financial assignment, it requires a new column on `projects` and a corresponding scope — the current model has no way to express it.
 
+Plans follow the same split. Creating a plan, uploading a version, sending a version to the client and deleting a plan are project structure, so they live in the `role:admin,manager` groups; downloading a version is reading, so it sits with the photo and cover routes that `financial` may reach. Deleting a plan is a soft delete that deliberately leaves `plan_versions` untouched (PLAN-09): the history survives the delete and comes back whole on restore.
+
+`Plan` and `PlanVersion` are both watched by `AuditObserver`, for the same reason `Document` is — a plan is a contractual artefact, and "which drawing was current, who uploaded it, when it was sent, when it was superseded" is exactly what the trail exists to answer. Auditing only `Plan` would record the label and lose the facts, because those columns live on `plan_versions`. It is also where PORT-05 will read from once the client can approve a version in the portal.
+
 Project deletion remains a soft delete. Media files are not removed during soft delete so future restore remains possible. Permanent media cleanup should be implemented with an explicit force-delete lifecycle or queued cleanup job.
+
+## Upload size limit (plans)
+
+Plan versions (`plan_versions`) accept the file formats architects actually hand over: PDF, JPG, JPEG, PNG, WEBP, DWG, DXF, SKP, RVT, IFC, GLB, GLTF and ZIP. Revit and SketchUp files routinely pass 100 MB, so the server ceiling is a product constraint, not a detail.
+
+### What the ceiling actually is
+
+The effective limit is the **smaller** of two PHP directives, because either one alone will reject the request:
+
+| Directive | Docker (`docker/php/local.ini`) | Effect when exceeded |
+| --- | --- | --- |
+| `upload_max_filesize` | 64M | The file arrives with `UPLOAD_ERR_INI_SIZE` and no content. Caught in `ProjectPlanVersionController::store`, which answers with the limit and the external-address alternative. |
+| `post_max_size` | 64M | PHP discards the whole request body before the application sees it. |
+
+`PlanVersion::maxUploadKilobytes()` reads both directives at runtime and returns the smaller. That one number feeds three places: the `max:` validation rule, the sentence printed in the upload form before anyone picks a file, and every error message. A misconfigured server therefore tells the truth about what it accepts rather than repeating a value someone typed once.
+
+### What the user sees when a file is too big
+
+Three distinct failures, three distinct answers:
+
+1. **File over `upload_max_filesize`, request under `post_max_size`** — the controller intercepts `UPLOAD_ERR_INI_SIZE` before validation and returns `PlanVersion::overLimitMessage()`. Without that intercept, Laravel's `file` rule says "must be a file", which is true and useless.
+2. **Request over `post_max_size`, with a `Content-Length`** — Laravel's global `ValidatePostSize` middleware throws before the session starts, so no error can be flashed back to the form. `resources/views/errors/413.blade.php` replaces the generic "413 Payload Too Large" with the limit, the two ways out, and a back link.
+3. **Request truncated with no `Content-Length`** (chunked transfer encoding) — escapes `ValidatePostSize`, and PHP hands the application an empty `$_POST` and `$_FILES`. The CSRF token is gone with them, so the default answer is "419 — page expired". `App\Http\Middleware\ExplainTruncatedUpload` takes the CSRF middleware's slot in the `web` group (see `bootstrap/app.php`) and answers with the truth instead.
+
+In every case the documented way out is the same and is a first-class feature, not a workaround: a plan version may store an **external address** (Google Drive, WeTransfer, OneDrive) instead of a file. The version number, the change note, the supersede history and the audit trail are recorded exactly as they would be for an uploaded file — only the bytes live elsewhere.
+
+### Raising the limit in cPanel
+
+Production runs on HostGator shared hosting. To raise the ceiling:
+
+1. Log into cPanel and open **Software › Select PHP Version**, then the **Options** tab (on some cPanel builds this is **MultiPHP INI Editor › Editor mode**).
+2. Set `upload_max_filesize` and `post_max_size` together. **`post_max_size` must be at least as large as `upload_max_filesize`**, and ideally a little larger, because it covers the whole request — the file plus the other form fields. Setting only `upload_max_filesize` changes nothing.
+3. `max_execution_time` and `memory_limit` usually need to go up with them. A 200 MB upload over a slow connection can exceed a 300-second execution limit even though the file itself is fine.
+4. Verify from the application, not from the ini file — the value the app enforces and advertises is whatever `PlanVersion::maxUploadKilobytes()` reads:
+
+```bash
+php artisan tinker --execute="echo App\Models\PlanVersion::maxUploadLabel();"
+```
+
+The upload form on the project page prints the same value, so a wrong setting is visible without a shell.
+
+### The cost and the risk of raising it
+
+- **Shared hosting enforces its own ceilings.** HostGator caps what a shared account may set; above that cap the directive is silently ignored, and the application will then advertise a limit the server never honours. Always verify with the command above after changing it.
+- **Concurrency is the real cost, not disk.** Each in-flight upload holds a PHP-FPM worker and buffers the request in memory or in the temp directory for its whole duration. Three simultaneous 200 MB uploads on a shared account is enough to exhaust the process pool and make the whole portal unresponsive to everyone, including clients who are only reading their project.
+- **Long uploads collide with the execution timeout.** A request that dies at `max_execution_time` leaves nothing behind but a failed upload and a confused user; the ceiling and the timeout have to be raised together or not at all.
+- **Storage grows fastest here.** Plan versions are never deleted — that is the point of the feature (PLAN-04). A plan revised ten times keeps ten files. Raising the per-file limit multiplies the account's disk growth by the same factor, on hosting where disk is finite and shared.
+
+The deliberate position is to leave the limit at 64 MB and treat the external address as the normal path for native Revit, SketchUp and large IFC models, rather than to raise the ceiling and inherit the concurrency problem. Raise it only if a specific client workflow makes the external address unworkable, and raise `max_execution_time` and `memory_limit` in the same change.
 
 ## Scheduled maintenance
 
