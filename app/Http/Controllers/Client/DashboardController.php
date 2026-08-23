@@ -18,9 +18,12 @@ class DashboardController extends Controller
             ->latest('updated_at')
             ->get()
             ->map(function ($project) {
-                $project->cover_url = $project->latestImage
-                    ? route('portal.projects.photos.show', [$project, $project->latestImage])
-                    : ($project->cover_image_path ? route('portal.projects.cover', $project) : null);
+                // A capa escolhida à mão manda sobre a última foto: era ao contrário e
+                // bastava alguém carregar uma foto para a capa deliberada desaparecer.
+                // A última imagem fica como recurso para as obras que não têm capa.
+                $project->cover_url = $project->cover_image_path
+                    ? route('portal.projects.cover', $project)
+                    : ($project->latestImage ? route('portal.projects.photos.show', [$project, $project->latestImage]) : null);
 
                 return $project;
             });
