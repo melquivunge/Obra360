@@ -12,13 +12,30 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'client_id', 'manager_id', 'name', 'code', 'description', 'location',
+    'client_id', 'manager_id', 'name', 'code', 'type', 'description', 'location',
     'start_date', 'expected_end_date', 'completed_at', 'budget', 'status',
     'progress', 'show_financials', 'cover_image_path', 'notes',
 ])]
 class Project extends Model
 {
     use HasFactory, SoftDeletes;
+
+    /**
+     * TIPO-01: o que a empresa vende. Governa o vocabulário da interface e,
+     * mais tarde, o que cada página mostra — não uma tabela à parte.
+     */
+    public const TYPES = [
+        'construcao' => 'Construção',
+        'remodelacao' => 'Remodelação',
+        'arquitetura' => 'Projecto de arquitectura',
+        'design_interiores' => 'Design de interiores',
+    ];
+
+    /**
+     * Tipos que correspondem a obra física. Os restantes são serviços de
+     * projecto: chamar-lhes «obra» ao cliente estaria errado.
+     */
+    public const SITE_TYPES = ['construcao', 'remodelacao'];
 
     public const STATUSES = [
         'planejada' => 'Planejada',
@@ -27,6 +44,16 @@ class Project extends Model
         'aguardando_aprovacao' => 'Aguardando aprovação',
         'concluida' => 'Concluída',
         'cancelada' => 'Cancelada',
+    ];
+
+    /**
+     * TIPO-02: um projecto sem tipo declarado é uma obra de construção — o
+     * mesmo valor com que a migração preencheu as linhas já existentes.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'type' => 'construcao',
     ];
 
     protected function casts(): array
@@ -90,6 +117,50 @@ class Project extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)->latest();
+    }
+
+    public function typeLabel(): string
+    {
+        return self::TYPES[$this->type] ?? $this->type;
+    }
+
+    /** Verdadeiro para construção e remodelação; falso para os serviços de projecto. */
+    public function isSiteWork(): bool
+    {
+        return in_array($this->type, self::SITE_TYPES, true);
+    }
+
+    /**
+     * O substantivo a usar na interface: «obra» para quem contratou construção
+     * ou remodelação, «projecto» para quem contratou só arquitectura ou design
+     * de interiores.
+     */
+    public function noun(): string
+    {
+        return $this->isSiteWork() ? 'obra' : 'projecto';
+    }
+
+    /**
+     * Como nomear um conjunto de projectos do mesmo cliente — no título do
+     * painel e na navegação do portal. Quem só contratou arquitectura ou
+     * design de interiores não tem obra nenhuma para ver ali (TIPO-04).
+     */
+    public static function collectionLabel(bool $hasSiteWork, bool $hasDesignWork): string
+    {
+        return match (true) {
+            $hasSiteWork && $hasDesignWork => 'Minhas Obras e Projectos',
+            $hasDesignWork => 'Meus Projectos',
+            default => 'Minhas Obras',
+        };
+    }
+
+    /**
+     * O mesmo substantivo com o artigo concordado — «a obra», «o projecto» —
+     * para as frases da interface que o antecedem de uma preposição.
+     */
+    public function nounWithArticle(): string
+    {
+        return ($this->isSiteWork() ? 'a ' : 'o ').$this->noun();
     }
 
     /**

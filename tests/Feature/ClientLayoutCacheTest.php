@@ -67,6 +67,7 @@ class ClientLayoutCacheTest extends TestCase
             "client_unread_msgs_{$this->clientUser->id}_{$bucket}",
             "client_unread_count_{$this->clientUser->id}_{$bucket}",
             "client_updates_{$this->client->id}",
+            "client_project_mix_{$this->client->id}",
         ];
     }
 
@@ -165,6 +166,51 @@ class ClientLayoutCacheTest extends TestCase
 
         $this->assertIsArray(Cache::get($key));
         $this->assertSame($this->project->name, Cache::get($key)['name']);
+    }
+
+    /**
+     * O menu precisa de saber se o cliente tem obras, projectos, ou ambos. Essa
+     * informação também não pode passar pela cache como modelo — só booleanos.
+     */
+    public function test_the_cached_project_mix_holds_only_booleans(): void
+    {
+        $this->actingAs($this->clientUser)->get(route('portal.dashboard'))->assertOk();
+
+        $cached = Cache::get("client_project_mix_{$this->client->id}");
+
+        $this->assertIsArray($cached);
+        $this->assertIsBool($cached['has_site_work']);
+        $this->assertIsBool($cached['has_design_work']);
+        $this->assertTrue($cached['has_site_work']);
+        $this->assertFalse($cached['has_design_work']);
+    }
+
+    public function test_the_cached_first_project_carries_the_noun_as_a_string(): void
+    {
+        $this->actingAs($this->clientUser)->get(route('portal.dashboard'))->assertOk();
+
+        $cached = Cache::get("client_first_project_{$this->client->id}");
+
+        $this->assertIsString($cached['noun_with_article']);
+        $this->assertSame('a obra', $cached['noun_with_article']);
+    }
+
+    /**
+     * Uma cache escrita antes desta versão não traz a palavra do substantivo; o
+     * layout tem de continuar a renderizar com o valor de recurso.
+     */
+    public function test_a_cached_first_project_without_the_noun_still_renders(): void
+    {
+        Cache::put(
+            "client_first_project_{$this->client->id}",
+            ['id' => $this->project->id, 'name' => $this->project->name],
+            120,
+        );
+
+        $this->actingAs($this->clientUser)
+            ->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('Ir para mensagens da obra');
     }
 
     public function test_the_messages_link_still_points_to_the_first_project(): void

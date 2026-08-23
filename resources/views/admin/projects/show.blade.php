@@ -16,12 +16,13 @@
                      falta no disco, que faz a rota devolver 404 — entra a imagem padrão, para
                      o cabeçalho não mudar de forma consoante a obra. --}}
                 <x-project-cover :src="$project->cover_image_path ? route('admin.projects.cover', $project) : null"
-                                 alt="Capa da obra"
+                                 alt="Capa d{{ $project->nounWithArticle() }}"
                                  style="width:4.5rem;height:4.5rem;border-radius:0.75rem;object-fit:cover;border:1px solid var(--border);flex-shrink:0;" />
                 <div>
                     <div class="flex items-center gap-3">
                         <h1 style="font-size:1.5rem;font-weight:700;">{{ $project->name }}</h1>
                         <span class="badge badge-{{ $project->status }}">{{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}</span>
+                        <x-project-type :project="$project" />
                     </div>
                     <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ $project->client?->name }} · {{ $project->location ?: '—' }}</p>
                 </div>
@@ -29,7 +30,7 @@
             @can('manage-projects')
             <div class="flex gap-2">
                 <a href="{{ route('admin.projects.edit', $project) }}" class="btn-secondary">Editar</a>
-                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir esta obra?')">
+                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projecto' }}?')">
                     @csrf @method('DELETE')
                     <button type="submit" class="btn-danger">Excluir</button>
                 </form>
@@ -57,6 +58,7 @@
             <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 mb-4">
                 @php $infos = [
                     'Cliente'=>$project->client?->name??'—',
+                    'Tipo'=>$project->typeLabel(),
                     'Código'=>$project->code??'—',
                     'Localização'=>$project->location??'—',
                     'Início'=>$project->start_date?\Carbon\Carbon::parse($project->start_date)->format('d/m/Y'):'—',

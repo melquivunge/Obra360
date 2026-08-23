@@ -50,6 +50,15 @@
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
+                    <label class="field-label">Tipo <span style="color:var(--destructive)">*</span></label>
+                    <select name="type" required>
+                        @foreach(\App\Models\Project::TYPES as $k => $v)
+                        <option value="{{ $k }}" {{ old('type', $project->type)===$k?'selected':'' }}>{{ $v }}</option>
+                        @endforeach
+                    </select>
+                    @error('type')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                </div>
+                <div>
                     <label class="field-label">Status</label>
                     <select name="status">
                         @foreach(\App\Models\Project::STATUSES as $k => $v)

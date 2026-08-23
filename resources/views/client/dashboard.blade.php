@@ -1,9 +1,17 @@
 <x-client-layout>
 <div class="space-y-6 p-4 md:p-8">
 
-    {{-- Header --}}
+    {{-- Header. O título segue o que o cliente contratou: quem só tem projecto de
+         arquitectura ou de design de interiores não tem obra nenhuma (TIPO-04). --}}
+    @php
+        $hasSiteWork = $projects->contains(fn ($p) => $p->isSiteWork());
+        $hasDesignWork = $projects->contains(fn ($p) => ! $p->isSiteWork());
+        // A mesma regra que nomeia a entrada do menu, no modelo — aqui sobre a
+        // colecção real, sem passar pela cache do layout.
+        $heading = \App\Models\Project::collectionLabel($hasSiteWork, $hasDesignWork);
+    @endphp
     <div>
-        <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">Minhas Obras</h1>
+        <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">{{ $heading }}</h1>
         <p style="color:var(--color-muted-foreground);font-size:0.875rem;margin-top:0.25rem;">
             Bem-vindo, {{ auth()->user()->name }}. Acompanhe o andamento abaixo.
         </p>
@@ -15,7 +23,7 @@
                  class="w-12 h-12 mx-auto mb-4" style="color:var(--color-muted-foreground);opacity:0.4;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21" />
             </svg>
-            <p style="color:var(--color-muted-foreground);font-size:0.9375rem;">Você ainda não tem obras vinculadas.</p>
+            <p style="color:var(--color-muted-foreground);font-size:0.9375rem;">Você ainda não tem obras ou projectos vinculados.</p>
             <p style="color:var(--color-muted-foreground);font-size:0.8125rem;margin-top:0.375rem;opacity:0.7;">Entre em contato com a equipe para liberar seu acesso.</p>
         </div>
     @else
@@ -45,9 +53,12 @@
                                 {{ $project->location ?: '—' }}
                             </p>
                         </div>
-                        <span class="badge badge-{{ $project->status }} shrink-0">
-                            {{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}
-                        </span>
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <span class="badge badge-{{ $project->status }} shrink-0">
+                                {{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}
+                            </span>
+                            <x-project-type :project="$project" />
+                        </div>
                     </div>
 
                     {{-- Progress --}}

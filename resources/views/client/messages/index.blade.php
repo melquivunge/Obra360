@@ -5,7 +5,7 @@
     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-shrink:0;">
         <a href="{{ route('portal.projects.show', $project) }}"
            style="display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;border-radius:0.5rem;border:1px solid var(--color-border);background-color:var(--color-card);color:var(--color-muted-foreground);text-decoration:none;flex-shrink:0;transition:border-color 0.15s,color 0.15s;"
-           aria-label="Voltar para a obra"
+           aria-label="Voltar para {{ $project->nounWithArticle() }}"
            onmouseover="this.style.borderColor='var(--color-primary)';this.style.color='var(--color-primary)'"
            onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-muted-foreground)'">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1rem;height:1rem;">
