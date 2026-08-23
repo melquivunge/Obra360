@@ -21,6 +21,10 @@ class DashboardController extends Controller
                 // A capa escolhida à mão manda sobre a última foto: era ao contrário e
                 // bastava alguém carregar uma foto para a capa deliberada desaparecer.
                 // A última imagem fica como recurso para as obras que não têm capa.
+                //
+                // Fica em `null` quando não há nem uma nem outra: a imagem padrão não
+                // entra aqui, entra no componente <x-project-cover>, o único sítio que
+                // decide qual é o URL da imagem padrão em toda a aplicação.
                 $project->cover_url = $project->cover_image_path
                     ? route('portal.projects.cover', $project)
                     : ($project->latestImage ? route('portal.projects.photos.show', [$project, $project->latestImage]) : null);

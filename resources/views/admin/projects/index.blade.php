@@ -46,14 +46,12 @@
              onmouseout="this.style.borderColor='var(--border)'">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex items-start gap-3 min-w-0">
-                    {{-- Capa: miniatura discreta. Sem capa não se renderiza nada — o cartão
-                         fecha o espaço sozinho. Um registo cuja imagem falta no disco devolve
-                         404 na rota; o onerror retira a imagem em vez de deixar o ícone partido. --}}
-                    @if($project->cover_image_path)
-                    <img src="{{ route('admin.projects.cover', $project) }}" alt="" loading="lazy"
-                         style="width:3rem;height:3rem;border-radius:0.5rem;object-fit:cover;border:1px solid var(--border);flex-shrink:0;"
-                         onerror="this.remove()">
-                    @endif
+                    {{-- Capa: miniatura discreta. Sem capa própria — ou com o ficheiro em
+                         falta no disco, que faz a rota devolver 404 — entra a imagem padrão,
+                         de modo que a miniatura ocupa sempre o mesmo espaço. --}}
+                    <x-project-cover :src="$project->cover_image_path ? route('admin.projects.cover', $project) : null"
+                                     alt="" loading="lazy"
+                                     style="width:3rem;height:3rem;border-radius:0.5rem;object-fit:cover;border:1px solid var(--border);flex-shrink:0;" />
                     <div class="min-w-0">
                         @if($project->code)<p style="font-size:0.75rem;color:var(--muted-foreground)">{{ $project->code }}</p>@endif
                         <h3 style="font-size:1rem;font-weight:700;" class="truncate">{{ $project->name }}</h3>
