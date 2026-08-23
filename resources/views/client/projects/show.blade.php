@@ -1,5 +1,10 @@
 <x-client-layout>
-<div class="p-4 md:p-8 space-y-6" x-data="{ tab: 'resumo' }">
+@php
+    // Uma aprovação de planta volta por back(); sem isto o portal reabriria no
+    // Resumo e a mensagem de confirmação ficaria num separador fechado.
+    $activeTab = session('active_tab') === 'plantas' && $plans->isNotEmpty() ? 'plantas' : 'resumo';
+@endphp
+<div class="p-4 md:p-8 space-y-6" x-data="{ tab: @js($activeTab) }">
 
     {{-- Back + Header --}}
     <div>
@@ -83,6 +88,12 @@
                 @if($pendingCount) <span style="font-size:0.7rem;margin-left:0.25rem;background:oklch(0.6 0.18 40 / 0.15);color:oklch(0.6 0.18 40);border-radius:9999px;padding:0.1rem 0.4rem;">{{ $pendingCount }}</span> @endif
             </button>
             @endif
+            @if($plans->isNotEmpty())
+            <button class="tab-btn" :class="{ active: tab === 'plantas' }" @click="tab = 'plantas'">
+                Plantas
+                <span style="font-size:0.7rem;margin-left:0.25rem;opacity:0.7;">({{ $plans->count() }})</span>
+            </button>
+            @endif
             <button class="tab-btn" :class="{ active: tab === 'documentos' }" @click="tab = 'documentos'">Documentos</button>
             @if($allowComments)
             <button class="tab-btn" :class="{ active: tab === 'mensagens' }" @click="tab = 'mensagens'">Mensagens</button>
@@ -112,6 +123,8 @@
                             'despesa'   => ['bg' => 'oklch(0.5 0.15 220 / 0.15)',  'color' => 'oklch(0.6 0.18 220)'],
                             'fase'      => ['bg' => 'oklch(0.65 0.16 145 / 0.15)', 'color' => 'oklch(0.65 0.16 145)'],
                             'documento' => ['bg' => 'oklch(0.6 0.18 280 / 0.15)',  'color' => 'oklch(0.7 0.18 280)'],
+                            'planta'    => ['bg' => 'oklch(0.6 0.16 200 / 0.15)',  'color' => 'oklch(0.62 0.16 200)'],
+                            'planta_aprovada' => ['bg' => 'oklch(0.65 0.16 145 / 0.15)', 'color' => 'oklch(0.65 0.16 145)'],
                             'status'    => ['bg' => 'oklch(0.78 0.15 75 / 0.15)',  'color' => 'oklch(0.78 0.15 75)'],
                             'geral'     => ['bg' => 'var(--color-surface)',         'color' => 'var(--color-muted-foreground)'],
                         ];
@@ -416,6 +429,128 @@
                 @endif
             </div>
         </div>
+
+        {{-- Tab: Plantas (PORT-01 a PORT-06) --}}
+        @if($plans->isNotEmpty())
+        <div x-show="tab === 'plantas'" style="display:none;">
+            <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
+                <h2 style="font-size:1rem;font-weight:700;margin-bottom:0.35rem;">Plantas e desenhos</h2>
+                <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-bottom:1.25rem;">
+                    Estão aqui as versões que lhe foram enviadas. Aprove a versão corrente quando ela estiver conforme.
+                </p>
+
+                @if(session('success'))
+                <div style="background-color:oklch(0.65 0.16 145 / 0.12);border:1px solid oklch(0.65 0.16 145 / 0.35);border-radius:0.5rem;padding:0.75rem 0.875rem;margin-bottom:1rem;font-size:0.875rem;color:oklch(0.65 0.16 145);">
+                    {{ session('success') }}
+                </div>
+                @endif
+                @error('plan_version')
+                <div style="background-color:oklch(0.62 0.21 25 / 0.12);border:1px solid oklch(0.62 0.21 25 / 0.35);border-radius:0.5rem;padding:0.75rem 0.875rem;margin-bottom:1rem;font-size:0.875rem;color:oklch(0.62 0.21 25);">
+                    {{ $message }}
+                </div>
+                @enderror
+
+                <div class="space-y-3">
+                    @foreach($plans as $plan)
+                    @php
+                        // A colecção vem filtrada às versões enviadas e ordenada
+                        // da mais recente para a mais antiga: a primeira é a que
+                        // o cliente tem em mãos.
+                        $current = $plan->versions->first();
+                        $history = $plan->versions->slice(1);
+                    @endphp
+                    <div x-data="{ history: false }" style="border:1px solid var(--color-border);border-radius:0.75rem;padding:1.125rem;background-color:var(--color-surface);">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 style="font-size:0.9375rem;font-weight:600;">{{ $plan->name }}</h3>
+                                    <span style="font-size:0.6875rem;font-weight:500;padding:0.125rem 0.5rem;border-radius:9999px;background-color:var(--color-card);color:var(--color-muted-foreground);border:1px solid var(--color-border);">{{ $plan->disciplineLabel() }}</span>
+                                    @if($current->approved_at)
+                                    <span style="font-size:0.6875rem;font-weight:600;padding:0.125rem 0.5rem;border-radius:9999px;background-color:oklch(0.65 0.16 145 / 0.15);color:oklch(0.65 0.16 145);">Aprovada</span>
+                                    @elseif($current->isSuperseded())
+                                    <span style="font-size:0.6875rem;font-weight:600;padding:0.125rem 0.5rem;border-radius:9999px;background-color:var(--color-card);color:var(--color-muted-foreground);border:1px solid var(--color-border);">Substituída</span>
+                                    @endif
+                                </div>
+                                <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-top:0.3rem;">
+                                    Versão {{ $current->label() }} ·
+                                    {{ $current->isExternal() ? 'endereço externo' : strtoupper($current->format) }}{{ $current->humanSize() ? ' · '.$current->humanSize() : '' }}
+                                    · enviada a {{ $current->sent_to_client_at->format('d/m/Y') }}
+                                </p>
+                                @if($current->change_note)
+                                <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-top:0.25rem;white-space:pre-wrap;">{{ $current->change_note }}</p>
+                                @endif
+                                @if($current->approved_at)
+                                <p style="font-size:0.75rem;color:oklch(0.65 0.16 145);margin-top:0.35rem;">
+                                    Aprovada por {{ $current->approver?->name ?? 'si' }} a {{ $current->approved_at->format('d/m/Y \à\s H:i') }}.
+                                </p>
+                                @elseif($current->isSuperseded())
+                                {{-- Diz porque não há botão de aprovar, sem
+                                     descrever a revisão que ainda não foi
+                                     enviada: o cliente fica a saber o estado da
+                                     cópia que tem, e não o que está em cima da
+                                     mesa do estúdio. --}}
+                                <p style="font-size:0.75rem;color:var(--color-muted-foreground);margin-top:0.35rem;">
+                                    Esta já não é a versão corrente da planta e por isso não pode ser aprovada.
+                                </p>
+                                @endif
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                                @include('client.projects.partials.plan-version-links', ['project' => $project, 'plan' => $plan, 'version' => $current])
+
+                                {{-- PORT-04/PORT-06: só a versão corrente e só uma vez. --}}
+                                @if(! $current->isSuperseded() && ! $current->approved_at)
+                                <form method="POST" action="{{ route('portal.projects.plans.versions.approve', [$project, $plan, $current]) }}"
+                                      x-data="{ sent: false }" @submit="sent = true"
+                                      onsubmit="return confirm('Aprovar a versão {{ $current->label() }} da planta «{{ $plan->name }}»? A aprovação fica registada e não é reversível.')">
+                                    @csrf
+                                    {{-- O `disabled` no envio evita o segundo pedido do duplo clique;
+                                         o servidor não confia nele — a aprovação é idempotente lá. --}}
+                                    <button type="submit" :disabled="sent"
+                                            style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.4rem 0.85rem;border-radius:0.375rem;border:none;font-size:0.8125rem;font-weight:600;cursor:pointer;background-color:oklch(0.65 0.16 145);color:white;"
+                                            :style="sent ? 'opacity:0.6;cursor:progress;' : ''">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                                        </svg>
+                                        <span x-text="sent ? 'A aprovar…' : 'Aprovar versão'">Aprovar versão</span>
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- PORT-02: as versões anteriores continuam disponíveis. --}}
+                        @if($history->isNotEmpty())
+                        <div style="margin-top:0.875rem;padding-top:0.875rem;border-top:1px solid var(--color-border);">
+                            <button type="button" @click="history = !history"
+                                    style="background:none;border:none;padding:0;cursor:pointer;font-size:0.8125rem;color:var(--color-primary);"
+                                    x-text="history ? 'Ocultar versões anteriores' : 'Ver versões anteriores ({{ $history->count() }})'">Ver versões anteriores ({{ $history->count() }})</button>
+
+                            <div x-show="history" style="display:none;margin-top:0.75rem;" class="space-y-2">
+                                @foreach($history as $old)
+                                <div class="flex flex-wrap items-center gap-3" style="font-size:0.8125rem;padding:0.5rem 0.75rem;border-radius:0.5rem;background-color:var(--color-card);border:1px solid var(--color-border);">
+                                    <span style="font-weight:600;min-width:2.25rem;">{{ $old->label() }}</span>
+                                    <span style="color:var(--color-muted-foreground);" class="min-w-0 truncate">
+                                        {{ $old->isExternal() ? 'Endereço externo' : strtoupper($old->format) }}{{ $old->humanSize() ? ' · '.$old->humanSize() : '' }}
+                                    </span>
+                                    <span style="color:var(--color-muted-foreground);">enviada a {{ $old->sent_to_client_at->format('d/m/Y') }}</span>
+                                    @if($old->approved_at)
+                                    <span style="color:oklch(0.65 0.16 145);">aprovada a {{ $old->approved_at->format('d/m/Y') }}</span>
+                                    @endif
+                                    <span class="ml-auto flex flex-wrap items-center gap-2">
+                                        @include('client.projects.partials.plan-version-links', ['project' => $project, 'plan' => $plan, 'version' => $old])
+                                    </span>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
 
         {{-- Tab: Mensagens --}}
         @if($allowComments)
