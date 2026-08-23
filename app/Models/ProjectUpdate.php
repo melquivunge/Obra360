@@ -15,6 +15,7 @@ class ProjectUpdate extends Model
         'despesa' => 'Despesa registrada',
         'fase' => 'Mudança de fase',
         'documento' => 'Documento adicionado',
+        'planta' => 'Planta enviada',
         'status' => 'Mudança de status',
     ];
 

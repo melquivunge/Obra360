@@ -1,8 +1,30 @@
 @php
-    $tabs = ['geral' => 'Geral', 'fases' => 'Fases', 'fotos' => 'Fotos', 'despesas' => 'Despesas', 'pagamentos' => 'Pagamentos', 'documentos' => 'Documentos', 'historico' => 'Histórico', 'mensagens' => 'Mensagens'];
+    // O separador das plantas segue o tipo de projecto: onde o desenho é o
+    // produto está sempre lá, e logo a seguir ao geral; numa obra é material de
+    // apoio, aparece ao pé dos documentos e só quando já existem plantas — ou a
+    // quem as pode criar, senão a primeira nunca poderia ser feita.
+    $canManagePlans = auth()->user()->can('manage-projects');
+    $showPlansTab = $project->showsPlans() || $canManagePlans;
+    $plansTab = $showPlansTab ? ['plantas' => 'Plantas'] : [];
+
+    $tabs = array_merge(
+        ['geral' => 'Geral'],
+        $project->isSiteWork() ? [] : $plansTab,
+        ['fases' => 'Fases', 'fotos' => 'Fotos', 'despesas' => 'Despesas', 'pagamentos' => 'Pagamentos', 'documentos' => 'Documentos'],
+        $project->isSiteWork() ? $plansTab : [],
+        ['historico' => 'Histórico', 'mensagens' => 'Mensagens'],
+    );
+
     // Os filtros das fotos recarregam a página por GET; sem isto o separador activo voltava sempre a "geral".
     $requestedTab = request('tab');
     $activeTab = is_string($requestedTab) && isset($tabs[$requestedTab]) ? $requestedTab : 'geral';
+
+    // Um erro de validação das plantas volta por back(); sem isto abriria em
+    // "geral" e a mensagem — a do limite de upload, sobretudo — ficaria por ler.
+    $planErrorKeys = ['file', 'external_url', 'change_note', 'version', 'discipline'];
+    if ($showPlansTab && $errors->hasAny($planErrorKeys)) {
+        $activeTab = 'plantas';
+    }
 @endphp
 <x-admin-layout>
 <div class="p-6 md:p-8 space-y-6" x-data="projectShow({{ $project->id }}, '{{ $activeTab }}')">
@@ -411,6 +433,136 @@
         </div>
     </div>
 
+    {{-- TAB: Plantas --}}
+    @if($showPlansTab)
+    <div x-show="tab==='plantas'" x-cloak class="space-y-4">
+
+        {{-- É o único sítio da área interna que mostra erros de validação, e é
+             onde eles têm mesmo de ser lidos: a mensagem do limite de upload
+             (LIM-02) não serve de nada se ninguém a vir. --}}
+        @if($errors->any())
+        <div style="background-color:oklch(0.62 0.21 25 / 0.12);border:1px solid oklch(0.62 0.21 25 / 0.35);border-radius:0.75rem;padding:0.875rem 1rem;">
+            <ul style="margin:0;padding-left:1.1rem;font-size:0.875rem;color:var(--destructive);">
+                @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
+        @if($canManagePlans)
+        <div class="flex justify-end">
+            <button type="button" onclick="openModal('modal-planta')" class="btn-primary">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Nova planta
+            </button>
+        </div>
+        @endif
+
+        @forelse($project->plans as $plan)
+        @php
+            $current = $plan->versions->first();
+            $badge = ['em_elaboracao' => 'planejada', 'enviada' => 'aguardando_aprovacao', 'aprovada' => 'concluida', 'substituida' => 'pausada'][$plan->status] ?? 'planejada';
+        @endphp
+        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;" x-data="{ editing: false, history: false }">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h4 style="font-weight:600;">{{ $plan->name }}</h4>
+                        <span class="badge badge-{{ $badge }}">{{ $plan->statusLabel() }}</span>
+                        <span style="font-size:0.6875rem;font-weight:500;padding:0.125rem 0.5rem;border-radius:9999px;background-color:var(--surface);color:var(--muted-foreground);border:1px solid var(--border);">{{ $plan->disciplineLabel() }}</span>
+                    </div>
+                    <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;">
+                        @if($current)
+                            Versão corrente {{ $current->label() }} ·
+                            @if($current->isExternal()) endereço externo @else {{ strtoupper($current->format) }}{{ $current->humanSize() ? ' · '.$current->humanSize() : '' }} @endif
+                            · {{ $current->created_at->format('d/m/Y') }}
+                            @if($current->wasSentToClient()) · enviada ao cliente a {{ $current->sent_to_client_at->format('d/m/Y') }} @endif
+                        @else
+                            Sem versões. Carregue a primeira.
+                        @endif
+                    </p>
+                    @if($plan->notes)<p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;white-space:pre-wrap;">{{ $plan->notes }}</p>@endif
+                </div>
+                <div class="flex flex-wrap gap-2 shrink-0">
+                    @if($plan->versions->count() > 1)
+                    <button type="button" @click="history=!history" class="btn-secondary" style="font-size:0.8125rem;">
+                        <span x-text="history ? 'Ocultar histórico' : 'Histórico ({{ $plan->versions->count() }} versões)'"></span>
+                    </button>
+                    @endif
+                    @if($canManagePlans)
+                    @if($current && ! $current->isSuperseded())
+                    <form method="POST" action="{{ route('admin.projects.plans.versions.send', [$project, $plan, $current]) }}">
+                        @csrf
+                        <button type="submit" class="btn-secondary" style="font-size:0.8125rem;">{{ $current->wasSentToClient() ? 'Reenviar ao cliente' : 'Enviar ao cliente' }}</button>
+                    </form>
+                    @endif
+                    <button type="button" class="btn-primary" style="font-size:0.8125rem;"
+                            onclick="novaVersao({{ $plan->id }}, @js($plan->name), {{ $plan->versions->count() + 1 }})">
+                        Nova versão
+                    </button>
+                    <button type="button" @click="editing=!editing" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;" title="Editar planta">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
+                    </button>
+                    <form method="POST" action="{{ route('admin.projects.plans.destroy', [$project, $plan]) }}" onsubmit="return confirm('Remover a planta «{{ $plan->name }}»? O histórico de versões é mantido.')">
+                        @csrf @method('DELETE')
+                        <button type="submit" style="padding:0.375rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" title="Remover planta" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                        </button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+
+            {{-- PLAN-04: o histórico completo. A versão corrente está sempre
+                 visível; as substituídas abrem a pedido para a lista não crescer
+                 sem fim, mas continuam todas descarregáveis. --}}
+            <div class="mt-4 space-y-2" style="border-top:1px solid var(--border);padding-top:1rem;">
+                @foreach($plan->versions as $i => $version)
+                <div x-show="{{ $i === 0 ? 'true' : 'history' }}" @if($i > 0) x-cloak @endif
+                     class="flex flex-wrap items-center gap-3" style="font-size:0.8125rem;padding:0.5rem 0.75rem;border-radius:0.5rem;background-color:var(--surface);">
+                    <span style="font-weight:600;min-width:2.5rem;">{{ $version->label() }}</span>
+                    @if($version->isSuperseded())
+                        <span class="badge badge-pausada">Substituída</span>
+                    @else
+                        <span class="badge badge-em_andamento">Corrente</span>
+                    @endif
+                    <span style="color:var(--muted-foreground)" class="min-w-0 truncate">
+                        {{ $version->isExternal() ? 'Endereço externo' : ($version->original_name ?: strtoupper($version->format)) }}
+                        @if($version->humanSize()) · {{ $version->humanSize() }} @endif
+                    </span>
+                    <span style="color:var(--muted-foreground)">{{ $version->created_at->format('d/m/Y H:i') }}</span>
+                    @if($version->uploader)<span style="color:var(--muted-foreground)">{{ $version->uploader->name }}</span>@endif
+                    @if($version->change_note)<span style="color:var(--muted-foreground)" class="w-full">{{ $version->change_note }}</span>@endif
+                    <span class="ml-auto">
+                        @if($version->isExternal())
+                            <a href="{{ $version->external_url }}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Abrir endereço ↗</a>
+                        @else
+                            <a href="{{ route('admin.projects.plans.versions.download', [$project, $plan, $version]) }}" style="color:var(--primary);">Descarregar</a>
+                        @endif
+                    </span>
+                </div>
+                @endforeach
+            </div>
+
+            @if($canManagePlans)
+            <form x-show="editing" x-cloak method="POST" action="{{ route('admin.projects.plans.update', [$project, $plan]) }}" class="mt-4 space-y-3 pt-4" style="border-top:1px solid var(--border)">
+                @csrf @method('PUT')
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div><label class="field-label">Nome</label><input type="text" name="name" value="{{ $plan->name }}" maxlength="200" required></div>
+                    <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ $plan->discipline===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select></div>
+                </div>
+                <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;">{{ $plan->notes }}</textarea></div>
+                <div class="flex gap-2"><button type="submit" class="btn-primary">Guardar</button><button type="button" @click="editing=false" class="btn-secondary">Cancelar</button></div>
+            </form>
+            @endif
+        </div>
+        @empty
+        <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma planta registada.</p>
+        @endforelse
+    </div>
+    @endif
+
     {{-- TAB: Histórico --}}
     <div x-show="tab==='historico'" x-cloak class="space-y-4">
         @can('manage-projects')
@@ -687,6 +839,80 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
   </div>
 </div>
 @endcan
+
+@if($showPlansTab)
+@can('manage-projects')
+{{-- Modal: Nova Planta --}}
+<div id="modal-planta" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-planta')">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+      <h2 class="modal-title" style="margin:0;">Nova planta</h2>
+      <button type="button" onclick="closeModal('modal-planta')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+    </div>
+    <form method="POST" action="{{ route('admin.projects.plans.store', $project) }}" class="space-y-4">
+      @csrf
+      <div>
+        <label class="field-label">Nome da planta <span style="color:var(--destructive)">*</span></label>
+        <input type="text" name="name" required maxlength="200" placeholder="Ex: Planta baixa — piso 0">
+        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">O desenho, não o ficheiro. As revisões entram depois como versões desta mesma planta.</span>
+      </div>
+      <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
+      <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;" maxlength="1000"></textarea></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar planta</button><button type="button" onclick="closeModal('modal-planta')" class="btn-secondary">Cancelar</button></div>
+    </form>
+  </div>
+</div>
+
+{{-- Modal: Nova Versão (o mesmo modal serve todas as plantas; o destino é
+     definido em JS, como no modal das despesas) --}}
+<div id="modal-versao" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-versao')">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+      <h2 class="modal-title" style="margin:0;">Nova versão <span id="versao-numero" style="color:var(--muted-foreground)"></span></h2>
+      <button type="button" onclick="closeModal('modal-versao')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+    </div>
+    <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:1rem;" id="versao-planta"></p>
+    <form id="form-versao" method="POST" enctype="multipart/form-data" class="space-y-4">
+      @csrf
+      <div>
+        <label class="field-label">Ficheiro</label>
+        <input type="file" name="file" style="padding:0.375rem;" accept=".pdf,.jpg,.jpeg,.png,.webp,.dwg,.dxf,.skp,.rvt,.ifc,.glb,.gltf,.zip">
+        {{-- LIM-01: o limite é dito antes de alguém gastar dez minutos a enviar
+             um Revit de 120 MB para ver o envio falhar no fim. --}}
+        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.375rem;">
+          Formatos aceites: {{ strtoupper(implode(', ', \App\Models\PlanVersion::FORMATS)) }}.
+        </span>
+        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">
+          <strong>Limite deste servidor: {{ \App\Models\PlanVersion::maxUploadLabel() }} por ficheiro.</strong>
+          Um desenho maior do que isto não chega a ser recebido — nesse caso deixe o ficheiro em branco e use o endereço externo abaixo.
+        </span>
+      </div>
+      <div>
+        <label class="field-label">Endereço externo (em alternativa ao ficheiro)</label>
+        <input type="url" name="external_url" maxlength="2048" placeholder="https://drive.google.com/…">
+        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">Google Drive, WeTransfer, OneDrive. A versão fica registada na mesma, com o histórico completo — só o ficheiro é que vive fora daqui.</span>
+      </div>
+      <div><label class="field-label">Nota de alterações</label><textarea name="change_note" rows="2" style="resize:vertical;" maxlength="1000" placeholder="O que mudou em relação à versão anterior"></textarea></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Carregar versão</button><button type="button" onclick="closeModal('modal-versao')" class="btn-secondary">Cancelar</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+@php $versaoUrlTemplate = route('admin.projects.plans.versions.store', [$project, '__ID__']); @endphp
+const versaoStoreUrl = id => @json($versaoUrlTemplate).replace('__ID__', id);
+
+function novaVersao(planId, planName, nextVersion) {
+    const form = document.getElementById('form-versao');
+    form.reset();
+    form.action = versaoStoreUrl(planId);
+    document.getElementById('versao-planta').textContent = planName;
+    document.getElementById('versao-numero').textContent = 'v' + nextVersion;
+    openModal('modal-versao');
+}
+</script>
+@endcan
+@endif
 
 {{-- Lightbox --}}
 <div id="lightbox-overlay"

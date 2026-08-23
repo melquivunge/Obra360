@@ -8,6 +8,8 @@ use App\Models\Document;
 use App\Models\Expense;
 use App\Models\Payment;
 use App\Models\Photo;
+use App\Models\Plan;
+use App\Models\PlanVersion;
 use App\Models\Project;
 use App\Models\ProjectPhase;
 use App\Models\ProjectUpdate;
@@ -40,10 +42,18 @@ class AppServiceProvider extends ServiceProvider
 
         // Audit trail (SEC-05). ProjectUpdate is deliberately absent: it is
         // client-facing content, already visible in the project history.
+        //
+        // Plan and PlanVersion are audited for the same reason Document is: a
+        // plan is a contractual artefact, and "which drawing was current, who
+        // uploaded it, when it was sent and superseded" is precisely the kind
+        // of question the trail exists to answer. PlanVersion carries those
+        // columns — auditing only Plan would record the label and lose the
+        // facts. It is also what PORT-05 will read once the client can approve
+        // a version from the portal.
         foreach ([
             Project::class, Client::class, User::class, Expense::class,
             Payment::class, Photo::class, Document::class, ProjectPhase::class,
-            Setting::class,
+            Setting::class, Plan::class, PlanVersion::class,
         ] as $auditable) {
             $auditable::observe(AuditObserver::class);
         }
