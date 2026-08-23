@@ -16,6 +16,10 @@ class ProjectUpdate extends Model
         'fase' => 'Mudança de fase',
         'documento' => 'Documento adicionado',
         'planta' => 'Planta enviada',
+        // PORT-05: a aprovação é um facto distinto do envio, e o histórico do
+        // cliente mostra a etiqueta do tipo — reutilizar 'planta' daria a uma
+        // aprovação a legenda «Planta enviada».
+        'planta_aprovada' => 'Planta aprovada',
         'status' => 'Mudança de status',
     ];
 

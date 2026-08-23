@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ProjectPlanVersionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
+use App\Http\Controllers\Client\PlanController as ClientPlanController;
 use App\Http\Controllers\Client\ProjectController as ClientProjectController;
 use App\Http\Controllers\Portal\PushSubscriptionController;
 use App\Http\Controllers\ProfileController;
@@ -199,6 +200,16 @@ Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->g
         ->middleware('throttle:20,1')
         ->name('projects.messages.store');
     Route::get('/obras/{project}/documentos/{document}/download', [ClientProjectController::class, 'downloadDocument'])->name('projects.documents.download');
+
+    // PORT-01 a PORT-06: as plantas enviadas ao cliente. Os literais ficam
+    // depois dos parâmetros no fim do URI, nunca no lugar deles, para nenhuma
+    // destas rotas ser apanhada por uma anterior.
+    Route::get('/obras/{project}/plantas/{plan}/versoes/{version}/download', [ClientPlanController::class, 'download'])->name('projects.plans.versions.download');
+    Route::get('/obras/{project}/plantas/{plan}/versoes/{version}/ver', [ClientPlanController::class, 'preview'])->name('projects.plans.versions.preview');
+    // Escrita do cliente — o mesmo tecto das mensagens.
+    Route::post('/obras/{project}/plantas/{plan}/versoes/{version}/aprovar', [ClientPlanController::class, 'approve'])
+        ->middleware('throttle:20,1')
+        ->name('projects.plans.versions.approve');
     Route::post('/mensagens/marcar-lidas', function () {
         session(['messages_last_viewed_at' => now()->timestamp]);
 

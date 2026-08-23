@@ -7,9 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\Message;
 use App\Models\Photo;
+use App\Models\Plan;
 use App\Models\Project;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -32,8 +34,9 @@ class ProjectController extends Controller
         $documents = $project->documents()->where('visibility', 'cliente')->get();
         $payments = $canViewFinancials ? $project->payments()->get() : collect();
         $totalSpent = $expenses->sum('amount');
+        $plans = $this->plansSentToClient($project);
 
-        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials', 'allowComments'));
+        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials', 'allowComments', 'plans'));
     }
 
     public function messages(Request $request, Project $project)
@@ -109,6 +112,28 @@ class ProjectController extends Controller
                 : $photo->path;
 
         return $this->mediaResponse($path);
+    }
+
+    /**
+     * PORT-01: as plantas como o cliente as vê — e uma versão que não lhe foi
+     * enviada não existe.
+     *
+     * O filtro está aqui, na consulta, e não na vista: uma condição esquecida
+     * num `@if` do Blade é um esboço de trabalho entregue por engano, e nenhuma
+     * versão sem `sent_to_client_at` chega sequer a ser carregada. Uma planta
+     * cujas versões estejam todas por enviar não aparece de todo — é por isso
+     * que o `whereHas` acompanha o `with`, com a mesma condição nos dois.
+     *
+     * @return Collection<int, Plan>
+     */
+    private function plansSentToClient(Project $project): Collection
+    {
+        $sent = fn ($query) => $query->whereNotNull('sent_to_client_at');
+
+        return $project->plans()
+            ->whereHas('versions', $sent)
+            ->with(['versions' => $sent, 'versions.approver'])
+            ->get();
     }
 
     private function canViewFinancials(Project $project): bool
