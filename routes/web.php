@@ -33,7 +33,34 @@ Route::get('/dashboard', function () {
     return redirect()->route('admin.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// ── Admin routes ─────────────────────────────────────────────────────────────
+// ── Área admin ───────────────────────────────────────────────────────────────
+//
+// Tectos de escrita da área interna (POST/PUT/DELETE). Não é uma porta aberta
+// ao mundo — todas exigem sessão de admin, gestor ou financeiro — por isso os
+// valores são deliberadamente largos: travam o que um humano nunca faz (um
+// script em ciclo, uma conta interna comprometida) sem partir o trabalho de
+// quem lança um lote de dados de uma vez. Um tecto apertado de mais é pior do
+// que tecto nenhum, porque bloqueia quem paga pelo produto.
+//
+//   throttle:120,1  escritas leves — uma linha na base de dados por pedido
+//                   (despesa, fase, pagamento, atualização, mensagem, cliente,
+//                   obra, utilizador). 2/s está muito acima do ritmo de quem
+//                   preenche formulários, mesmo a lançar 50 despesas seguidas.
+//   throttle:30,1   upload de documentos — um ficheiro de até 50 MB por pedido,
+//                   enviado de cada vez; 1 a cada 2 s nunca é atingido à mão.
+//   throttle:20,1   upload de fotos/vídeos — N ficheiros de até 50 MB cada no
+//                   mesmo pedido, mais a geração de miniaturas. É de longe o
+//                   pedido mais caro do sistema e o único com tecto apertado.
+
+// O formulário de nova obra tem de ser declarado ANTES de `/obras/{project}`:
+// o Laravel casa pela ordem de declaração, o parâmetro apanhava o literal
+// "nova", o route-model binding falhava e a resposta era 404 — na prática, não
+// se conseguia criar uma obra pela interface. Fica no seu próprio grupo para
+// manter a criação em admin,manager sem a alargar ao papel financeiro.
+Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/obras/nova', [ProjectController::class, 'create'])->name('projects.create');
+});
+
 Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -50,7 +77,9 @@ Route::middleware(['auth', 'role:admin,manager,financial'])->prefix('admin')->na
     Route::get('/obras/{project}/fotos/{photo}', [ProjectPhotoController::class, 'show'])->name('projects.photos.show');
     Route::get('/mensagens', [MessageController::class, 'index'])->name('messages.index');
     Route::get('/obras/{project}/mensagens', [MessageController::class, 'messages'])->name('projects.messages.index');
-    Route::post('/obras/{project}/mensagens', [MessageController::class, 'store'])->name('projects.messages.store');
+    Route::post('/obras/{project}/mensagens', [MessageController::class, 'store'])
+        ->middleware('throttle:120,1')
+        ->name('projects.messages.store');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -60,45 +89,61 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Clients
     Route::get('/clientes', [ClientController::class, 'index'])->name('clients.index');
     Route::get('/clientes/novo', [ClientController::class, 'create'])->name('clients.create');
-    Route::post('/clientes', [ClientController::class, 'store'])->name('clients.store');
     Route::get('/clientes/{client}/editar', [ClientController::class, 'edit'])->name('clients.edit');
-    Route::put('/clientes/{client}', [ClientController::class, 'update'])->name('clients.update');
-    Route::delete('/clientes/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
-    Route::post('/clientes/{client}/vincular-usuario', [ClientController::class, 'linkUser'])->name('clients.link-user');
-    Route::delete('/clientes/{client}/desvincular/{user}', [ClientController::class, 'unlinkUser'])->name('clients.unlink-user');
+
+    Route::middleware('throttle:120,1')->group(function () {
+        Route::post('/clientes', [ClientController::class, 'store'])->name('clients.store');
+        Route::put('/clientes/{client}', [ClientController::class, 'update'])->name('clients.update');
+        Route::delete('/clientes/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
+        Route::post('/clientes/{client}/vincular-usuario', [ClientController::class, 'linkUser'])->name('clients.link-user');
+        Route::delete('/clientes/{client}/desvincular/{user}', [ClientController::class, 'unlinkUser'])->name('clients.unlink-user');
+    });
 
     // Settings
     Route::get('/configuracoes', [SettingController::class, 'index'])->name('settings.index');
-    Route::put('/configuracoes', [SettingController::class, 'update'])->name('settings.update');
+    Route::put('/configuracoes', [SettingController::class, 'update'])
+        ->middleware('throttle:120,1')
+        ->name('settings.update');
 });
 
 Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.')->group(function () {
-    // Projects
-    Route::get('/obras/nova', [ProjectController::class, 'create'])->name('projects.create');
-    Route::post('/obras', [ProjectController::class, 'store'])->name('projects.store');
+    // Projects (o formulário de criação está declarado mais acima, por ordem)
     Route::get('/obras/{project}/editar', [ProjectController::class, 'edit'])->name('projects.edit');
-    Route::put('/obras/{project}', [ProjectController::class, 'update'])->name('projects.update');
-    Route::delete('/obras/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
-    // Phases (nested under project)
-    Route::post('/obras/{project}/fases', [ProjectPhaseController::class, 'store'])->name('projects.phases.store');
-    Route::put('/obras/{project}/fases/{phase}', [ProjectPhaseController::class, 'update'])->name('projects.phases.update');
-    Route::delete('/obras/{project}/fases/{phase}', [ProjectPhaseController::class, 'destroy'])->name('projects.phases.destroy');
-
-    // Photos
-    Route::post('/obras/{project}/fotos', [ProjectPhotoController::class, 'store'])->name('projects.photos.store');
-    Route::delete('/obras/{project}/fotos/{photo}', [ProjectPhotoController::class, 'destroy'])->name('projects.photos.destroy');
-
-    // Documents
-    Route::post('/obras/{project}/documentos', [ProjectDocumentController::class, 'store'])->name('projects.documents.store');
+    // Documents — download é leitura, fica fora do tecto de escrita.
     Route::get('/obras/{project}/documentos/{document}/download', [ProjectDocumentController::class, 'download'])->name('projects.documents.download');
-    Route::delete('/obras/{project}/documentos/{document}', [ProjectDocumentController::class, 'destroy'])->name('projects.documents.destroy');
 
-    // Updates
-    Route::post('/obras/{project}/atualizacoes', [ProjectController::class, 'storeUpdate'])->name('projects.updates.store');
+    // Escritas leves: uma linha na base de dados por pedido.
+    Route::middleware('throttle:120,1')->group(function () {
+        Route::post('/obras', [ProjectController::class, 'store'])->name('projects.store');
+        Route::put('/obras/{project}', [ProjectController::class, 'update'])->name('projects.update');
+        Route::delete('/obras/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+
+        // Phases (nested under project)
+        Route::post('/obras/{project}/fases', [ProjectPhaseController::class, 'store'])->name('projects.phases.store');
+        Route::put('/obras/{project}/fases/{phase}', [ProjectPhaseController::class, 'update'])->name('projects.phases.update');
+        Route::delete('/obras/{project}/fases/{phase}', [ProjectPhaseController::class, 'destroy'])->name('projects.phases.destroy');
+
+        // Apagar não move ficheiros para dentro do servidor; só remove.
+        Route::delete('/obras/{project}/fotos/{photo}', [ProjectPhotoController::class, 'destroy'])->name('projects.photos.destroy');
+        Route::delete('/obras/{project}/documentos/{document}', [ProjectDocumentController::class, 'destroy'])->name('projects.documents.destroy');
+
+        // Updates
+        Route::post('/obras/{project}/atualizacoes', [ProjectController::class, 'storeUpdate'])->name('projects.updates.store');
+    });
+
+    // Uploads: os dois pedidos pesados do sistema, com tecto próprio.
+    Route::post('/obras/{project}/fotos', [ProjectPhotoController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('projects.photos.store');
+    Route::post('/obras/{project}/documentos', [ProjectDocumentController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('projects.documents.store');
 });
 
-Route::middleware(['auth', 'role:admin,financial'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin,financial', 'throttle:120,1'])->prefix('admin')->name('admin.')->group(function () {
+    // Só há escritas neste grupo, por isso o tecto vive no próprio grupo.
+
     // Expenses
     Route::post('/obras/{project}/despesas', [ProjectExpenseController::class, 'store'])->name('projects.expenses.store');
     Route::put('/obras/{project}/despesas/{expense}', [ProjectExpenseController::class, 'update'])->name('projects.expenses.update');
@@ -116,8 +161,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('usuarios', UserController::class)
         ->parameters(['usuarios' => 'user'])
         ->except(['show'])
-        ->names('users');
+        ->names('users')
+        // Só as escritas levam tecto; os ecrãs de listagem e edição ficam livres.
+        ->middlewareFor(['store', 'update', 'destroy'], 'throttle:120,1');
     Route::post('usuarios/{user}/toggle-active', [UserController::class, 'toggleActive'])
+        ->middleware('throttle:120,1')
         ->name('users.toggle-active');
 });
 
