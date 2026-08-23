@@ -264,16 +264,14 @@ class ProjectCrudTest extends TestCase
     }
 
     /**
-     * BUG: `GET /admin/obras/nova` nunca chega ao ProjectController@create.
-     * `GET /admin/obras/{project}` é registada antes em routes/web.php (grupo
-     * role:admin,manager,financial) e apanha o literal "nova", pelo que o
-     * route-model binding falha e devolve 404 — mesmo para um admin.
-     * O teste documenta o comportamento atual; não corrigir aqui.
+     * `GET /admin/obras/nova` chegava a ser apanhada por `/admin/obras/{project}`,
+     * declarada antes, e devolvia 404. A rota literal passou a ser declarada
+     * primeiro; a cobertura da ordem está em RouteOrderTest.
      */
-    public function test_the_new_project_form_is_shadowed_by_the_show_route(): void
+    public function test_admin_can_open_the_new_project_form(): void
     {
         $this->actingAs(User::factory()->admin()->create())
             ->get(route('admin.projects.create'))
-            ->assertNotFound();
+            ->assertOk();
     }
 }
