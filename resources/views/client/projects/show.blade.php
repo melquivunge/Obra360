@@ -22,6 +22,17 @@
         </div>
     </div>
 
+    {{-- Capa da obra. Só é renderizada quando existe. Se o ficheiro faltar no disco a
+         rota devolve 404: o onerror remove o bloco inteiro, para não sobrar nem o ícone
+         de imagem partida nem uma moldura vazia no meio da página. --}}
+    @if($project->cover_image_path)
+    <div data-capa style="border:1px solid var(--color-border);border-radius:0.875rem;overflow:hidden;background-color:var(--color-surface);">
+        <img src="{{ route('portal.projects.cover', $project) }}" alt="Capa da obra"
+             style="width:100%;height:180px;object-fit:cover;display:block;"
+             onerror="this.closest('[data-capa]').remove()">
+    </div>
+    @endif
+
     {{-- Progress card --}}
     <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
         <div class="flex justify-between mb-2">

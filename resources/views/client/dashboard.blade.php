@@ -32,7 +32,8 @@
                     @if($project->cover_url)
                         <img src="{{ $project->cover_url }}" alt="{{ $project->name }}"
                              style="width:100%;height:180px;object-fit:cover;transition:transform 0.3s;"
-                             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
+                             onerror="this.remove()">
                     @else
                         <div class="flex items-center justify-center h-full">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"

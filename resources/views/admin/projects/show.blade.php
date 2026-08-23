@@ -11,12 +11,22 @@
     <div>
         <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obras</a>
         <div class="flex flex-wrap items-start justify-between gap-3 mt-2">
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 style="font-size:1.5rem;font-weight:700;">{{ $project->name }}</h1>
-                    <span class="badge badge-{{ $project->status }}">{{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}</span>
+            <div class="flex items-start gap-4">
+                {{-- Capa da obra ao lado do título. Sem capa o bloco não é renderizado e o
+                     cabeçalho fica como estava. Se o ficheiro faltar no disco a rota devolve
+                     404 e o onerror retira a imagem, em vez do ícone de imagem partida. --}}
+                @if($project->cover_image_path)
+                <img src="{{ route('admin.projects.cover', $project) }}" alt="Capa da obra"
+                     style="width:4.5rem;height:4.5rem;border-radius:0.75rem;object-fit:cover;border:1px solid var(--border);flex-shrink:0;"
+                     onerror="this.remove()">
+                @endif
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h1 style="font-size:1.5rem;font-weight:700;">{{ $project->name }}</h1>
+                        <span class="badge badge-{{ $project->status }}">{{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}</span>
+                    </div>
+                    <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ $project->client?->name }} · {{ $project->location ?: '—' }}</p>
                 </div>
-                <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ $project->client?->name }} · {{ $project->location ?: '—' }}</p>
             </div>
             @can('manage-projects')
             <div class="flex gap-2">
