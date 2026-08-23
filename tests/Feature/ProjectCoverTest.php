@@ -13,8 +13,8 @@ use Tests\TestCase;
 /**
  * A capa era guardada mas nunca mostrada: fora da pré-visualização do formulário
  * de edição não aparecia em página nenhuma. Estes testes fixam onde ela passa a
- * aparecer — e garantem que uma obra sem capa não arrasta nenhum URL de capa
- * para o HTML, para não sobrar uma imagem partida.
+ * aparecer — e garantem que uma obra sem capa própria mostra a imagem padrão em
+ * vez de deixar o espaço vazio.
  */
 class ProjectCoverTest extends TestCase
 {
@@ -53,6 +53,15 @@ class ProjectCoverTest extends TestCase
         ]);
     }
 
+    /**
+     * O URL da imagem padrão sai do mesmo sítio que o componente usa, para o
+     * teste não fixar um caminho à mão que depois diverge da aplicação.
+     */
+    private function defaultCover(): string
+    {
+        return asset('images/capa-padrao.jpg');
+    }
+
     public function test_the_admin_project_page_shows_the_cover(): void
     {
         $project = $this->projectWithCover();
@@ -63,13 +72,14 @@ class ProjectCoverTest extends TestCase
             ->assertSee(route('admin.projects.cover', $project), false);
     }
 
-    public function test_the_admin_project_page_without_a_cover_shows_nothing(): void
+    public function test_the_admin_project_page_without_a_cover_shows_the_default_image(): void
     {
         $project = $this->projectWithoutCover();
 
         $this->actingAs(User::factory()->admin()->create())
             ->get(route('admin.projects.show', $project))
             ->assertOk()
+            ->assertSee($this->defaultCover(), false)
             ->assertDontSee(route('admin.projects.cover', $project), false);
     }
 
@@ -83,13 +93,14 @@ class ProjectCoverTest extends TestCase
             ->assertSee(route('admin.projects.cover', $project), false);
     }
 
-    public function test_the_admin_list_without_a_cover_shows_nothing(): void
+    public function test_the_admin_list_without_a_cover_shows_the_default_thumbnail(): void
     {
         $project = $this->projectWithoutCover();
 
         $this->actingAs(User::factory()->admin()->create())
             ->get(route('admin.projects.index'))
             ->assertOk()
+            ->assertSee($this->defaultCover(), false)
             ->assertDontSee(route('admin.projects.cover', $project), false);
     }
 
@@ -103,13 +114,14 @@ class ProjectCoverTest extends TestCase
             ->assertSee(route('portal.projects.cover', $project), false);
     }
 
-    public function test_the_client_project_page_without_a_cover_shows_nothing(): void
+    public function test_the_client_project_page_without_a_cover_shows_the_default_image(): void
     {
         $project = $this->projectWithoutCover();
 
         $this->actingAs($this->clientUser)
             ->get(route('portal.projects.show', $project))
             ->assertOk()
+            ->assertSee($this->defaultCover(), false)
             ->assertDontSee(route('portal.projects.cover', $project), false);
     }
 
@@ -145,5 +157,42 @@ class ProjectCoverTest extends TestCase
             ->assertOk()
             ->assertSee(route('portal.projects.photos.show', [$project, $photo]), false)
             ->assertDontSee(route('portal.projects.cover', $project), false);
+    }
+
+    /**
+     * O cartão do painel tinha um estado vazio com um ícone de edifício quando
+     * não havia capa nem fotos. Passa a mostrar a imagem padrão, como o resto.
+     */
+    public function test_the_dashboard_card_without_a_cover_or_photos_shows_the_default_image(): void
+    {
+        $project = $this->projectWithoutCover();
+
+        $this->actingAs($this->clientUser)
+            ->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee($this->defaultCover(), false)
+            ->assertDontSee(route('portal.projects.cover', $project), false);
+    }
+
+    /**
+     * Quando o registo tem capa mas o ficheiro não está no disco a rota devolve
+     * 404 — o onerror troca para a imagem padrão em vez de retirar o elemento, e
+     * anula-se a si próprio antes da troca para não entrar em ciclo se também
+     * essa falhar.
+     */
+    public function test_the_onerror_falls_back_to_the_default_image_without_looping(): void
+    {
+        $project = $this->projectWithCover();
+
+        $html = $this->actingAs($this->clientUser)
+            ->get(route('portal.projects.show', $project))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString(
+            "onerror=\"this.onerror=null;this.src='".$this->defaultCover()."'\"",
+            $html
+        );
+        $this->assertStringNotContainsString('this.closest(\'[data-capa]\').remove()', $html);
     }
 }

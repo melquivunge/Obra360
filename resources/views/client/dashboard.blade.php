@@ -27,21 +27,13 @@
                onmouseover="this.style.borderColor='oklch(0.74 0.135 78 / 0.5)';this.style.boxShadow='0 10px 40px -10px rgba(0,0,0,0.5)'"
                onmouseout="this.style.borderColor='var(--color-border)';this.style.boxShadow='none'">
 
-                {{-- Cover image --}}
+                {{-- Capa: capa própria, última foto ou imagem padrão — o cartão mostra
+                     sempre uma imagem, em vez do antigo estado vazio com o ícone de
+                     edifício. Quem escolhe entre elas é o componente. --}}
                 <div style="height:180px;overflow:hidden;background-color:var(--color-surface);flex-shrink:0;">
-                    @if($project->cover_url)
-                        <img src="{{ $project->cover_url }}" alt="{{ $project->name }}"
-                             style="width:100%;height:180px;object-fit:cover;transition:transform 0.3s;"
-                             onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
-                             onerror="this.remove()">
-                    @else
-                        <div class="flex items-center justify-center h-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
-                                 stroke="currentColor" class="w-16 h-16" style="color:var(--color-border);">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21" />
-                            </svg>
-                        </div>
-                    @endif
+                    <x-project-cover :src="$project->cover_url" alt="{{ $project->name }}"
+                                     style="width:100%;height:180px;object-fit:cover;transition:transform 0.3s;"
+                                     onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" />
                 </div>
 
                 {{-- Info --}}
