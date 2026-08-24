@@ -9,6 +9,7 @@ use App\Models\Message;
 use App\Models\Photo;
 use App\Models\Plan;
 use App\Models\Project;
+use App\Models\ProjectUpdate;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -32,13 +33,24 @@ class ProjectController extends Controller
         $clientId = auth()->user()->client_id;
         abort_if($project->client_id !== $clientId, 403);
 
-        $project->load(['client', 'phases', 'updates.user']);
+        $canViewFinancials = $project->showsFinancialsToClient();
+
+        // O histórico é filtrado na consulta e não na vista: o título de uma
+        // despesa traz o valor embutido, e um `@if` esquecido num bloco novo
+        // voltaria a expô-lo. Se não pode ver o financeiro, os registos
+        // financeiros não chegam sequer a ser lidos.
+        $project->load([
+            'client',
+            'phases',
+            'updates' => fn ($q) => $canViewFinancials
+                ? $q->with('user')
+                : $q->with('user')->whereNotIn('type', ProjectUpdate::FINANCIAL_TYPES),
+        ]);
         // Load messages with a hard limit to prevent OOM on large projects
         $messages = $project->messages()->reorder()->with('user')->latest()
             ->limit(self::SHOW_MESSAGE_LIMIT)->get()->reverse()->values();
         $project->setRelation('messages', $messages);
         $photos = $project->photos()->limit(self::SHOW_PHOTO_LIMIT)->get();
-        $canViewFinancials = $this->canViewFinancials($project);
         $allowComments = Setting::get('allow_comments', '1') === '1';
         $allowUploads = Setting::get('allow_client_uploads', '1') === '1';
         $expenses = $canViewFinancials ? $project->expenses()->get() : collect();
@@ -161,12 +173,6 @@ class ProjectController extends Controller
             ->whereHas('versions', $sent)
             ->with(['versions' => $sent, 'versions.approver', 'versions.comments.author'])
             ->get();
-    }
-
-    private function canViewFinancials(Project $project): bool
-    {
-        return $project->show_financials
-            && Setting::get('show_client_financials', '1') === '1';
     }
 
     private function authorizeClientProject(Project $project): void

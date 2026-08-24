@@ -127,9 +127,24 @@ class ClientLayoutComposer
             })
             : 0;
 
+        // O mesmo cuidado da página da obra, e aqui é por obra: o menu junta
+        // várias. Uma entrada de despesa traz o valor no título, portanto só
+        // passa quando a obra dela mostra o financeiro ao cliente — e o
+        // interruptor global entra na chave da cache para não continuar a
+        // vazar durante o minuto seguinte a ser desligado.
+        $financeiroGlobal = Project::clientFinancialsEnabled();
+        $chaveUpdates = "client_updates_{$clientId}_".($financeiroGlobal ? 'fin' : 'nofin');
+
         $recentUpdates = collect($clientId
-            ? $this->cachedArray("client_updates_{$clientId}", 60, function () use ($clientId) {
+            ? $this->cachedArray($chaveUpdates, 60, function () use ($clientId, $financeiroGlobal) {
                 return ProjectUpdate::whereHas('project', fn ($q) => $q->where('client_id', $clientId))
+                    ->where(function ($q) use ($financeiroGlobal) {
+                        $q->whereNotIn('type', ProjectUpdate::FINANCIAL_TYPES);
+
+                        if ($financeiroGlobal) {
+                            $q->orWhereHas('project', fn ($p) => $p->where('show_financials', true));
+                        }
+                    })
                     ->latest()
                     ->take(self::RECENT_UPDATES_LIMIT)
                     ->get()

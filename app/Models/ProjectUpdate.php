@@ -9,6 +9,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['project_id', 'title', 'description', 'type', 'happened_at', 'user_id'])]
 class ProjectUpdate extends Model
 {
+    /**
+     * Tipos cujo texto expõe valores. O histórico do cliente esconde-os quando
+     * o financeiro está desligado para aquela obra — sem isto, o valor da
+     * despesa chegava ao cliente pela linha do tempo mesmo com a aba
+     * financeira escondida, porque o título traz o valor embutido.
+     *
+     * @var list<string>
+     */
+    public const FINANCIAL_TYPES = ['despesa'];
+
     public const TYPES = [
         'geral' => 'Atualização geral',
         'foto' => 'Foto adicionada',

@@ -399,6 +399,32 @@ class Project extends Model
         return Setting::get('progress_mode', 'derivado') === 'manual';
     }
 
+    /**
+     * FIN-05: esta obra mostra valores ao cliente.
+     *
+     * O interruptor tem duas camadas — o da obra e a definição global — e a
+     * regra vive aqui porque é lida em três sítios: a página da obra no
+     * portal, o menu lateral e o observador que decide se a notificação de um
+     * registo financeiro chega a sair. Uma quarta cópia da mesma condição é
+     * como nasce o próximo vazamento.
+     */
+    public function showsFinancialsToClient(): bool
+    {
+        return (bool) $this->show_financials && static::clientFinancialsEnabled();
+    }
+
+    /**
+     * Só a camada global, sem obra nenhuma à frente.
+     *
+     * Existe à parte porque quem filtra o histórico em SQL não pode chamar um
+     * método de instância dentro da consulta, e porque o valor entra na chave
+     * da cache do menu lateral.
+     */
+    public static function clientFinancialsEnabled(): bool
+    {
+        return Setting::get('show_client_financials', '1') === '1';
+    }
+
     public function totalSpent(): float
     {
         return (float) $this->expenses()->sum('amount');
