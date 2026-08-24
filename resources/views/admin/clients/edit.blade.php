@@ -8,11 +8,14 @@
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;">
         <form method="POST" action="{{ route('admin.clients.update', $client) }}" class="space-y-4">
             @csrf @method('PUT')
+            <input type="hidden" name="_form" value="editar_cliente">
+
+            <x-form-errors form="editar_cliente" />
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Nome <span style="color:var(--destructive)">*</span></label>
                     <input type="text" name="name" value="{{ old('name', $client->name) }}" required>
-                    @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="name" form="editar_cliente" />
                 </div>
                 <div>
                     <label class="field-label">Documento</label>
@@ -21,6 +24,7 @@
                 <div>
                     <label class="field-label">E-mail</label>
                     <input type="email" name="email" value="{{ old('email', $client->email) }}">
+                    <x-field-error field="email" form="editar_cliente" />
                 </div>
                 <div>
                     <label class="field-label">Telefone</label>
@@ -39,7 +43,7 @@
                     <input type="text" name="country" value="{{ old('country', $client->country) }}">
                 </div>
                 <div class="flex items-center gap-2 pt-6">
-                    <input type="checkbox" name="active" value="1" id="active" {{ $client->active ? 'checked' : '' }} style="width:auto;">
+                    <input type="checkbox" name="active" value="1" id="active" {{ old_checked('active', (bool) $client->active) ? 'checked' : '' }} style="width:auto;">
                     <label for="active" style="font-size:0.875rem;color:var(--foreground)">Cliente ativo</label>
                 </div>
             </div>
@@ -80,12 +84,14 @@
         @endif
 
         @if($availableUsers->count())
+        <x-form-errors form="vincular_utilizador" />
         <form method="POST" action="{{ route('admin.clients.link-user', $client) }}" class="flex gap-2">
             @csrf
+            <input type="hidden" name="_form" value="vincular_utilizador">
             <select name="user_id" style="max-width:20rem;">
                 <option value="">Selecione um usuário…</option>
                 @foreach($availableUsers as $u)
-                <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
+                <option value="{{ $u->id }}" {{ old('user_id')==$u->id?'selected':'' }}>{{ $u->name }} ({{ $u->email }})</option>
                 @endforeach
             </select>
             <button type="submit" class="btn-primary">Vincular</button>

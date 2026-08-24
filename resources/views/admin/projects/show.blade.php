@@ -21,10 +21,48 @@
     $requestedTab = request('tab');
     $activeTab = is_string($requestedTab) && isset($tabs[$requestedTab]) ? $requestedTab : 'geral';
 
-    // Um erro de validação das plantas volta por back(); sem isto abriria em
-    // "geral" e a mensagem — a do limite de upload, sobretudo — ficaria por ler.
+    // Um erro de validação volta por back() e a página recarrega no separador
+    // "geral" — a mensagem ficava num separador que ninguém tinha aberto, e o
+    // modal que a originou fechava-se pelo caminho. Cada formulário desta
+    // página leva um marcador `_form`; o marcador diz de onde veio o erro, e
+    // daqui sai o separador que tem de estar aberto quando a página volta.
+    $submittedForm = is_string(old('_form')) ? old('_form') : null;
+
+    // Os modais das despesas e das versões servem vários registos e escolhem o
+    // destino em JS, por isso o marcador leva o id do registo. Estes dois
+    // guardam o marcador que voltou — ou o valor de repouso, que não coincide
+    // com marcador nenhum e mantém o resumo escondido.
+    $expenseForm = $submittedForm !== null && str_starts_with($submittedForm, 'despesa_') ? $submittedForm : 'despesa_nova';
+    $versionForm = $submittedForm !== null && str_starts_with($submittedForm, 'nova_versao') ? $submittedForm : 'nova_versao';
+
+    // Marcador → separador onde o formulário vive.
+    $formTabs = [
+        'nova_fase' => 'fases',
+        'editar_fase' => 'fases',
+        'enviar_fotos' => 'fotos',
+        'despesa_nova' => 'despesas',
+        'despesa_editar' => 'despesas',
+        'nova_cobranca' => 'pagamentos',
+        'novo_documento' => 'documentos',
+        'nova_planta' => 'plantas',
+        'editar_planta' => 'plantas',
+        'nova_versao' => 'plantas',
+        'nova_atualizacao' => 'historico',
+    ];
+
+    if ($submittedForm !== null && $errors->any()) {
+        foreach ($formTabs as $marker => $tab) {
+            if (($submittedForm === $marker || str_starts_with($submittedForm, $marker.'_')) && isset($tabs[$tab])) {
+                $activeTab = $tab;
+                break;
+            }
+        }
+    }
+
+    // Rede de segurança para um pedido sem marcador — o limite de upload das
+    // plantas (LIM-02) é o erro que mais custa perder de vista.
     $planErrorKeys = ['file', 'external_url', 'change_note', 'version', 'discipline'];
-    if ($showPlansTab && $errors->hasAny($planErrorKeys)) {
+    if ($submittedForm === null && $showPlansTab && $errors->hasAny($planErrorKeys)) {
         $activeTab = 'plantas';
     }
 @endphp
@@ -68,6 +106,10 @@
             <div class="progress-bar"><div class="progress-fill" style="width:{{ $project->progress }}%"></div></div>
         </div>
     </div>
+
+    {{-- Erros de uma submissão sem marcador: nenhum dos formulários abaixo os
+         reclama, e sem isto não apareceriam em lado nenhum. --}}
+    <x-form-errors />
 
     {{-- Tabs --}}
     <div class="tab-nav">
@@ -170,7 +212,9 @@
         @endcan
 
         @forelse($phases as $phase)
-        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;" x-data="{ editing: false }">
+        @php $phaseForm = 'editar_fase_'.$phase->id; @endphp
+        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;"
+             x-data="{ editing: {{ old('_form') === $phaseForm ? 'true' : 'false' }} }">
             <div class="flex items-center justify-between gap-3">
                 <div>
                     <div class="flex items-center gap-2">
@@ -200,13 +244,17 @@
             @can('manage-projects')
             <form x-show="editing" x-cloak method="POST" action="{{ route('admin.projects.phases.update', [$project, $phase]) }}" class="mt-4 space-y-3 pt-4" style="border-top:1px solid var(--border)">
                 @csrf @method('PUT')
+                <input type="hidden" name="_form" value="{{ $phaseForm }}">
+
+                <x-form-errors :form="$phaseForm" />
+
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <div><label class="field-label">Nome</label><input type="text" name="name" value="{{ $phase->name }}" required></div>
-                    <div><label class="field-label">Status</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}" {{ $phase->status===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select></div>
-                    <div><label class="field-label">%</label><input type="number" name="percentage" min="0" max="100" value="{{ $phase->percentage }}"></div>
-                    <div><label class="field-label">Ordem</label><input type="number" name="sort_order" value="{{ $phase->sort_order }}"></div>
+                    <div><label class="field-label">Nome</label><input type="text" name="name" value="{{ old('name', $phase->name) }}" required><x-field-error field="name" :form="$phaseForm" /></div>
+                    <div><label class="field-label">Status</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status', $phase->status)===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="status" :form="$phaseForm" /></div>
+                    <div><label class="field-label">%</label><input type="number" name="percentage" min="0" max="100" value="{{ old('percentage', $phase->percentage) }}"><x-field-error field="percentage" :form="$phaseForm" /></div>
+                    <div><label class="field-label">Ordem</label><input type="number" name="sort_order" value="{{ old('sort_order', $phase->sort_order) }}"><x-field-error field="sort_order" :form="$phaseForm" /></div>
                 </div>
-                <div><label class="field-label">Descrição</label><textarea name="description" rows="2" style="resize:vertical;">{{ $phase->description }}</textarea></div>
+                <div><label class="field-label">Descrição</label><textarea name="description" rows="2" style="resize:vertical;">{{ old('description', $phase->description) }}</textarea><x-field-error field="description" :form="$phaseForm" /></div>
                 <div class="flex gap-2"><button type="submit" class="btn-primary">Salvar</button><button type="button" @click="editing=false" class="btn-secondary">Cancelar</button></div>
             </form>
             @endcan
@@ -223,20 +271,26 @@
             <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Enviar fotos / vídeos</h3>
             <form method="POST" action="{{ route('admin.projects.photos.store', $project) }}" enctype="multipart/form-data" class="space-y-3">
                 @csrf
+                <input type="hidden" name="_form" value="enviar_fotos">
+
+                <x-form-errors form="enviar_fotos" />
+
                 <div>
                     <label class="field-label">Arquivos (JPG, PNG, WebP, MP4…)</label>
                     <input type="file" name="photos[]" multiple accept="image/*,video/*" style="padding:0.375rem;" required>
+                    <x-field-error field="photos" form="enviar_fotos" />
                 </div>
                 <div class="grid gap-3 sm:grid-cols-3">
                     <div>
                         <label class="field-label">Fase</label>
                         <select name="phase_id">
                             <option value="">Sem fase</option>
-                            @foreach($phases as $ph)<option value="{{ $ph->id }}">{{ $ph->name }}</option>@endforeach
+                            @foreach($phases as $ph)<option value="{{ $ph->id }}" {{ old('phase_id')==$ph->id?'selected':'' }}>{{ $ph->name }}</option>@endforeach
                         </select>
+                        <x-field-error field="phase_id" form="enviar_fotos" />
                     </div>
-                    <div><label class="field-label">Legenda</label><input type="text" name="caption"></div>
-                    <div><label class="field-label">Data</label><input type="date" name="taken_at" value="{{ now()->toDateString() }}"></div>
+                    <div><label class="field-label">Legenda</label><input type="text" name="caption" value="{{ old('caption') }}"><x-field-error field="caption" form="enviar_fotos" /></div>
+                    <div><label class="field-label">Data</label><input type="date" name="taken_at" value="{{ old('taken_at', now()->toDateString()) }}"><x-field-error field="taken_at" form="enviar_fotos" /></div>
                 </div>
                 <button type="submit" class="btn-primary">Enviar</button>
             </form>
@@ -477,19 +531,6 @@
     @if($showPlansTab)
     <div x-show="tab==='plantas'" x-cloak class="space-y-4">
 
-        {{-- É o único sítio da área interna que mostra erros de validação, e é
-             onde eles têm mesmo de ser lidos: a mensagem do limite de upload
-             (LIM-02) não serve de nada se ninguém a vir. --}}
-        @if($errors->any())
-        <div style="background-color:oklch(0.62 0.21 25 / 0.12);border:1px solid oklch(0.62 0.21 25 / 0.35);border-radius:0.75rem;padding:0.875rem 1rem;">
-            <ul style="margin:0;padding-left:1.1rem;font-size:0.875rem;color:var(--destructive);">
-                @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-        @endif
-
         @if($canManagePlans)
         <div class="flex justify-end">
             <button type="button" onclick="openModal('modal-planta')" class="btn-primary">
@@ -544,7 +585,9 @@
             $current = $plan->versions->first();
             $badge = ['em_elaboracao' => 'planejada', 'enviada' => 'aguardando_aprovacao', 'aprovada' => 'concluida', 'substituida' => 'pausada'][$plan->status] ?? 'planejada';
         @endphp
-        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;" x-data="{ editing: false, history: false }">
+        @php $planForm = 'editar_planta_'.$plan->id; @endphp
+        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;"
+             x-data="{ editing: {{ old('_form') === $planForm ? 'true' : 'false' }}, history: false }">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
@@ -628,11 +671,15 @@
             @if($canManagePlans)
             <form x-show="editing" x-cloak method="POST" action="{{ route('admin.projects.plans.update', [$project, $plan]) }}" class="mt-4 space-y-3 pt-4" style="border-top:1px solid var(--border)">
                 @csrf @method('PUT')
+                <input type="hidden" name="_form" value="{{ $planForm }}">
+
+                <x-form-errors :form="$planForm" />
+
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <div><label class="field-label">Nome</label><input type="text" name="name" value="{{ $plan->name }}" maxlength="200" required></div>
-                    <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ $plan->discipline===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select></div>
+                    <div><label class="field-label">Nome</label><input type="text" name="name" value="{{ old('name', $plan->name) }}" maxlength="200" required><x-field-error field="name" :form="$planForm" /></div>
+                    <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline', $plan->discipline)===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="discipline" :form="$planForm" /></div>
                 </div>
-                <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;">{{ $plan->notes }}</textarea></div>
+                <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;">{{ old('notes', $plan->notes) }}</textarea><x-field-error field="notes" :form="$planForm" /></div>
                 <div class="flex gap-2"><button type="submit" class="btn-primary">Guardar</button><button type="button" @click="editing=false" class="btn-secondary">Cancelar</button></div>
             </form>
             @endif
@@ -780,8 +827,8 @@ function projectShow(id, initialTab){ return {
         window.history.replaceState(window.history.state, '', url);
     },
 }; }
-function openModal(id){ var m=document.getElementById(id);m.style.display='flex';var f=m.querySelector('select,input:not([type=hidden]):not([type=file]):not([type=checkbox]),textarea');if(f)setTimeout(function(){f.focus();},50); }
-function closeModal(id){ document.getElementById(id).style.display='none'; }
+function openModal(id){ var m=document.getElementById(id);if(!m)return;m.style.display='flex';var f=m.querySelector('select,input:not([type=hidden]):not([type=file]):not([type=checkbox]),textarea');if(f)setTimeout(function(){f.focus();},50); }
+function closeModal(id){ var m=document.getElementById(id);if(m)m.style.display='none'; }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-overlay').forEach(function(m){m.style.display='none';});});
 </script>
 
@@ -795,23 +842,29 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </div>
     <form method="POST" action="{{ route('admin.projects.phases.store', $project) }}" class="space-y-4">
       @csrf
+      <input type="hidden" name="_form" value="nova_fase">
+
+      <x-form-errors form="nova_fase" />
+
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label class="field-label">Nome da fase <span style="color:var(--destructive)">*</span></label><input type="text" name="name" required placeholder="Ex: Fundação, Estrutura, Revestimento..."></div>
-        <div><label class="field-label">Status da fase</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
+        <div><label class="field-label">Nome da fase <span style="color:var(--destructive)">*</span></label><input type="text" name="name" value="{{ old('name') }}" required placeholder="Ex: Fundação, Estrutura, Revestimento..."><x-field-error field="name" form="nova_fase" /></div>
+        <div><label class="field-label">Status da fase</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="status" form="nova_fase" /></div>
         <div>
           <label class="field-label">% Concluída <span class="field-tip" data-tip="Percentagem de conclusão desta fase. 0 = não iniciada, 100 = concluída.">?</span></label>
-          <input type="number" name="percentage" min="0" max="100" value="0" placeholder="0">
+          <input type="number" name="percentage" min="0" max="100" value="{{ old('percentage', 0) }}" placeholder="0">
           <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">0 = não iniciada &nbsp;·&nbsp; 100 = concluída</span>
+          <x-field-error field="percentage" form="nova_fase" />
         </div>
         <div>
           <label class="field-label">Ordem na lista <span class="field-tip" data-tip="Posição da fase na lista. Ex: 1 = primeira fase, 2 = segunda fase.">?</span></label>
-          <input type="number" name="sort_order" min="0" value="{{ $phases->count() }}">
+          <input type="number" name="sort_order" min="0" value="{{ old('sort_order', $phases->count()) }}">
           <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">Deixe em 0 para adicionar ao fim da lista</span>
+          <x-field-error field="sort_order" form="nova_fase" />
         </div>
-        <div><label class="field-label">Data de início</label><input type="date" name="start_date"></div>
-        <div><label class="field-label">Previsão de término</label><input type="date" name="expected_end_date"></div>
+        <div><label class="field-label">Data de início</label><input type="date" name="start_date" value="{{ old('start_date') }}"><x-field-error field="start_date" form="nova_fase" /></div>
+        <div><label class="field-label">Previsão de término</label><input type="date" name="expected_end_date" value="{{ old('expected_end_date') }}"><x-field-error field="expected_end_date" form="nova_fase" /></div>
       </div>
-      <div><label class="field-label">Descrição da fase</label><textarea name="description" rows="2" style="resize:vertical;" placeholder="Descreva o que será feito nesta fase..."></textarea></div>
+      <div><label class="field-label">Descrição da fase</label><textarea name="description" rows="2" style="resize:vertical;" placeholder="Descreva o que será feito nesta fase...">{{ old('description') }}</textarea><x-field-error field="description" form="nova_fase" /></div>
       <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Adicionar fase</button><button type="button" onclick="closeModal('modal-fase')" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
@@ -829,14 +882,20 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     <form id="form-despesa" method="POST" action="{{ route('admin.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
       @csrf
       <input type="hidden" name="_method" id="despesa-method" disabled value="PUT">
+      {{-- O modal serve criar e editar: o valor do marcador é posto em JS, e é
+           ele que na volta diz qual dos dois reabrir e com que despesa. --}}
+      <input type="hidden" name="_form" id="despesa-form" value="despesa_nova">
+
+      <x-form-errors :form="$expenseForm" />
+
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label class="field-label">Categoria</label><select name="category">@foreach(\App\Models\Expense::CATEGORIES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
-        <div><label class="field-label">Data</label><input type="date" name="spent_at" value="{{ now()->toDateString() }}" required></div>
-        <div class="sm:col-span-2"><label class="field-label">Descrição <span style="color:var(--destructive)">*</span></label><input type="text" name="description" required></div>
-        <div><label class="field-label">Valor ({{ currency_symbol() }})</label><input type="number" name="amount" step="0.01" min="0" required></div>
-        <div><label class="field-label">Fornecedor</label><input type="text" name="supplier"></div>
-        <div><label class="field-label">Comprovante</label><input type="file" name="receipt" style="padding:0.375rem;"></div>
-        <div><label class="field-label">Notas</label><input type="text" name="notes"></div>
+        <div><label class="field-label">Categoria</label><select name="category">@foreach(\App\Models\Expense::CATEGORIES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select><x-field-error field="category" :form="$expenseForm" /></div>
+        <div><label class="field-label">Data</label><input type="date" name="spent_at" value="{{ now()->toDateString() }}" required><x-field-error field="spent_at" :form="$expenseForm" /></div>
+        <div class="sm:col-span-2"><label class="field-label">Descrição <span style="color:var(--destructive)">*</span></label><input type="text" name="description" required><x-field-error field="description" :form="$expenseForm" /></div>
+        <div><label class="field-label">Valor ({{ currency_symbol() }})</label><input type="number" name="amount" step="0.01" min="0" required><x-field-error field="amount" :form="$expenseForm" /></div>
+        <div><label class="field-label">Fornecedor</label><input type="text" name="supplier"><x-field-error field="supplier" :form="$expenseForm" /></div>
+        <div><label class="field-label">Comprovante</label><input type="file" name="receipt" style="padding:0.375rem;"><x-field-error field="receipt" :form="$expenseForm" /></div>
+        <div><label class="field-label">Notas</label><input type="text" name="notes"><x-field-error field="notes" :form="$expenseForm" /></div>
       </div>
       <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary" id="despesa-submit">Registrar despesa</button><button type="button" onclick="fecharDespesa()" class="btn-secondary">Cancelar</button></div>
     </form>
@@ -854,14 +913,18 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </div>
     <form method="POST" action="{{ route('admin.projects.documents.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
       @csrf
-      <div><label class="field-label">Arquivo <span style="color:var(--destructive)">*</span></label><input type="file" name="file" required style="padding:0.375rem;" accept=".pdf,.docx,.xlsx,.xls,.doc,.jpg,.jpeg,.png,.webp"></div>
+      <input type="hidden" name="_form" value="novo_documento">
+
+      <x-form-errors form="novo_documento" />
+
+      <div><label class="field-label">Arquivo <span style="color:var(--destructive)">*</span></label><input type="file" name="file" required style="padding:0.375rem;" accept=".pdf,.docx,.xlsx,.xls,.doc,.jpg,.jpeg,.png,.webp"><x-field-error field="file" form="novo_documento" /></div>
       <div class="grid gap-3 sm:grid-cols-3">
-        <div class="sm:col-span-2"><label class="field-label">Nome do documento <span style="color:var(--destructive)">*</span></label><input type="text" name="name" required></div>
-        <div><label class="field-label">Tipo</label><select name="type">@foreach(\App\Models\Document::TYPES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
+        <div class="sm:col-span-2"><label class="field-label">Nome do documento <span style="color:var(--destructive)">*</span></label><input type="text" name="name" value="{{ old('name') }}" required><x-field-error field="name" form="novo_documento" /></div>
+        <div><label class="field-label">Tipo</label><select name="type">@foreach(\App\Models\Document::TYPES as $k=>$v)<option value="{{ $k }}" {{ old('type')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="type" form="novo_documento" /></div>
       </div>
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label class="field-label">Visibilidade</label><select name="visibility"><option value="interno">Interno (só equipa)</option><option value="cliente">Cliente (visível no portal)</option></select></div>
-        <div><label class="field-label">Notas</label><input type="text" name="notes"></div>
+        <div><label class="field-label">Visibilidade</label><select name="visibility"><option value="interno" {{ old('visibility')==='interno'?'selected':'' }}>Interno (só equipa)</option><option value="cliente" {{ old('visibility')==='cliente'?'selected':'' }}>Cliente (visível no portal)</option></select><x-field-error field="visibility" form="novo_documento" /></div>
+        <div><label class="field-label">Notas</label><input type="text" name="notes" value="{{ old('notes') }}"><x-field-error field="notes" form="novo_documento" /></div>
       </div>
       <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar documento</button><button type="button" onclick="closeModal('modal-documento')" class="btn-secondary">Cancelar</button></div>
     </form>
@@ -877,28 +940,34 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
       <h2 class="modal-title" style="margin:0;">Nova cobrança</h2>
       <button type="button" onclick="closeModal('modal-pagamento')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
-    <form method="POST" action="{{ route('admin.projects.payments.store', $project) }}" class="space-y-4" x-data="{ type: 'pix' }">
+    <form method="POST" action="{{ route('admin.projects.payments.store', $project) }}" class="space-y-4" x-data="{ type: @js(old('type', 'pix')) }">
       @csrf
+      <input type="hidden" name="_form" value="nova_cobranca">
+
+      <x-form-errors form="nova_cobranca" />
+
       <div class="grid gap-3 sm:grid-cols-2">
-        <div class="sm:col-span-2"><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" required placeholder="Ex: Parcela 1, Sinal de obra…"></div>
-        <div><label class="field-label">Valor ({{ currency_symbol() }}) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" required></div>
-        <div><label class="field-label">Vencimento</label><input type="date" name="due_date"></div>
+        <div class="sm:col-span-2"><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required placeholder="Ex: Parcela 1, Sinal de obra…"><x-field-error field="title" form="nova_cobranca" /></div>
+        <div><label class="field-label">Valor ({{ currency_symbol() }}) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" value="{{ old('amount') }}" required><x-field-error field="amount" form="nova_cobranca" /></div>
+        <div><label class="field-label">Vencimento</label><input type="date" name="due_date" value="{{ old('due_date') }}"><x-field-error field="due_date" form="nova_cobranca" /></div>
         <div>
           <label class="field-label">Tipo</label>
           <select name="type" x-model="type">
-            @foreach(\App\Models\Payment::TYPES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
+            @foreach(\App\Models\Payment::TYPES as $k=>$v)<option value="{{ $k }}" {{ old('type')===$k?'selected':'' }}>{{ $v }}</option>@endforeach
           </select>
+          <x-field-error field="type" form="nova_cobranca" />
         </div>
         <div>
           <label class="field-label">Status</label>
           <select name="status">
-            @foreach(\App\Models\Payment::STATUSES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach
+            @foreach(\App\Models\Payment::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status')===$k?'selected':'' }}>{{ $v }}</option>@endforeach
           </select>
+          <x-field-error field="status" form="nova_cobranca" />
         </div>
-        <div x-show="type==='boleto'" class="sm:col-span-2"><label class="field-label">Linha digitável (boleto)</label><input type="text" name="barcode" placeholder="000000000 …" maxlength="60"></div>
-        <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">Chave PIX</label><input type="text" name="pix_key" placeholder="email, CPF, telefone ou chave aleatória" maxlength="100"></div>
-        <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">Código copia-e-cola / QR</label><textarea name="pix_qrcode" rows="2" style="resize:vertical;" placeholder="00020126…"></textarea></div>
-        <div class="sm:col-span-2"><label class="field-label">Descrição / observações</label><textarea name="description" rows="2" style="resize:vertical;"></textarea></div>
+        <div x-show="type==='boleto'" class="sm:col-span-2"><label class="field-label">Linha digitável (boleto)</label><input type="text" name="barcode" value="{{ old('barcode') }}" placeholder="000000000 …" maxlength="60"><x-field-error field="barcode" form="nova_cobranca" /></div>
+        <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">Chave PIX</label><input type="text" name="pix_key" value="{{ old('pix_key') }}" placeholder="email, CPF, telefone ou chave aleatória" maxlength="100"><x-field-error field="pix_key" form="nova_cobranca" /></div>
+        <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">Código copia-e-cola / QR</label><textarea name="pix_qrcode" rows="2" style="resize:vertical;" placeholder="00020126…">{{ old('pix_qrcode') }}</textarea><x-field-error field="pix_qrcode" form="nova_cobranca" /></div>
+        <div class="sm:col-span-2"><label class="field-label">Descrição / observações</label><textarea name="description" rows="2" style="resize:vertical;">{{ old('description') }}</textarea><x-field-error field="description" form="nova_cobranca" /></div>
       </div>
       <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar cobrança</button><button type="button" onclick="closeModal('modal-pagamento')" class="btn-secondary">Cancelar</button></div>
     </form>
@@ -916,8 +985,12 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </div>
     <form method="POST" action="{{ route('admin.projects.updates.store', $project) }}" class="space-y-4">
       @csrf
-      <div><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" required></div>
-      <div><label class="field-label">Descrição</label><textarea name="description" rows="3" style="resize:vertical;"></textarea></div>
+      <input type="hidden" name="_form" value="nova_atualizacao">
+
+      <x-form-errors form="nova_atualizacao" />
+
+      <div><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required><x-field-error field="title" form="nova_atualizacao" /></div>
+      <div><label class="field-label">Descrição</label><textarea name="description" rows="3" style="resize:vertical;">{{ old('description') }}</textarea><x-field-error field="description" form="nova_atualizacao" /></div>
       <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Registrar</button><button type="button" onclick="closeModal('modal-historico')" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
@@ -935,13 +1008,18 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     </div>
     <form method="POST" action="{{ route('admin.projects.plans.store', $project) }}" class="space-y-4">
       @csrf
+      <input type="hidden" name="_form" value="nova_planta">
+
+      <x-form-errors form="nova_planta" />
+
       <div>
         <label class="field-label">Nome da planta <span style="color:var(--destructive)">*</span></label>
-        <input type="text" name="name" required maxlength="200" placeholder="Ex: Planta baixa — piso 0">
+        <input type="text" name="name" value="{{ old('name') }}" required maxlength="200" placeholder="Ex: Planta baixa — piso 0">
         <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">O desenho, não o ficheiro. As revisões entram depois como versões desta mesma planta.</span>
+        <x-field-error field="name" form="nova_planta" />
       </div>
-      <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
-      <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;" maxlength="1000"></textarea></div>
+      <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="discipline" form="nova_planta" /></div>
+      <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;" maxlength="1000">{{ old('notes') }}</textarea><x-field-error field="notes" form="nova_planta" /></div>
       <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar planta</button><button type="button" onclick="closeModal('modal-planta')" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
@@ -958,6 +1036,12 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
     <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:1rem;" id="versao-planta"></p>
     <form id="form-versao" method="POST" enctype="multipart/form-data" class="space-y-4">
       @csrf
+      {{-- Como no modal das despesas, o destino é escolhido em JS: o marcador
+           leva o id da planta para a volta saber qual reabrir. --}}
+      <input type="hidden" name="_form" id="versao-form" value="nova_versao">
+
+      <x-form-errors :form="$versionForm" />
+
       <div>
         <label class="field-label">Ficheiro</label>
         <input type="file" name="file" style="padding:0.375rem;" accept=".pdf,.jpg,.jpeg,.png,.webp,.dwg,.dxf,.skp,.rvt,.ifc,.glb,.gltf,.zip">
@@ -970,13 +1054,15 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
           <strong>Limite deste servidor: {{ \App\Models\PlanVersion::maxUploadLabel() }} por ficheiro.</strong>
           Um desenho maior do que isto não chega a ser recebido — nesse caso deixe o ficheiro em branco e use o endereço externo abaixo.
         </span>
+        <x-field-error field="file" :form="$versionForm" />
       </div>
       <div>
         <label class="field-label">Endereço externo (em alternativa ao ficheiro)</label>
-        <input type="url" name="external_url" maxlength="2048" placeholder="https://drive.google.com/…">
+        <input type="url" name="external_url" value="{{ old('external_url') }}" maxlength="2048" placeholder="https://drive.google.com/…">
         <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">Google Drive, WeTransfer, OneDrive. A versão fica registada na mesma, com o histórico completo — só o ficheiro é que vive fora daqui.</span>
+        <x-field-error field="external_url" :form="$versionForm" />
       </div>
-      <div><label class="field-label">Nota de alterações</label><textarea name="change_note" rows="2" style="resize:vertical;" maxlength="1000" placeholder="O que mudou em relação à versão anterior"></textarea></div>
+      <div><label class="field-label">Nota de alterações</label><textarea name="change_note" rows="2" style="resize:vertical;" maxlength="1000" placeholder="O que mudou em relação à versão anterior">{{ old('change_note') }}</textarea><x-field-error field="change_note" :form="$versionForm" /></div>
       <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Carregar versão</button><button type="button" onclick="closeModal('modal-versao')" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
@@ -990,6 +1076,7 @@ function novaVersao(planId, planName, nextVersion) {
     const form = document.getElementById('form-versao');
     form.reset();
     form.action = versaoStoreUrl(planId);
+    document.getElementById('versao-form').value = 'nova_versao_' + planId;
     document.getElementById('versao-planta').textContent = planName;
     document.getElementById('versao-numero').textContent = 'v' + nextVersion;
     openModal('modal-versao');
@@ -1043,13 +1130,8 @@ document.addEventListener('keydown', function(e) {
 const despesaStoreUrl = @json($despesaStoreUrl);
 const despesaUpdateUrl = id => @json($despesaUpdateUrlTemplate).replace('__ID__', id);
 
-function editarDespesa(despesa) {
+function preencherDespesa(despesa) {
     const form = document.getElementById('form-despesa');
-    form.action = despesaUpdateUrl(despesa.id);
-    document.getElementById('despesa-method').disabled = false;
-    document.getElementById('despesa-submit').textContent = 'Guardar alterações';
-    document.getElementById('titulo-despesa').textContent = 'Editar despesa';
-
     form.category.value = despesa.category ?? '';
     form.spent_at.value = despesa.spent_at ?? '';
     form.description.value = despesa.description ?? '';
@@ -1057,6 +1139,17 @@ function editarDespesa(despesa) {
     form.supplier.value = despesa.supplier ?? '';
     form.notes.value = despesa.notes ?? '';
     form.receipt.value = '';
+}
+
+function editarDespesa(despesa) {
+    const form = document.getElementById('form-despesa');
+    form.action = despesaUpdateUrl(despesa.id);
+    document.getElementById('despesa-method').disabled = false;
+    document.getElementById('despesa-form').value = 'despesa_editar_' + despesa.id;
+    document.getElementById('despesa-submit').textContent = 'Guardar alterações';
+    document.getElementById('titulo-despesa').textContent = 'Editar despesa';
+
+    preencherDespesa(despesa);
 
     openModal('modal-despesa');
 }
@@ -1066,6 +1159,7 @@ function novaDespesa() {
     form.reset();
     form.action = despesaStoreUrl;
     document.getElementById('despesa-method').disabled = true;
+    document.getElementById('despesa-form').value = 'despesa_nova';
     document.getElementById('despesa-submit').textContent = 'Registrar despesa';
     document.getElementById('titulo-despesa').textContent = 'Registrar despesa';
     form.spent_at.value = @json(now()->toDateString());
@@ -1077,4 +1171,63 @@ function fecharDespesa() {
     closeModal('modal-despesa');
 }
 </script>
+
+{{-- ─────────────────────────────────────────────────────────────────────────
+     Um erro de validação de um formulário que vive num modal chegava aqui como
+     uma página recarregada e um modal fechado: a mensagem existia, mas ficava
+     por detrás de um botão que ninguém voltava a carregar. O marcador `_form`
+     que veio no `old()` diz qual era o modal — e o modal reabre já com o
+     resumo, os erros por campo e o que a pessoa tinha escrito.
+     ───────────────────────────────────────────────────────────────────────── --}}
+@php
+    $modaisPorMarcador = [
+        'nova_fase' => 'modal-fase',
+        'novo_documento' => 'modal-documento',
+        'nova_cobranca' => 'modal-pagamento',
+        'nova_atualizacao' => 'modal-historico',
+        'nova_planta' => 'modal-planta',
+    ];
+
+    $despesaAntiga = [
+        'category' => old('category'),
+        'spent_at' => old('spent_at'),
+        'description' => old('description'),
+        'amount' => old('amount'),
+        'supplier' => old('supplier'),
+        'notes' => old('notes'),
+    ];
+
+    $despesaEditada = $submittedForm !== null && str_starts_with($submittedForm, 'despesa_editar_')
+        ? (int) substr($submittedForm, strlen('despesa_editar_'))
+        : null;
+
+    $plantaDaVersao = $submittedForm !== null && str_starts_with($submittedForm, 'nova_versao_')
+        ? $project->plans->firstWhere('id', (int) substr($submittedForm, strlen('nova_versao_')))
+        : null;
+@endphp
+@if($errors->any() && $submittedForm !== null)
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+@if(isset($modaisPorMarcador[$submittedForm]))
+    openModal(@json($modaisPorMarcador[$submittedForm]));
+@elseif($submittedForm === 'despesa_nova')
+    if (typeof novaDespesa === 'function') {
+        novaDespesa();
+        preencherDespesa(@json($despesaAntiga));
+    }
+@elseif($despesaEditada)
+    if (typeof editarDespesa === 'function') {
+        editarDespesa(@json(['id' => $despesaEditada] + $despesaAntiga));
+    }
+@elseif($plantaDaVersao)
+    if (typeof novaVersao === 'function') {
+        novaVersao({{ $plantaDaVersao->id }}, @json($plantaDaVersao->name), {{ $plantaDaVersao->versions->count() + 1 }});
+        var versao = document.getElementById('form-versao');
+        versao.external_url.value = @json(old('external_url', ''));
+        versao.change_note.value = @json(old('change_note', ''));
+    }
+@endif
+});
+</script>
+@endif
 </x-admin-layout>

@@ -21,6 +21,8 @@
               }"
               x-init="$nextTick(() => source = @js(old('source_project_id', '')))">
             @csrf
+
+            <x-form-errors />
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Cliente <span style="color:var(--destructive)">*</span></label>
@@ -28,7 +30,7 @@
                         <option value="">Selecione…</option>
                         @foreach($clients as $c)<option value="{{ $c->id }}" {{ old('client_id')==$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach
                     </select>
-                    @error('client_id')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="client_id" />
                 </div>
                 <div>
                     <label class="field-label">Código interno</label>
@@ -47,12 +49,12 @@
                     Este cliente já tem projectos connosco. Ligue a obra ao que lhe deu origem: as plantas aprovadas
                     desse projecto passam a aparecer aqui, sem cópias — se forem corrigidas lá, a obra vê logo a versão certa.
                 </p>
-                @error('source_project_id')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                <x-field-error field="source_project_id" />
             </div>
             <div>
                 <label class="field-label">Nome da obra <span style="color:var(--destructive)">*</span></label>
                 <input type="text" name="name" value="{{ old('name') }}" required>
-                @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                <x-field-error field="name" />
             </div>
             <div>
                 <label class="field-label">Localização</label>
@@ -84,7 +86,7 @@
                         <option value="{{ $k }}" {{ old('type','construcao')===$k?'selected':'' }}>{{ $v }}</option>
                         @endforeach
                     </select>
-                    @error('type')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="type" />
                 </div>
                 <div>
                     <label class="field-label">Status</label>
@@ -103,7 +105,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <input type="checkbox" name="show_financials" value="1" id="sf" {{ old('show_financials','1')?'checked':'' }} style="width:auto;">
+                <input type="checkbox" name="show_financials" value="1" id="sf" {{ old_checked('show_financials', true)?'checked':'' }} style="width:auto;">
                 <label for="sf" style="font-size:0.875rem;color:var(--foreground)">Exibir financeiro para o cliente</label>
             </div>
             <div>

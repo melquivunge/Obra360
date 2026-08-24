@@ -112,11 +112,13 @@
             @csrf
             <input type="hidden" name="_form" value="create_client">
 
+            <x-form-errors form="create_client" />
+
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Nome <span style="color:var(--destructive)">*</span></label>
                     <input type="text" name="name" value="{{ old('name') }}" required autofocus>
-                    @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="name" form="create_client" />
                 </div>
                 <div>
                     <label class="field-label">Documento (CPF/CNPJ)</label>
@@ -125,7 +127,7 @@
                 <div>
                     <label class="field-label">E-mail</label>
                     <input type="email" name="email" value="{{ old('email') }}">
-                    @error('email')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="email" form="create_client" />
                 </div>
                 <div>
                     <label class="field-label">Telefone</label>
@@ -144,7 +146,7 @@
                     <input type="text" name="country" value="{{ old('country', 'Brasil') }}">
                 </div>
                 <div style="display:flex;align-items:center;gap:0.5rem;padding-top:1.5rem;">
-                    <input type="checkbox" name="active" value="1" id="active_modal" checked style="width:1rem;height:1rem;border-radius:0.25rem;">
+                    <input type="checkbox" name="active" value="1" id="active_modal" {{ old_checked('active', true) ? 'checked' : '' }} style="width:1rem;height:1rem;border-radius:0.25rem;">
                     <label for="active_modal" style="font-size:0.875rem;color:var(--foreground);cursor:pointer;">Cliente ativo</label>
                 </div>
             </div>
@@ -164,7 +166,7 @@
                     <div>
                         <label class="field-label">Senha</label>
                         <x-password-input name="password" autocomplete="new-password" placeholder="Mín. 8 caracteres" />
-                        @error('password')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                        <x-field-error field="password" form="create_client" />
                     </div>
                     <div>
                         <label class="field-label">Confirmar senha</label>
