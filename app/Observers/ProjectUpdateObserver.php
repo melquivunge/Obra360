@@ -30,6 +30,20 @@ class ProjectUpdateObserver
             return;
         }
 
+        // FIN-05: o título de um registo financeiro traz o valor embutido
+        // («Despesa: Comissão — R$ 8.500,00») e a notificação sai da aplicação
+        // — um email ou um WhatsApp entregue não se retira. Com o financeiro
+        // escondido suprime-se por inteiro em vez de sanear o título: quem não
+        // vê a aba de despesas no portal também não tem que ser avisado de que
+        // houve uma despesa.
+        //
+        // Suprimir todos os destinatários está correcto porque estes são os
+        // utilizadores do cliente — a equipa não é notificada por aqui.
+        if (in_array($update->type, ProjectUpdate::FINANCIAL_TYPES, true)
+            && ! $project->showsFinancialsToClient()) {
+            return;
+        }
+
         foreach ($project->client->users as $user) {
             // Skip the user who triggered the action (they don't need a push)
             if ($user->id === $update->user_id) {

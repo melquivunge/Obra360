@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
-use App\Models\Setting;
 
 class DashboardController extends Controller
 {
     public function index()
     {
         $clientId = auth()->user()->client_id;
-        $canViewFinancials = Setting::get('show_client_financials', '1') === '1';
+        // Só a camada global: a vista cruza-a com o interruptor de cada obra
+        // ao percorrer a lista.
+        $canViewFinancials = Project::clientFinancialsEnabled();
 
         $projects = Project::with(['client', 'latestImage'])
             ->where('client_id', $clientId)
