@@ -333,8 +333,11 @@ class ValidationFeedbackTest extends TestCase
 
         $this->assertSame(1, $this->occurrences($html, self::RESUMO));
         $this->assertStringContainsString('O campo usuário é obrigatório.', $html);
-        // O nome do cliente continua no campo dele, intacto.
-        $this->assertStringContainsString('value="'.$client->name.'"', $html);
+        // O nome do cliente continua no campo dele, intacto. Comparado já
+        // escapado: o Blade escapa apóstrofos e acentos, e o gerador de dados
+        // produz nomes como «Prof. Aubrey O'Reilly» — sem o `e()` este teste
+        // falhava consoante o sorteio, e falhou mesmo na main.
+        $this->assertStringContainsString('value="'.e($client->name).'"', $html);
     }
 
     // ── Português e nomes de campo legíveis ───────────────────
