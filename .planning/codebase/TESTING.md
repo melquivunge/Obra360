@@ -1,6 +1,6 @@
 # Padrões de Teste
 
-**Data da análise:** 2026-08-22
+**Data da análise:** 2026-08-24
 
 ## Framework de teste
 
@@ -12,8 +12,8 @@
 - Cobertura declarada em `<source><include><directory>app</directory>` — não há limiar imposto
 
 **Dimensão actual:**
-- 32 ficheiros de teste: 30 em `Feature/` (8 dos quais em `Feature/Auth/`) e 2 em `Unit/`
-- **221 testes** (`./vendor/bin/phpunit --list-tests`). A diferença face ao número de métodos `test_` vem dos casos gerados por `#[DataProvider]` em `ReportTest`
+- 57 arquivos de teste: 55 em `Feature/` (9 dos quais em `Feature/Auth/`) e 2 em `Unit/`
+- **540 testes e 1609 asserções, todos passando** (`php artisan test`, 2026-08-24; eram 192 em 22/08). A diferença face ao número de métodos `test_` vem dos casos gerados por `#[DataProvider]`
 
 **Biblioteca de asserções:**
 - Asserções do PHPUnit: `assertTrue()`, `assertSame()`, `assertNotNull()`, `assertIsArray()`, `assertGreaterThan()`, `assertStringContainsString()`, `assertInstanceOf()`
@@ -93,6 +93,30 @@ composer test                       # config:clear seguido de artisan test
 | `Feature/SchemaTest.php` | Existência de tabelas e colunas |
 | `Feature/ProfileTest.php` | Perfil do utilizador |
 | `Feature/UserManagementTest.php` | CRUD de utilizadores e regras de administrador |
+| `Feature/ProjectTypeTest.php` | Tipo de projeto, filtro por tipo e vocabulário do portal (TIPO-01..05) |
+| `Feature/AdminVocabularyTest.php` | «obra» vs. «projeto» conforme o tipo do registro, na área interna |
+| `Feature/PlanTest.php` | Plantas e versões numeradas na área interna (PLAN-01..09) |
+| `Feature/ClientPlanPortalTest.php` | Ver, baixar, pré-visualizar e aprovar plantas no portal (PORT-01..06) |
+| `Feature/PlanCommentTest.php` | Comentários presos a cada versão, nos dois lados |
+| `Feature/RevisionAllowanceTest.php` | Contagem das revisões incluídas no contrato |
+| `Feature/Model3dViewerTest.php` | Visualizador 3D para GLB e GLTF |
+| `Feature/ProjectSourceLinkTest.php` | Ligação da obra ao projeto de origem e herança das plantas aprovadas (OBRA-01..04) |
+| `Feature/PhaseTemplateTest.php` | Etapas de entrega pré-definidas por tipo (NBR 13532 na arquitetura) |
+| `Feature/ClientUploadTest.php` | O cliente envia fotos e documentos pelo portal (ADV-03) |
+| `Feature/BudgetItemTest.php` | Orçamento por linhas comparado com o gasto real (ADV-04) |
+| `Feature/FinancialRoleTest.php` | Âmbito do papel financeiro, nos dois sentidos |
+| `Feature/RouteOrderTest.php` | Ordem das rotas — um literal depois de um parâmetro dava 404 |
+| `Feature/InternalWriteRateLimitTest.php` | Limite de taxa nas escritas da área interna |
+| `Feature/ValidationFeedbackTest.php` | Erros de validação visíveis em toda a área interna |
+| `Feature/ContentSecurityPolicyTest.php` | A política, o nonce por requisição e o modo relato/imposição |
+| `Feature/InlineScriptFreeViewsTest.php` | Impede a reintrodução de blocos `<script>` sem nonce |
+| `Feature/PruneAuditLogsTest.php` | `obra360:audit:prune` e a retenção de 365 dias |
+| `Feature/PruneTrashedProjectsTest.php` | `obra360:trash:prune`, exclusão definitiva e remoção dos arquivos |
+| `Feature/MessageListPaginationTest.php` | Paginação e ordenação em SQL da lista de mensagens |
+| `Feature/AdminProjectShowLimitsTest.php` | Paginação de cada separador da página da obra |
+| `Feature/ProjectShowTabTest.php` | O separador activo sobrevive a filtros e a POSTs |
+| `Feature/ProjectCoverTest.php` | Capa da obra e imagem padrão para quem não tem |
+| `Feature/WhatsAppChannelTest.php` | Aviso no log quando faltam credenciais |
 | `Unit/UserRoleTest.php` | Métodos `isAdmin()`, `isClient()`, ... |
 
 ## Estrutura dos testes
@@ -226,7 +250,9 @@ $this->assertSoftDeleted('users', ['id' => $user->id]);
 
 ## Factories
 
-Oito factories em `database/factories/`: `UserFactory`, `ClientFactory`, `ProjectFactory`, `ProjectPhaseFactory`, `PhotoFactory`, `ExpenseFactory`, `DocumentFactory`, `PaymentFactory`.
+Doze factories em `database/factories/`: `UserFactory`, `ClientFactory`, `ProjectFactory`, `ProjectPhaseFactory`, `PhotoFactory`, `ExpenseFactory`, `DocumentFactory`, `PaymentFactory`, `PlanFactory`, `PlanVersionFactory`, `PlanCommentFactory`, `BudgetItemFactory`.
+
+`ProjectFactory` tem os estados `architecture()` e `interiorDesign()`, que fixam `type` — são eles que dão o cenário aos testes de plantas, de vocabulário e de ligação à obra.
 
 `UserFactory` tem os estados `admin()`, `manager()`, `financial()` e `unverified()`:
 ```php
@@ -455,4 +481,4 @@ O job `deploy` depende do `test` e só corre em push para `main`.
 
 ---
 
-*Análise de testes: 2026-08-22*
+*Análise de testes: 2026-08-24*

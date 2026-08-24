@@ -50,7 +50,7 @@
 
 - [x] **FOTO-01**: Administrator/Manager can upload photos (JPG, JPEG, PNG, WebP) linked to a project and optionally to a phase
 - [x] **FOTO-02**: Each photo has a title/caption, description, date, and the user who uploaded it
-- [x] **FOTO-03**: System generates thumbnails on upload for gallery performance _(2026-08-20: a coluna `photos.thumbnail_path` existe mas nada a preenche)_
+- [x] **FOTO-03**: System generates thumbnails on upload for gallery performance
 - [x] **FOTO-04**: Photos are displayed in a gallery filterable by date, phase, most recent, oldest
 - [x] **FOTO-05**: Client can only view photos of their own projects
 - [x] **FOTO-06**: Upload validates file type and enforces a maximum file size
@@ -127,7 +127,7 @@
 - [x] **SEC-02**: Client users cannot access any project, photo, document, or financial data belonging to other clients
 - [x] **SEC-03**: CSRF protection enabled on all forms
 - [x] **SEC-04**: Upload validation enforces allowed MIME types and maximum file sizes
-- [x] **SEC-05**: Activity log records important actions: project create/edit, photo upload, expense register, document upload, status changes, deletions _(2026-08-20: só existe `project_updates`; não há log de auditoria dedicado nem ecrã de admin)_
+- [x] **SEC-05**: Activity log records important actions: project create/edit, photo upload, expense register, document upload, status changes, deletions
 - [x] **SEC-06**: Soft delete used on: projects, clients, users, expenses, documents, photos
 - [x] **SEC-07**: All pages paginate large lists
 
@@ -138,6 +138,52 @@
 - [x] **UX-03**: Client layout has minimal navigation: Minhas Obras, Documentos, Mensagens, Meu Perfil, Sair
 - [x] **UX-04**: UI uses cards, progress bars, color-coded statuses, photo gallery, clean tables, and clear action buttons
 - [x] **UX-05**: All UI text and labels are in Portuguese (PT)
+
+## Serviços de arquitetura e design de interiores
+
+*Definidos em 2026-08-23 (`.planning/requisitos-arquitetura-design.md`), entregues entre 23 e 24/08/2026. Escritos em português do Brasil, como o resto da interface.*
+
+### Tipo de projeto
+
+- [x] **TIPO-01**: um projeto tem um tipo entre construção, remodelação, arquitetura e design de interiores (`Project::TYPES`)
+- [x] **TIPO-02**: todos os projetos existentes ficam como construção, sem intervenção manual (`default('construcao')` na migração `2026_08_23_100000`)
+- [x] **TIPO-03**: o tipo é escolhido na criação e pode ser alterado na edição
+- [x] **TIPO-04**: o tipo é visível na listagem e na página do projeto, no portal do cliente inclusive (`<x-project-type>`)
+- [x] **TIPO-05**: a listagem pode ser filtrada por tipo (`Admin\ProjectController::index`)
+
+### Plantas
+
+- [x] **PLAN-01**: o arquiteto cria uma planta num projeto, com nome e disciplina (`Plan::DISCIPLINES`)
+- [x] **PLAN-02**: cada planta tem versões numeradas a partir de 1; um arquivo novo cria a versão seguinte (`Plan::nextVersionNumber()`)
+- [x] **PLAN-03**: uma versão guarda arquivo, nome original, formato, tamanho, quem carregou e nota de alterações
+- [x] **PLAN-04**: a versão mais recente é a corrente; as anteriores ficam acessíveis e marcadas como substituídas (`superseded_at`, `PlanVersion::isSuperseded()`)
+- [x] **PLAN-05**: uma planta tem estado — em elaboração, enviada ao cliente, aprovada, substituída (`Plan::STATUSES`)
+- [x] **PLAN-06**: os arquivos vivem no disco privado e só saem por rota autenticada
+- [x] **PLAN-07**: treze formatos aceitos — PDF, JPG, JPEG, PNG, WEBP, DWG, DXF, SKP, RVT, IFC, GLB, GLTF, ZIP (`PlanVersion::FORMATS`)
+- [x] **PLAN-08**: uma versão pode guardar um endereço externo em vez do arquivo (`plan_versions.external_url`)
+- [x] **PLAN-09**: excluir uma planta é reversível e não apaga o histórico de versões (`SoftDeletes` em `Plan`, ausente de propósito em `PlanVersion`)
+
+### Portal do cliente
+
+- [x] **PORT-01**: o cliente vê apenas as plantas que lhe foram enviadas; o que está em elaboração responde 404, não 403
+- [x] **PORT-02**: o cliente baixa a versão corrente e as anteriores
+- [x] **PORT-03**: PDF e imagens são vistos no navegador sem baixar (`Client\PlanController::preview`)
+- [x] **PORT-04**: o cliente aprova a versão corrente; a aprovação grava quem e quando, sob `lockForUpdate`
+- [x] **PORT-05**: a aprovação entra no histórico do projeto (`ProjectUpdate::log(..., 'planta_aprovada')`) e no registro de auditoria (`AuditObserver` sobre `PlanVersion`)
+- [x] **PORT-06**: uma versão aprovada não é aprovada outra vez; uma versão substituída não pode ser aprovada
+
+### Ligação à obra
+
+- [x] **OBRA-01**: ao criar uma obra é possível ligá-la a um projeto de arquitetura ou design do mesmo cliente (`projects.source_project_id`)
+- [x] **OBRA-02**: a obra mostra as plantas aprovadas da origem sem copiar arquivos (`Project::inheritedApprovedPlans()`)
+- [x] **OBRA-03**: a partir do projeto vê-se a obra que dele resultou (`Project::derivedProjects()`)
+- [x] **OBRA-04**: o cliente vê a continuidade nos dois sentidos no portal
+
+### Limites do servidor
+
+- [x] **LIM-01**: o limite real de envio é apresentado antes de o envio falhar (`PlanVersion::maxUploadLabel()`, lido das diretivas do PHP em tempo de execução)
+- [x] **LIM-02**: um arquivo acima do limite explica o limite e sugere o endereço externo, nos três modos de falha (`overLimitMessage()`, `ExplainTruncatedUpload`, `errors/413.blade.php`)
+- [x] **LIM-03**: o procedimento de cPanel está documentado, com custo e risco (`docs/production-readiness.md`)
 
 ## v2 Requirements
 
@@ -151,8 +197,8 @@
 
 - **ADV-01**: Real-time notifications via WebSockets/Pusher
 - **ADV-02**: Multi-company / SaaS billing mode
-- **ADV-03**: Client can upload photos or documents (bidirectional)
-- **ADV-04**: Project budgeting line items (beyond single total budget)
+- [x] **ADV-03**: Client can upload photos or documents (bidirectional) — entregue em 2026-08-24 (`app/Http/Controllers/Client/UploadController.php`, configuração `allow_client_uploads`, `tests/Feature/ClientUploadTest.php`)
+- [x] **ADV-04**: Project budgeting line items (beyond single total budget) — entregue em 2026-08-24 (`App\Models\BudgetItem`, `Admin\ProjectBudgetItemController`, `Project::budgetVersusSpent()`, `tests/Feature/BudgetItemTest.php`)
 
 ## Out of Scope
 
@@ -164,7 +210,7 @@
 | Real-time push notifications | Email only in v1 |
 | Multi-tenant SaaS billing | Single-company installation |
 | OAuth / social login | Email+password sufficient for v1 |
-| Client uploading files | Company controls content in v1 |
+| Client uploading files | ~~Company controls content in v1~~ — revertido: entregue como ADV-03 em 2026-08-24, com interruptor nas configurações |
 
 ## Traceability
 
@@ -255,17 +301,56 @@
 | UX-03 | Phase 1 | ✅ Done |
 | UX-04 | Phase 1 | ✅ Done |
 | UX-05 | Phase 1 | ✅ Done |
+| TIPO-01 | Fora do roadmap (23-24/08) | ✅ Feito |
+| TIPO-02 | Fora do roadmap (23-24/08) | ✅ Feito |
+| TIPO-03 | Fora do roadmap (23-24/08) | ✅ Feito |
+| TIPO-04 | Fora do roadmap (23-24/08) | ✅ Feito |
+| TIPO-05 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-01 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-02 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-03 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-04 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-05 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-06 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-07 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-08 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PLAN-09 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PORT-01 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PORT-02 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PORT-03 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PORT-04 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PORT-05 | Fora do roadmap (23-24/08) | ✅ Feito |
+| PORT-06 | Fora do roadmap (23-24/08) | ✅ Feito |
+| OBRA-01 | Fora do roadmap (23-24/08) | ✅ Feito |
+| OBRA-02 | Fora do roadmap (23-24/08) | ✅ Feito |
+| OBRA-03 | Fora do roadmap (23-24/08) | ✅ Feito |
+| OBRA-04 | Fora do roadmap (23-24/08) | ✅ Feito |
+| LIM-01 | Fora do roadmap (23-24/08) | ✅ Feito |
+| LIM-02 | Fora do roadmap (23-24/08) | ✅ Feito |
+| LIM-03 | Fora do roadmap (23-24/08) | ✅ Feito |
+| ADV-03 | Fora do roadmap (24/08) | ✅ Feito |
+| ADV-04 | Fora do roadmap (24/08) | ✅ Feito |
 
-**Coverage (reconciled 2026-08-21):**
+**Cobertura (reconciliada em 2026-08-24):**
 
-- v1 requirements: 83
-- ✅ Done: 83
-- 🟡 Partial: 0
-- ❌ Not built: 0
+- Requisitos v1: 83 — ✅ 83 feitos, 🟡 0 parciais, ❌ 0 por construir
+- Serviços de arquitetura e design: 27 — ✅ 27 feitos (TIPO 5, PLAN 9, PORT 6, OBRA 4, LIM 3)
+- Requisitos v2 entregues antes do tempo: ADV-03 e ADV-04
+- **Total verificado no código: 112 requisitos feitos**
 
-All five roadmap phases are delivered. FASE-04 closed on 2026-08-22: the
-`progress_mode` setting switches between progress derived from the phase average
-and a value typed by hand on the project form.
+As cinco fases do roadmap estão entregues. FASE-04 fechou em 2026-08-22: a
+configuração `progress_mode` alterna entre o progresso derivado da média das
+fases e um valor digitado à mão no formulário do projeto.
+
+Quatro itens que `.planning/requisitos-arquitetura-design.md` tinha listado como
+fora do âmbito foram entregues logo a seguir, sem identificador próprio:
+comentários por versão de planta (`PlanComment`), contagem das revisões
+incluídas no contrato (`projects.revisions_included`), visualizador 3D no
+navegador para GLB e GLTF (`<x-model-viewer>`) e etapas de entrega
+pré-definidas por tipo (`App\Support\PhaseTemplates`, arquitetura seguindo a
+NBR 13532).
+
+A suíte cobre 540 testes com 1609 asserções, todos passando em 2026-08-24.
 
 ## Scope Changes Since Definition
 
@@ -277,7 +362,10 @@ Delivered although listed as v2 or out of scope:
 | ADV-01 Real-time notifications | v2 / out of scope | ✅ Built (Laravel Reverb + Echo, `MessageSent`) |
 | Web Push / PWA | Out of scope ("email only in v1") | ✅ Built (`manifest.json`, `sw.js`, `PushSubscription`, VAPID) |
 | Payments module | Never specified | ✅ Built (`Payment`, `Admin/PaymentController`) — needs requirements written retroactively |
+| ADV-03 Client uploads files | v2 / fora do âmbito | ✅ Entregue 24/08 (`Client\UploadController`, configuração `allow_client_uploads`) |
+| ADV-04 Budget line items | v2 | ✅ Entregue 24/08 (`BudgetItem`, `Project::budgetVersusSpent()`) |
+| Serviços de arquitetura e design | Nunca especificado em v1 | ✅ Entregue 23-24/08, com requisitos escritos antes (`.planning/requisitos-arquitetura-design.md`) |
 
 ---
-*Requirements defined: 2026-06-27*
-*Statuses reconciled against the codebase: 2026-08-21 — all v1 gaps closed*
+*Requisitos definidos: 2026-06-27*
+*Estados reconciliados com o código: 2026-08-24 — v1 completo, serviços de arquitetura e design entregues, ADV-03 e ADV-04 entregues*

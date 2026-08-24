@@ -1,6 +1,6 @@
 # Arquitectura
 
-**Data da análise:** 2026-08-22
+**Data da análise:** 2026-08-24
 
 ## Visão do padrão
 
@@ -8,13 +8,17 @@
 
 **Características principais:**
 - Renderização no servidor (Blade) — não existe SPA nem camada de API (`bootstrap/app.php` só devolve JSON para `api/*`, e não há rotas `api/*`)
+- Um projeto tem **tipo** (`Project::TYPES`: construção, remodelação, projeto de arquitetura, design de interiores). O tipo governa o vocabulário da interface e o que cada página mostra; não há tabela separada para os serviços de projeto
+- Plantas versionadas (`Plan` → `PlanVersion`) com aprovação registrada pelo cliente, e ligação opcional de uma obra ao projeto que lhe deu origem (`projects.source_project_id`)
 - Quatro papéis (`admin`, `manager`, `financial`, `client`), aplicados por middleware, por Gates e pelo trait `AuthorizesProjectAccess`
 - Isolamento por cliente: o portal só devolve obras cujo `client_id` coincide com o do utilizador autenticado
 - Mensagens em tempo real por canais privados de broadcasting (`project.{projectId}`)
 - Notificações accionadas por observer (`ProjectUpdateObserver` → `ProjectUpdateNotification` → canais WhatsApp, WebPush e `mail`)
-- Trilho de auditoria genérico (`AuditObserver` sobre nove modelos → tabela `audit_logs`)
-- Soft deletes em `User`, `Project`, `Client`, `Photo`, `Document`, `Expense`
-- Media servida exclusivamente do disco privado `local`, através de rotas autenticadas
+- Trilho de auditoria genérico (`AuditObserver` sobre onze modelos → tabela `audit_logs`)
+- Soft deletes em `User`, `Project`, `Client`, `Photo`, `Document`, `Expense` e `Plan` — deliberadamente ausentes de `PlanVersion`, para que uma versão substituída continue legível
+- Limpeza dos arquivos do disco no momento em que a exclusão passa a definitiva (`MediaCleanupObserver` em `forceDeleting` de `Project` e `Plan`)
+- Mídia servida exclusivamente do disco privado `local`, através de rotas autenticadas
+- Content-Security-Policy com nonce por requisição (`SecurityHeaders`), imposta em local e nos testes e em modo de relato em produção
 
 ## Camadas
 
@@ -26,31 +30,33 @@
 
 **Camada de middleware:**
 - Localização: `app/Http/Middleware/`
-- Contém: `EnsureUserRole.php` (403 quando o papel não está na lista), `EnsureUserIsActive.php` (termina a sessão de utilizadores desactivados), `SecurityHeaders.php` (nosniff, SAMEORIGIN, Referrer-Policy, Permissions-Policy, X-Permitted-Cross-Domain-Policies e HSTS só sobre HTTPS)
+- Contém: `EnsureUserRole.php` (403 quando o papel não está na lista), `EnsureUserIsActive.php` (termina a sessão de usuários desativados), `SecurityHeaders.php` (nosniff, `X-Frame-Options: DENY`, Referrer-Policy, Permissions-Policy, X-Permitted-Cross-Domain-Policies, HSTS só sobre HTTPS e a CSP completa com nonce), `ExplainTruncatedUpload.php` (ocupa a vaga do middleware de CSRF no grupo `web` para explicar um envio truncado em vez de responder «419 — página expirada»)
 
 **Autorização e traits:**
 - Localização: `app/Traits/AuthorizesProjectAccess.php`, `app/Policies/UserPolicy.php`
-- `authorizeProjectAccess()` restringe `manager` e `financial` às obras onde são `manager_id`
+- `authorizeProjectAccess()` restringe **apenas** o `manager` às obras onde é `manager_id`. O financeiro lê todas as obras e escreve despesas e cobranças em qualquer uma; o âmbito dele vem dos grupos `role:` em `routes/web.php`, não de uma coluna por obra
+- `authorizePlanReadAccess()` abre ao gestor, além das obras dele, o projeto de origem de uma delas — é de lá que vêm as plantas aprovadas que a obra mostra (OBRA-02)
 - `assertBelongsToProject()` devolve 404 quando o filho de uma rota aninhada não pertence à obra do URL
-- `Admin\MessageController` tem uma verificação própria e privada que só cobre o papel `manager`
+- `Admin\MessageController` e `Admin\ReportController::index()` aplicam a mesma regra: filtram por `manager_id` só para o `manager`
 
 **Camada de controllers:**
 - Localização: `app/Http/Controllers/`
-- `Admin/` (12): `DashboardController`, `ProjectController`, `ProjectPhaseController`, `ProjectPhotoController`, `ProjectExpenseController`, `ProjectDocumentController`, `PaymentController`, `ClientController`, `MessageController`, `SettingController`, `ReportController`, `AuditLogController`
+- `Admin/` (15): `DashboardController`, `ProjectController`, `ProjectPhaseController`, `ProjectPhotoController`, `ProjectExpenseController`, `ProjectDocumentController`, `ProjectPlanController`, `ProjectPlanVersionController`, `ProjectBudgetItemController`, `PaymentController`, `ClientController`, `MessageController`, `SettingController`, `ReportController`, `AuditLogController`
 - `Auth/` (8): sessão, confirmação de palavra-passe, verificação de e-mail, reposição e alteração de palavra-passe
-- `Client/` (2): `DashboardController`, `ProjectController`
+- `Client/` (4): `DashboardController`, `ProjectController`, `PlanController`, `UploadController`
 - `Portal/` (1): `PushSubscriptionController`
-- Raiz: `Controller.php` (base abstracta), `ProfileController.php`, `UserController.php`
-- O `Admin\ProjectController` ficou com o CRUD da obra, a galeria filtrada (`filteredPhotos()`) e `storeUpdate()`; fases, fotos, despesas e documentos foram extraídos para controllers próprios
+- Raiz: `Controller.php` (base abstrata), `ProfileController.php`, `UserController.php`, `CspReportController.php`
+- O `Admin\ProjectController` (455 linhas) ficou com o CRUD da obra, a paginação de cada separador da página (`paginateTab()`, `conversationPage()`, `filteredPhotos()`), `storeUpdate()` e as regras da ligação ao projeto de origem; fases, fotos, despesas, documentos, plantas, versões e orçamento têm controladores próprios
 
 **Camada de modelos (Eloquent):**
-- Localização: `app/Models/` — 13 modelos: `User`, `Client`, `Project`, `ProjectPhase`, `Photo`, `Expense`, `Document`, `ProjectUpdate`, `Message`, `Payment`, `Setting`, `PushSubscription`, `AuditLog`
-- `Project` concentra a lógica de negócio: `recalcProgress()`, `progressIsManual()`, `totalSpent()`, `remainingBalance()`, `budgetUsedPercent()`, `expensesByCategory()`, `expensesByMonth()`
+- Localização: `app/Models/` — 17 modelos: `User`, `Client`, `Project`, `ProjectPhase`, `Photo`, `Expense`, `Document`, `ProjectUpdate`, `Message`, `Payment`, `Setting`, `PushSubscription`, `AuditLog`, `Plan`, `PlanVersion`, `PlanComment`, `BudgetItem`
+- `Project` concentra a lógica de negócio: `recalcProgress()`, `progressIsManual()`, `totalSpent()`, `remainingBalance()`, `budgetUsedPercent()`, `expensesByCategory()`, `expensesByMonth()`, `budgetPlanned()`, `budgetVersusSpent()`, `budgetPlanDiff()`, `inheritedApprovedPlans()`, `revisionsUsed()`, `revisionsRemaining()`, `noun()`/`typeLabel()` (vocabulário por tipo) e `storedMediaPaths()` (usado pelo `MediaCleanupObserver`)
 - `ProjectPhase::booted()` chama `recalcProgress()` da obra em `saved` e `deleted`
 
 **Suporte (funções e utilitários):**
 - Localização: `app/Support/`
 - `helpers.php` — carregado por `autoload.files`; define `currency_symbol()` e `money()`, que leem a definição `currency` (BRL, USD, EUR, GBP, AOA, MZN) e formatam com agrupamento de dígitos pt-BR
+- `PhaseTemplates.php` — etapas de entrega pré-definidas por tipo de projeto; as de arquitetura seguem a NBR 13532
 - `Thumbnail.php` — geração de miniaturas em GD puro, aresta máxima 480 px, JPEG a qualidade 78, escrita em `<dir>/thumbs/<nome>.jpg` no mesmo disco; falha em silêncio (`Log::warning`) para nunca partir um upload
 
 **Eventos e notificações:**
@@ -60,14 +66,14 @@
 - `app/Observers/AuditObserver.php` — genérico; grava `created`, `updated`, `deleted` e `restored`, redige credenciais e dados de pagamento (`password`, `remember_token`, `two_factor_*`, `pix_key`, `pix_qrcode`, `barcode`) e ignora `created_at`/`updated_at`
 
 **Canais de broadcasting:**
-- `routes/channels.php` — `project.{projectId}` autorizado a `admin` e `financial` (qualquer obra), a `manager` (obras suas) e a `client` (obras do seu cliente); `App.Models.User.{id}` para o próprio
+- `routes/channels.php` — `project.{projectId}` autorizado a `admin` e `financial` (qualquer obra), a `manager` (obras suas) e a `client` (obras do seu cliente); `App.Models.User.{id}` para o próprio. Coerente com `AuthorizesProjectAccess` desde que o papel financeiro foi decidido
 
 **Canais de notificação:**
 - `app/Channels/WhatsAppChannel.php` — Meta Graph API via Guzzle
 - `app/Channels/WebPushChannel.php` — usa `minishlink/web-push`; sai cedo se faltarem as chaves VAPID ou se o utilizador não tiver subscrições
 
 **Camada de vistas:**
-- `resources/views/` — 59 ficheiros Blade, organizados por papel (`admin/`, `client/`, `auth/`, `profile/`, `users/`) mais `components/`
+- `resources/views/` — 70 arquivos Blade, organizados por papel (`admin/`, `client/`, `auth/`, `profile/`, `users/`) mais `components/` (27) e `errors/413.blade.php`
 - `admin/reports/` tem `index`, `show`, `pdf` e os parciais `geral`, `financeiro`, `fotos`, `fases`, `fases-table`
 - `admin/audit/index.blade.php` é a página `/admin/auditoria`
 
@@ -76,18 +82,20 @@
 - `app/Http/View/Composers/ClientLayoutComposer.php` — ligado a `components.layouts.client` no `AppServiceProvider`
 
 **Service provider:**
-- `app/Providers/AppServiceProvider.php` — regista `ProjectUpdateObserver` em `ProjectUpdate`, regista `AuditObserver` em `Project`, `Client`, `User`, `Expense`, `Payment`, `Photo`, `Document`, `ProjectPhase` e `Setting`, liga o view composer e define os Gates `access-admin`, `manage-users` e `access-financial`
+- `app/Providers/AppServiceProvider.php` — regista `ProjectUpdateObserver` em `ProjectUpdate`; `AuditObserver` em onze modelos (`Project`, `Client`, `User`, `Expense`, `Payment`, `Photo`, `Document`, `ProjectPhase`, `Setting`, `Plan`, `PlanVersion`); `MediaCleanupObserver` em `Project` e `Plan`; liga o view composer e define os Gates `access-admin`, `manage-users`, `manage-projects` e `access-financial`
 - `ProjectUpdate` está deliberadamente fora da auditoria — é conteúdo visível ao cliente, já presente no histórico da obra
 
 **Base de dados e seeding:**
-- `database/migrations/` — 18 migrações (4 do framework, 14 de domínio, a última `2026_08_21_100000_create_audit_logs_table.php`)
-- `database/factories/` — 8 factories: `User`, `Client`, `Project`, `ProjectPhase`, `Photo`, `Expense`, `Document`, `Payment`
+- `database/migrations/` — 26 migrações (3 do framework, 23 de domínio, a última `2026_08_24_300000_create_budget_items_table.php`)
+- `database/factories/` — 12 factories, incluindo `Plan`, `PlanVersion`, `PlanComment` e `BudgetItem`
 - `database/seeders/DatabaseSeeder.php` — cria o administrador inicial e as definições base; lança excepção se `SEED_ADMIN_PASSWORD` faltar em produção
 
 **Consola:**
 - `app/Console/Commands/MigratePublicProjectMedia.php` — `obra360:media:migrate-public`, migra capas, fotos, miniaturas e documentos do disco `public` para o `local`; dry-run por omissão, `--commit` copia, `--delete-source` (que exige `--commit`) apaga a origem depois de verificar a cópia
 - `app/Console/Commands/GeneratePhotoThumbnails.php` — `obra360:photos:thumbnails`, gera miniaturas em falta (`--force` regenera as existentes), ignorando vídeos
-- `routes/console.php` — comando `inspire` de exemplo
+- `app/Console/Commands/PruneAuditLogs.php` — `obra360:audit:prune`, retenção de 365 dias por omissão, ensaio sem `--commit`
+- `app/Console/Commands/PruneTrashedProjects.php` — `obra360:trash:prune`, torna definitiva a exclusão de obras e plantas com mais de 90 dias na reciclagem e leva os arquivos do disco pelo `MediaCleanupObserver`
+- `routes/console.php` — o comando `inspire` de exemplo e quatro tarefas agendadas: `auth:clear-resets` (diária, 03:00 UTC), `queue:prune-failed --hours=168` (domingos, 03:30), `obra360:audit:prune --commit` (diária, 04:00) e `obra360:trash:prune --commit` (segundas, 04:30). Nenhuma corre sem uma entrada de cron a chamar `schedule:run`
 
 ## Fluxos de dados
 
@@ -120,7 +128,8 @@
 
 1. Depois do login, o cliente é encaminhado para `portal.dashboard`
 2. `Client\DashboardController@index` carrega `Project::where('client_id', $user->client_id)` com `latestImage` e calcula `cover_url`
-3. `Client\ProjectController@show` aborta com 403 se `client_id` não corresponder; carrega fases, mensagens (limite 100), fotos (limite 200), documentos com `visibility = cliente` e, se `show_financials` da obra e a definição `show_client_financials` o permitirem, despesas e pagamentos
+3. `Client\ProjectController@show` aborta com 403 se `client_id` não corresponder; carrega fases, mensagens (`SHOW_MESSAGE_LIMIT = 100`), fotos (`SHOW_PHOTO_LIMIT = 200`), documentos com `visibility = cliente`, as plantas enviadas ao cliente, o projeto de origem e as obras dele derivadas (OBRA-04) e, se `show_financials` da obra e a definição `show_client_financials` o permitirem, despesas e pagamentos
+4. `Client\PlanController` serve o download, a pré-visualização no navegador, a aprovação e os comentários por versão; `Client\UploadController` recebe fotos e documentos do cliente quando `allow_client_uploads` está ligado (ADV-03)
 
 **Mensagens em tempo real:**
 
@@ -131,7 +140,7 @@
 
 **Relatórios e PDF:**
 
-1. `GET /admin/relatorios` → `ReportController@index` lista as obras (restritas a `manager_id` para `manager` e `financial`) com pesquisa por nome
+1. `GET /admin/relatorios` → `ReportController@index` lista as obras (restritas a `manager_id` só para o `manager`) com pesquisa por nome
 2. `GET /admin/obras/{project}/relatorios/{type}` → `@show`; `{type}` tem de estar em `ReportController::TYPES` (`geral`, `financeiro`, `fotos`, `fases`), senão 404
 3. `@data()` agrega o que cada tipo precisa: fases, `totalSpent()`, `expensesByCategory()`, `expensesByMonth()`, despesas, pagamentos, fotos e as últimas 20 actualizações
 4. `GET .../pdf` → `@pdf` gera o documento com DomPDF em A4, com recursos remotos desligados, e devolve `relatorio-{tipo}-{slug}-{data}.pdf`
@@ -145,7 +154,7 @@
 
 **Auditoria:**
 
-1. Qualquer escrita nos nove modelos observados dispara `AuditObserver`
+1. Qualquer escrita nos onze modelos observados dispara `AuditObserver`
 2. `updated` só grava quando `getChanges()` (já redigido) não fica vazio, e guarda `['de' => ..., 'para' => ...]`
 3. Cada registo fica com `user_id`, `user_name` (preservado para sobreviver à remoção do utilizador), `action`, `auditable_type`, `auditable_id`, `description`, `changes` (JSON) e `ip_address`
 4. `GET /admin/auditoria` (só `admin`) → `AuditLogController@index` filtra por acção, tipo e utilizador, 50 por página
@@ -170,7 +179,7 @@
 
 **View composers:** `ClientLayoutComposer::compose(View $view)`, registado por `View::composer()`
 
-**Observers:** `ProjectUpdateObserver` (específico) e `AuditObserver` (genérico, um por nove modelos)
+**Observers:** `ProjectUpdateObserver` (específico), `AuditObserver` (genérico, sobre onze modelos) e `MediaCleanupObserver` (`forceDeleting` de `Project` e `Plan`)
 
 **Eventos:** `MessageSent` com `broadcastOn()`
 
@@ -201,13 +210,13 @@
 
 ## Preocupações transversais
 
-**Logging:** Monolog através do Laravel; `Log::warning` em `Thumbnail`, `Log::info` no `WebPushChannel`
+**Logging:** Monolog através do Laravel; `Log::warning` em `Thumbnail`, no `WhatsAppChannel` (credenciais em falta e falhas da API) e no `CspReportController` (uma linha por violação de CSP); `Log::info` no `WebPushChannel`
 
 **Validação:** `$request->validate()` nos controllers; `FormRequest` em `app/Http/Requests/` para utilizadores, perfil e login
 
 **Autenticação:** Laravel Breeze, sessão em base de dados; registo público desactivado
 
-**Autorização:** middleware `role:`, Gates (`access-admin`, `manage-users`, `access-financial`), `UserPolicy` e o trait `AuthorizesProjectAccess`
+**Autorização:** middleware `role:`, Gates (`access-admin`, `manage-users`, `manage-projects`, `access-financial`), `UserPolicy` e o trait `AuthorizesProjectAccess`. As rotas continuam a ser o ponto de imposição; os Gates existem para as vistas esconderem o que a rota recusaria
 
 **Tempo real:** Reverb + Laravel Echo; canais privados por obra
 
@@ -215,8 +224,12 @@
 
 **Cache:** `Setting::get()` usa `rememberForever("setting:{$key}")`, invalidado por `Setting::set()`; o `ClientLayoutComposer` usa janelas de 30 s (mensagens não lidas e contagem), 60 s (actualizações) e 120 s (primeira obra), e **só guarda escalares e arrays de escalares** — nunca modelos Eloquent
 
-**Auditoria:** `AuditObserver` sobre nove modelos, com redacção de credenciais e de dados de pagamento
+**Auditoria:** `AuditObserver` sobre onze modelos, com redacção de credenciais e de dados de pagamento; retenção de 365 dias por `obra360:audit:prune`
+
+**Limitação de taxa:** todas as escritas têm tecto — `throttle:120,1` nas escritas leves da área interna, `throttle:30,1` no envio de documentos e plantas, `throttle:20,1` nos envios de fotos, e os limites já existentes nas rotas do portal
+
+**Content-Security-Policy:** montada em `SecurityHeaders::policy()` com nonce por requisição registado no Vite e lido pelo `@cspNonce`; ligada/desligada e alternada entre relato e imposição por `config/security.php`; violações recolhidas por `CspReportController`
 
 ---
 
-*Análise de arquitectura: 2026-08-22*
+*Análise de arquitetura: 2026-08-24*

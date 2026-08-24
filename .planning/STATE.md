@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: All 83 v1 requirements done; media still needs migrating off the public disk in production
-last_updated: "2026-08-22"
-last_activity: 2026-08-22 -- document access/upload tests, FASE-04 closed
+stopped_at: v1 completo e serviços de arquitetura/design entregues; falta a migração para S3 e passar a CSP a imposição
+last_updated: "2026-08-24"
+last_activity: 2026-08-24 -- orçamento por linhas comparado com o gasto real (#34)
 progress:
   total_phases: 6
   completed_phases: 6
@@ -14,107 +14,95 @@ progress:
   percent: 100
 ---
 
-# Project State
+# Estado do Projeto
 
-## Project Reference
+## Referência
 
-See: .planning/PROJECT.md (updated 2026-08-21)
+Ver: `.planning/PROJECT.md` (atualizado em 2026-08-21)
+Requisitos da funcionalidade nova: `.planning/requisitos-arquitetura-design.md` (2026-08-23)
 
-**Core value:** A client logs in, immediately sees the current state of their construction project (phase, progress %, recent photos, money spent), and feels informed — without needing to contact the company.
-**Current focus:** production hardening — migrate legacy media off the public disk, then drop the fallback
+**Valor central:** o cliente entra, vê imediatamente o estado atual do que contratou — fase, percentual, fotos recentes, dinheiro gasto — e sente-se informado, sem precisar ligar para a empresa.
 
-## Current Position
+**Foco atual:** o produto deixou de ser só acompanhamento de obra. Passou a cobrir também os serviços de projeto — arquitetura e design de interiores — com plantas versionadas, aprovação pelo cliente e continuidade até a obra.
 
-Phase: 06 (rede de testes) — DELIVERED
-Status: Phases 1-6 delivered. 83 of 83 v1 requirements done, 0 partial, 0 not built.
-Last activity: 2026-08-22 -- document access control and upload validation covered; FASE-04 closed
+## Posição atual
 
-Progress: [██████████] 100%
+Fases 1 a 6 entregues. Os 83 requisitos v1 estão feitos, 0 parciais, 0 por construir.
+Sobre eles foram entregues os 27 requisitos dos serviços de arquitetura e design (TIPO, PLAN, PORT, OBRA, LIM) e dois requisitos v2 (ADV-03, ADV-04).
 
-> **Working mode:** Phases 2-5 and the 2026-08-21 gap-closure work were built
-> directly, outside the GSD workflow, at the user's direction. There are no
-> PLAN.md/SUMMARY.md artifacts for them. The status below was reconstructed from
-> the code and the commit history.
+Progresso v1: [██████████] 100%
 
-## What Was Built on 2026-08-21
+**Suíte de testes: 540 testes, 1609 asserções, todos passando** (`php artisan test`, 2026-08-24). Eram 192 em 22/08.
 
-Six commits closed every outstanding v1 gap:
+> **Modo de trabalho:** as fases 2 a 6 e todo o trabalho posterior a 21/08 foram
+> construídos diretamente, fora do fluxo GSD, por decisão do usuário. Não existem
+> artefatos PLAN.md/SUMMARY.md para eles. O que está abaixo foi reconstruído a
+> partir do código e do histórico de commits.
 
-| Commit | Delivered |
-|--------|-----------|
-| `2fd2f4a` | Currency helper `money()` replacing 21 hardcoded `R$`; `expensesByCategory()` / `expensesByMonth()` / `remainingBalance()` / `budgetUsedPercent()`; `ExpenseFactory`; DomPDF installed (FIN-02, FIN-03, FIN-06) |
-| `126972d` | Four per-project reports — geral, financeiro, fotos, fases — on screen and as PDF; "Relatórios" sidebar entry; date casts added to four models (REL-01..04) |
-| `3aac97f` | `audit_logs` table + `AuditObserver` on 9 models; admin-only `/admin/auditoria` with filters; per-event notification toggles wired into `ProjectUpdateObserver` (SEC-05, CONF-04) |
-| `7b3faa6` | Expense editing via a shared create/edit modal; dashboard "Atrasadas" and "Perto do fim" KPIs with alert lists (DESP-03, DASH-01) |
-| `becb9ba` | `App\Support\Thumbnail` (plain GD, no new dependency); thumbnails on upload, served with `?thumb=1`; `obra360:photos:thumbnails` backfill; gallery filters by phase, date range and order (FOTO-03, FOTO-04) |
-| `991c2cd` | `minishlink/web-push` installed — Web Push had never delivered anything; `toMail()` added to `ProjectUpdateNotification` (NOTF-01, NOTF-03) |
+## O que foi construído entre 23/08 e 24/08
 
-**Tests: 73 → 131, all passing. Pint clean. `composer audit` clean.**
+Vinte commits, do `8161493` ao `78d0f59`.
 
-## Incidental Findings Fixed
+### Serviços de arquitetura e design de interiores — completo
 
-- **CI was red before any of this work.** `composer audit` reported 12 advisories
-  against `guzzlehttp/guzzle` and `league/commonmark`, which the CI runs as a
-  blocking step — deploys were failing. Both packages updated.
-- **Four models had no date casts** (`Expense`, `Project`, `ProjectPhase`, `Photo`).
-  Views worked around it with `Carbon::parse` over raw strings. Fixed at the model.
-- **A multi-line `@json` inside an `onclick` attribute** broke the project page with
-  a `ParseError`. Introduced in `7b3faa6` and shipped undetected because the expense
-  tests only asserted redirects; the gallery tests, which render the page, caught it.
+| Commit | Entregue |
+|--------|----------|
+| `c95c51d` | Tipo de projeto: `Project::TYPES` (construção, remodelação, projeto de arquitetura, design de interiores), `SITE_TYPES`, `SOURCE_TYPES`, migração com `construcao` por omissão, filtro por tipo na listagem (TIPO-01..05) |
+| `ca99568` | Plantas com versões numeradas na área interna: `Plan`, `PlanVersion`, `Admin\ProjectPlanController`, `Admin\ProjectPlanVersionController`, disco privado, treze formatos aceitos, endereço externo em alternativa ao arquivo, soft delete que preserva o histórico (PLAN-01..09) |
+| `5b3e97d` | Portal do cliente: ver, baixar e aprovar. Recusa por 404 o que ainda não lhe foi enviado, pré-visualização de PDF e imagens no navegador, aprovação sob `lockForUpdate` que grava quem e quando, entra no histórico e na auditoria (PORT-01..06) |
+| `4a92f6c` | `projects.source_project_id`: a obra fica ligada ao projeto que lhe deu origem, mostra as plantas aprovadas dele sem copiar arquivos, e a continuidade aparece nos dois sentidos, no portal inclusive (OBRA-01..04) |
+| `cc566bf` | Comentários presos a cada versão (`PlanComment`) e contagem das revisões incluídas no contrato (`projects.revisions_included`, `revisionsUsed()`, `revisionsRemaining()`, `revisionLimitExceeded()`) |
+| `9baed6c` | Visualizador 3D no navegador para GLB e GLTF (`<x-model-viewer>`, `@google/model-viewer` carregado sob demanda) |
+| `d93782c` | Etapas de entrega pré-definidas por tipo (`App\Support\PhaseTemplates`), as de arquitetura seguindo a NBR 13532 |
 
-## Remaining Work
+Os limites do servidor (LIM-01..03) estão cobertos: `PlanVersion::maxUploadKilobytes()` lê as duas diretivas do PHP em tempo de execução e alimenta a validação, o texto do formulário e as mensagens de erro; `App\Http\Middleware\ExplainTruncatedUpload` e `resources/views/errors/413.blade.php` explicam os três modos de falha; o procedimento de cPanel, com custo e risco, está em `docs/production-readiness.md`.
 
-1. **Run `obra360:media:migrate-public --commit` in production**, validate, re-run with
-   `--delete-source`, then drop the `'local' ?: 'public'` fallback in
-   `Admin/ProjectController`, `Client/ProjectController` and `ReportController`.
-   Until then legacy media stays reachable on the public disk. Top item.
-2. Decide the exact surface the `financial` role should reach (`docs/production-readiness.md`).
-   Today `AuthorizesProjectAccess` treats it like a manager, which is a placeholder.
-3. Split `Admin/ProjectController` — 471 lines covering projects, phases, photos,
-   documents, expenses and updates.
-4. Regenerate `.planning/codebase/*.md` — stale since 2026-08-20.
-5. S3 migration (Flysystem already abstracts it).
+### Correções e dívida fechada
 
-## What Was Built on 2026-08-22
+| Commit | Fechado |
+|--------|---------|
+| `8161493` | Ordem das rotas — criar uma obra pela interface dava 404 — e limite de taxa em todas as escritas da área interna |
+| `01e98a6` | Tarefas agendadas: `auth:clear-resets`, `queue:prune-failed`, `obra360:audit:prune` (365 dias) e `obra360:trash:prune` (90 dias, com remoção dos arquivos do disco) |
+| `5e5082f`, `6925443` | Capa da obra visível nas páginas da obra; imagem padrão para quem não tem capa ou tem o arquivo em falta |
+| `b3cdef9` | Erros de validação em toda a área interna — `<x-form-errors>` e `<x-field-error>`, com `_form` a distinguir formulários da mesma página |
+| `d75bc4d` | Vocabulário da área interna segue o tipo do registro: «obra» para construção e remodelação, «projeto» para arquitetura e design |
+| `c40d93d` | Interface padronizada em português do Brasil e `APP_LOCALE=pt_BR` — o arquivo de traduções nunca era lido |
+| `5f74374` | Paginação da lista de mensagens e de todos os separadores da página da obra, com a ordenação movida para SQL |
+| `27ce944` | Limpeza dos arquivos na exclusão definitiva, aviso do canal de WhatsApp sem credenciais, remoção da coluna morta `photos.external_url` |
+| `5c8992f` | Content-Security-Policy com nonce por requisição, imposta em local e nos testes, em modo de relato em produção |
+| `079d889` | Papel financeiro decidido e implementado: lê todas as obras, escreve despesas e cobranças em qualquer uma, não toca na estrutura |
+| `e030950` | ADV-03 — o cliente envia fotos e documentos pelo portal, com interruptor nas configurações |
+| `78d0f59` | ADV-04 — orçamento por linhas (`BudgetItem`), comparado com o gasto real por categoria |
 
-- `DocumentAccessTest` (15 tests): who can download what (client sees only documents
-  released to them, 404 across projects, managers limited to their own projects) and
-  what the app accepts as an upload (extension, size, visibility, private disk).
-- `obra360:media:migrate-public` now also migrates thumbnails and documents — it only
-  covered covers and photos, and those were exactly the paths still on the fallback.
-- FASE-04 closed: `progress_mode` setting switches derived vs. manual progress.
+## Trabalho em aberto
 
-Tests: 192 -> 216, all passing. Pint clean.
+1. **Migração para S3.** `league/flysystem-aws-s3-v3` não está instalado — em `composer.lock` aparece só como sugestão do framework — e as variáveis `AWS_*` do `.env.example` estão vazias. À espera de credenciais. O código já usa `Storage::disk('local')` em todo o lado, nunca caminhos absolutos, portanto a mudança é de configuração.
+2. **Passar a CSP a imposição em produção.** Hoje `config/security.php` põe `report_only` a verdadeiro quando `APP_ENV=production`. Falta observar os relatórios em `storage/logs` e pôr `CSP_REPORT_ONLY=false`.
+3. **Assimetria na remoção de arquivos.** Excluir uma obra ou uma planta guarda os arquivos até o prazo de retenção; excluir uma foto, um documento ou uma despesa continua a apagar o arquivo no mesmo instante, apesar de a linha ser só soft delete.
+4. **Notificar a outra parte quando há comentário novo numa planta.** Hoje o comentário é gravado e mais nada — nem histórico, nem notificação.
+5. **`style-src` mantém `'unsafe-inline'`** (atributos `style=` nas vistas) **e `script-src` mantém `'unsafe-eval'`** (Alpine 3 avalia as expressões com `new Function`). As duas cedências estão documentadas no próprio middleware.
+6. **Multi-empresa/SaaS (ADV-02) e app móvel (INT-03)** continuam em escopo v2, não iniciados.
 
-## Accumulated Context
+## Contexto acumulado
 
-### Decisions
+### Decisões
 
-- Notifications now ship on three channels — e-mail, Web Push and WhatsApp — each
-  failing silently when unconfigured, with per-event-type toggles in Settings.
-- Audit trail implemented as one generic observer over 9 models rather than audit
-  calls in controllers: less code, and impossible to forget on a new write path.
-  `ProjectUpdate` is deliberately excluded — it is client-facing content.
-- Thumbnails use plain GD instead of Intervention Image — the job is ~40 lines.
-- Reports share Blade partials between the on-screen view and the PDF; photos are
-  embedded as base64 because the media disk is private and DomPDF cannot
-  authenticate. `isRemoteEnabled(false)` since the HTML is built from user data.
-
-### Roadmap Evolution
-
-- Phase 04.1 inserted 2026-08-20, then removed and re-added as Phase 6 on the user's
-  direction to build features before tests. That risk played out exactly as flagged:
-  a `ParseError` shipped in `7b3faa6` and was only caught one commit later.
+- Um serviço de projeto é um **tipo** na tabela `projects`, não uma entidade separada — evita duplicar documentos, cobranças, mensagens, portal e relatórios.
+- Uma planta é uma entidade própria com versões numeradas e aprovação. `plan_versions` não usa soft delete de propósito: uma versão substituída continua legível para sempre.
+- A obra **fica ligada** ao projeto de origem e lê as plantas aprovadas onde elas vivem. Nada é copiado, portanto nada diverge.
+- Arquivos 3D: baixar sempre, visualizar só formatos leves (GLB, GLTF). Converter formatos proprietários no servidor é inviável em alojamento compartilhado.
+- O limite de envio fica nos 64 MB e o endereço externo é o caminho normal para Revit, SketchUp e IFC grandes — a alternativa custa concorrência de processos PHP-FPM, não disco.
+- O financeiro tem âmbito definido pelo middleware `role:`, não por obra: ele nunca é gestor de obra nenhuma, e restringi-lo por `manager_id` dava 403 nas rotas que lhe são explicitamente atribuídas.
+- Os arquivos só saem do disco quando a exclusão passa a definitiva, num observador de `forceDeleting` e não no comando — o `forceDelete` pode vir de qualquer lado.
 
 ### Blockers/Concerns
 
-- `.planning/codebase/*.md` were regenerated on 2026-08-20 and are now mildly stale:
-  they predate `AuditLog`, `ReportController`, `Thumbnail`, the money helper and the
-  audit_logs table. Re-run the codebase mapping before relying on them.
+- Nenhuma tarefa agendada corre sem uma entrada de cron criada à mão em produção, fora do repositório. Ver `docs/production-readiness.md`.
+- A tabela `cache` não é varrida por nada: o Laravel não traz limpeza em massa para o store de base de dados.
 
-## Session Continuity
+## Continuidade
 
-Last session: 2026-08-21
-Stopped at: all v1 feature gaps closed and committed
+Última sessão: 2026-08-24
+Parado em: orçamento por linhas entregue; documentos de planejamento atualizados ao estado real.
 
-Next step: build the Phase 6 regression net over the financial and access-control paths.
+Próximo passo: instalar o driver de S3 quando houver credenciais, e observar os relatórios de CSP em produção antes de passar a imposição.
