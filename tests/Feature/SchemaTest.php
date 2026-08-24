@@ -45,6 +45,18 @@ class SchemaTest extends TestCase
         $this->assertTrue(Schema::hasColumn('documents', 'visibility'));
     }
 
+    /**
+     * `photos.external_url` foi criada em 2026_06_27_200001 e nunca foi
+     * escrita nem lida por nada. O caso do arquivo que mora fora do servidor
+     * vive em `plan_versions.external_url` (PLAN-08), esse sim implementado de
+     * ponta a ponta.
+     */
+    public function test_photos_table_has_no_unused_external_url_column(): void
+    {
+        $this->assertFalse(Schema::hasColumn('photos', 'external_url'));
+        $this->assertTrue(Schema::hasColumn('plan_versions', 'external_url'));
+    }
+
     public function test_messages_table_exists_with_body_column(): void
     {
         $this->assertTrue(Schema::hasTable('messages'));

@@ -16,6 +16,7 @@ use App\Models\ProjectUpdate;
 use App\Models\Setting;
 use App\Models\User;
 use App\Observers\AuditObserver;
+use App\Observers\MediaCleanupObserver;
 use App\Observers\ProjectUpdateObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -57,6 +58,13 @@ class AppServiceProvider extends ServiceProvider
         ] as $auditable) {
             $auditable::observe(AuditObserver::class);
         }
+
+        // Limpeza dos arquivos no disco quando a exclusão passa a ser
+        // definitiva. Só a obra e a planta: são as duas exclusões que deixam
+        // arquivos para trás (o `destroy` de foto, documento e despesa já
+        // apaga o arquivo no momento). Ver MediaCleanupObserver.
+        Project::observe(MediaCleanupObserver::class);
+        Plan::observe(MediaCleanupObserver::class);
 
         View::composer('components.layouts.client', ClientLayoutComposer::class);
 

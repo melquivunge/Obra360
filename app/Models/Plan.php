@@ -68,6 +68,26 @@ class Plan extends Model
         return $this->hasOne(PlanVersion::class)->ofMany('version', 'max');
     }
 
+    /**
+     * Os arquivos no disco privado desta planta — um por versão.
+     *
+     * PLAN-08: uma versão guardada num endereço externo (Google Drive,
+     * WeTransfer) tem `path` nulo. Não é arquivo nosso: apagar a planta não
+     * apaga nada do outro lado, e aqui simplesmente não entra.
+     *
+     * @return array<int, string>
+     */
+    public function storedMediaPaths(): array
+    {
+        return $this->versions()
+            ->reorder()
+            ->pluck('path')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     public function statusLabel(): string
     {
         return self::STATUSES[$this->status] ?? $this->status;

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'project_id', 'phase_id', 'title', 'caption', 'description',
-    'path', 'thumbnail_path', 'media_type', 'external_url',
+    'path', 'thumbnail_path', 'media_type',
     'taken_at', 'uploaded_by',
 ])]
 class Photo extends Model

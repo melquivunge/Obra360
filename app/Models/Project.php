@@ -159,6 +159,41 @@ class Project extends Model
         return $this->hasMany(self::class, 'source_project_id')->latest();
     }
 
+    /**
+     * Todos os arquivos no disco privado que pertencem a esta obra — a capa,
+     * as fotos e as suas miniaturas, os recibos das despesas, os documentos e
+     * as versões das plantas.
+     *
+     * Os filhos são lidos com `withTrashed()` de propósito: apagar uma obra é
+     * `SoftDeletes` e não toca nas linhas filhas, mas uma foto removida uma a
+     * uma antes disso continua a ser uma linha desta obra. Se a obra for
+     * excluída definitivamente, a chave estrangeira leva essas linhas com ela
+     * (`cascadeOnDelete`) e ninguém mais saberia que aqueles arquivos
+     * existiram.
+     *
+     * PLAN-08: uma versão de planta guardada num endereço externo tem `path`
+     * nulo — não há arquivo nosso para apagar, e o `filter()` deixa-a de fora.
+     *
+     * @return array<int, string>
+     */
+    public function storedMediaPaths(): array
+    {
+        // reorder() em toda a parte: estas relações trazem um ORDER BY que não
+        // serve de nada num pluck e estorva o MySQL nas subconsultas.
+        $planIds = $this->plans()->withTrashed()->reorder()->pluck('id');
+
+        return collect([$this->cover_image_path])
+            ->merge($this->photos()->withTrashed()->reorder()->pluck('path'))
+            ->merge($this->photos()->withTrashed()->reorder()->pluck('thumbnail_path'))
+            ->merge($this->documents()->withTrashed()->reorder()->pluck('path'))
+            ->merge($this->expenses()->withTrashed()->reorder()->pluck('receipt_path'))
+            ->merge(PlanVersion::query()->whereIn('plan_id', $planIds)->pluck('path'))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     /** OBRA-01: só um projecto de arquitectura ou de design pode ser origem. */
     public function canBeSource(): bool
     {

@@ -51,7 +51,6 @@ class ProjectDocumentController extends Controller
         $this->assertBelongsToProject($project, $document);
 
         Storage::disk('local')->delete($document->path);
-        Storage::disk('public')->delete($document->path);
         $document->delete();
 
         return back()->with('success', 'Documento removido.');

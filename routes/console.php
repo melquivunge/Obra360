@@ -57,3 +57,14 @@ Schedule::command('queue:prune-failed --hours=168')
 Schedule::command('obra360:audit:prune --commit')
     ->dailyAt('04:00')
     ->withoutOverlapping();
+
+// Retenção da reciclagem. Obras e plantas apagadas ficam recuperáveis durante
+// 90 dias; passado esse prazo a exclusão passa a definitiva e os arquivos
+// (fotos, recibos, documentos, plantas) saem do disco — sem isto nada os
+// apagava, nunca. Semanal e não diária: a reciclagem não cresce todos os dias
+// e cada execução mexe no disco, não só na base de dados. Segunda-feira às
+// 04:30, depois da limpeza da auditoria, para não haver duas tarefas a carregar
+// o alojamento partilhado ao mesmo tempo.
+Schedule::command('obra360:trash:prune --commit')
+    ->weeklyOn(1, '04:30')
+    ->withoutOverlapping();

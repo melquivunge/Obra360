@@ -257,7 +257,6 @@ class ProjectController extends Controller
         if ($request->hasFile('cover_image')) {
             if ($project->cover_image_path) {
                 Storage::disk('local')->delete($project->cover_image_path);
-                Storage::disk('public')->delete($project->cover_image_path);
             }
             $data['cover_image_path'] = $request->file('cover_image')->store('covers', 'local');
         }

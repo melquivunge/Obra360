@@ -74,7 +74,6 @@ class ProjectExpenseController extends Controller
 
         if ($expense->receipt_path) {
             Storage::disk('local')->delete($expense->receipt_path);
-            Storage::disk('public')->delete($expense->receipt_path);
         }
 
         $expense->delete();

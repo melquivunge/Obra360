@@ -56,7 +56,6 @@ class ProjectPhotoController extends Controller
 
         foreach (array_filter([$photo->path, $photo->thumbnail_path]) as $file) {
             Storage::disk('local')->delete($file);
-            Storage::disk('public')->delete($file);
         }
         $photo->delete();
 
