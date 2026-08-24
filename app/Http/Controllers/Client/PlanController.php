@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Models\PlanComment;
 use App\Models\PlanVersion;
 use App\Models\Project;
 use App\Models\ProjectUpdate;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -162,6 +164,27 @@ class PlanController extends Controller
      * arquitectura saber que há uma revisão por mostrar já é informação a mais.
      * Para o cliente, um esboço de trabalho não existe.
      */
+    /**
+     * O cliente comenta uma versão que lhe foi enviada. A porta é a mesma do
+     * download, da visualização e da aprovação — `authorizeSentVersion()`, com
+     * 404 e não 403 para o que ainda não lhe foi mostrado: um 403 confirmaria
+     * que o esboço existe, e isso já é informação a mais.
+     */
+    public function storeComment(Request $request, Project $project, Plan $plan, PlanVersion $version): RedirectResponse
+    {
+        $this->authorizeSentVersion($project, $plan, $version);
+
+        $data = $request->validate(['body' => 'required|string|max:2000']);
+
+        PlanComment::create([
+            'plan_version_id' => $version->id,
+            'user_id' => auth()->id(),
+            'body' => $data['body'],
+        ]);
+
+        return $this->backToPlans()->with('success', 'Comentário enviado.');
+    }
+
     private function authorizeSentVersion(Project $project, Plan $plan, PlanVersion $version): void
     {
         abort_if($project->client_id !== auth()->user()->client_id, 403);

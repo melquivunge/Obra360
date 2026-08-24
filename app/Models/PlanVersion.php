@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * PLAN-02/PLAN-03: uma revisão numerada de uma planta. O histórico nunca é
@@ -62,6 +63,11 @@ class PlanVersion extends Model
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(PlanComment::class)->oldest();
     }
 
     public function approver(): BelongsTo

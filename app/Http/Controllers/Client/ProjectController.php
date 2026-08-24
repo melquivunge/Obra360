@@ -158,7 +158,7 @@ class ProjectController extends Controller
 
         return $project->plans()
             ->whereHas('versions', $sent)
-            ->with(['versions' => $sent, 'versions.approver'])
+            ->with(['versions' => $sent, 'versions.approver', 'versions.comments.author'])
             ->get();
     }
 

@@ -681,6 +681,10 @@
                             <a href="{{ route('admin.projects.plans.versions.download', [$project, $plan, $version]) }}" style="color:var(--primary);">Baixar</a>
                         @endif
                     </span>
+
+                    <x-plan-comments :version="$version"
+                                     :action="route('admin.projects.plans.versions.comments.store', [$project, $plan, $version])"
+                                     :form="'comentario_versao_'.$version->id" />
                 </div>
                 @endforeach
             </div>

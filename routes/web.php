@@ -146,6 +146,9 @@ Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.
         Route::put('/obras/{project}/plantas/{plan}', [ProjectPlanController::class, 'update'])->name('projects.plans.update');
         Route::delete('/obras/{project}/plantas/{plan}', [ProjectPlanController::class, 'destroy'])->name('projects.plans.destroy');
         Route::post('/obras/{project}/plantas/{plan}/versoes/{version}/enviar', [ProjectPlanVersionController::class, 'send'])->name('projects.plans.versions.send');
+        // Comentário da equipa sobre uma versão. É texto, não ficheiro: cabe no
+        // tecto geral das escritas deste grupo.
+        Route::post('/obras/{project}/plantas/{plan}/versoes/{version}/comentarios', [ProjectPlanVersionController::class, 'storeComment'])->name('projects.plans.versions.comments.store');
     });
 
     // Uploads: os dois pedidos pesados do sistema, com tecto próprio.
@@ -212,6 +215,9 @@ Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->g
     Route::post('/obras/{project}/plantas/{plan}/versoes/{version}/aprovar', [ClientPlanController::class, 'approve'])
         ->middleware('throttle:20,1')
         ->name('projects.plans.versions.approve');
+    Route::post('/obras/{project}/plantas/{plan}/versoes/{version}/comentarios', [ClientPlanController::class, 'storeComment'])
+        ->middleware('throttle:20,1')
+        ->name('projects.plans.versions.comments.store');
     Route::post('/mensagens/marcar-lidas', function () {
         session(['messages_last_viewed_at' => now()->timestamp]);
 

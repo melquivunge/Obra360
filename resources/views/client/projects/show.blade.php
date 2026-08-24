@@ -547,6 +547,10 @@
                             </div>
                         </div>
 
+                        <x-plan-comments :version="$current"
+                                         :action="route('portal.projects.plans.versions.comments.store', [$project, $plan, $current])"
+                                         :form="'comentario_versao_'.$current->id" />
+
                         {{-- PORT-02: as versões anteriores continuam disponíveis. --}}
                         @if($history->isNotEmpty())
                         <div style="margin-top:0.875rem;padding-top:0.875rem;border-top:1px solid var(--color-border);">
@@ -568,6 +572,10 @@
                                     <span class="ml-auto flex flex-wrap items-center gap-2">
                                         @include('client.projects.partials.plan-version-links', ['project' => $project, 'plan' => $plan, 'version' => $old])
                                     </span>
+
+                                    <x-plan-comments :version="$old"
+                                                     :action="route('portal.projects.plans.versions.comments.store', [$project, $plan, $old])"
+                                                     :form="'comentario_versao_'.$old->id" />
                                 </div>
                                 @endforeach
                             </div>
