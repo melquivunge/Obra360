@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\ProjectBudgetItemController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\ProjectDocumentController;
 use App\Http\Controllers\Admin\ProjectExpenseController;
@@ -175,6 +176,12 @@ Route::middleware(['auth', 'role:admin,financial', 'throttle:120,1'])->prefix('a
     Route::post('/obras/{project}/despesas', [ProjectExpenseController::class, 'store'])->name('projects.expenses.store');
     Route::put('/obras/{project}/despesas/{expense}', [ProjectExpenseController::class, 'update'])->name('projects.expenses.update');
     Route::delete('/obras/{project}/despesas/{expense}', [ProjectExpenseController::class, 'destroy'])->name('projects.expenses.destroy');
+
+    // ADV-04: as linhas do orçamento vivem ao lado das despesas — orçamentar é
+    // trabalho financeiro, não estrutural.
+    Route::post('/obras/{project}/orcamento', [ProjectBudgetItemController::class, 'store'])->name('projects.budget-items.store');
+    Route::put('/obras/{project}/orcamento/{item}', [ProjectBudgetItemController::class, 'update'])->name('projects.budget-items.update');
+    Route::delete('/obras/{project}/orcamento/{item}', [ProjectBudgetItemController::class, 'destroy'])->name('projects.budget-items.destroy');
 
     // Payments
     Route::post('/obras/{project}/pagamentos', [PaymentController::class, 'store'])->name('projects.payments.store');

@@ -441,6 +441,62 @@ class Project extends Model
      *
      * @return array<int, array{key: string, label: string, total: float, percent: float}>
      */
+    public function budgetItems(): HasMany
+    {
+        return $this->hasMany(BudgetItem::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /** A soma das linhas do orçamento. Zero quando ninguém o detalhou ainda. */
+    public function budgetPlanned(): float
+    {
+        return (float) $this->budgetItems()->reorder()->sum('amount');
+    }
+
+    /**
+     * O plano e o gasto lado a lado, por categoria (ADV-04).
+     *
+     * Aparecem as categorias que têm plano **ou** gasto: uma despesa numa
+     * categoria que ninguém orçou é precisamente o que interessa ver, e
+     * escondê-la por não ter linha de plano seria esconder o problema.
+     *
+     * @return list<array{key: string, label: string, planned: float, spent: float, diff: float}>
+     */
+    public function budgetVersusSpent(): array
+    {
+        $planned = $this->budgetItems()->reorder()
+            ->selectRaw('category, SUM(amount) AS total')
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
+        $spent = $this->expenses()->reorder()
+            ->selectRaw('category, SUM(amount) AS total')
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
+        $categorias = collect(Expense::CATEGORIES)
+            ->filter(fn ($label, $key) => isset($planned[$key]) || isset($spent[$key]));
+
+        return $categorias->map(fn ($label, $key) => [
+            'key' => $key,
+            'label' => $label,
+            'planned' => (float) ($planned[$key] ?? 0),
+            'spent' => (float) ($spent[$key] ?? 0),
+            'diff' => (float) ($spent[$key] ?? 0) - (float) ($planned[$key] ?? 0),
+        ])->values()->all();
+    }
+
+    /**
+     * As linhas somam menos ou mais do que o total contratado da obra.
+     *
+     * Não é erro nem se impede: um orçamento em construção tem naturalmente
+     * linhas por escrever. Serve para se ver a diferença em vez de a descobrir
+     * no fim.
+     */
+    public function budgetPlanDiff(): float
+    {
+        return $this->budgetPlanned() - (float) ($this->budget ?? 0);
+    }
+
     public function expensesByCategory(): array
     {
         $rows = $this->expenses()

@@ -131,6 +131,7 @@ class ProjectController extends Controller
             // inteiro, e sem isto seriam duas consultas por planta.
             'plans.versions.uploader',
             'plans.versions.comments.author',
+            'budgetItems',
             // OBRA-01/OBRA-03: a continuidade nos dois sentidos. A origem
             // respeita o SoftDeletes e vem nula se estiver na reciclagem.
             'sourceProject', 'derivedProjects',
