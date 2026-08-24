@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'client_id', 'manager_id', 'name', 'code', 'type', 'description', 'location',
+    'client_id', 'manager_id', 'name', 'code', 'type', 'source_project_id', 'description', 'location',
     'start_date', 'expected_end_date', 'completed_at', 'budget', 'status',
     'progress', 'show_financials', 'cover_image_path', 'notes',
 ])]
@@ -36,6 +37,12 @@ class Project extends Model
      * projecto: chamar-lhes «obra» ao cliente estaria errado.
      */
     public const SITE_TYPES = ['construcao', 'remodelacao'];
+
+    /**
+     * OBRA-01: os tipos que podem ser origem de uma obra. Uma obra não nasce de
+     * outra obra — nasce do desenho que a antecedeu.
+     */
+    public const SOURCE_TYPES = ['arquitetura', 'design_interiores'];
 
     public const STATUSES = [
         'planejada' => 'Planejada',
@@ -123,6 +130,104 @@ class Project extends Model
     public function plans(): HasMany
     {
         return $this->hasMany(Plan::class)->latest();
+    }
+
+    /**
+     * OBRA-01: o projecto de arquitectura ou de design que deu origem a esta
+     * obra. Nulo na esmagadora maioria das obras.
+     *
+     * A relação respeita o SoftDeletes do projecto de origem de propósito: uma
+     * origem na reciclagem devolve `null` e tudo o que dela depende — as
+     * plantas herdadas, o cartão de continuidade no portal — simplesmente
+     * deixa de aparecer, em vez de rebentar a página com um `->name` sobre
+     * nulo. A coluna não é limpa: restaurar o projecto devolve a ligação
+     * inteira. Para dizer ao gestor que a origem existiu e foi removida há
+     * hasMissingSource().
+     */
+    public function sourceProject(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'source_project_id');
+    }
+
+    /**
+     * OBRA-03: a obra (ou obras) que nasceram deste projecto. É plural porque
+     * um projecto de arquitectura pode ser construído por fases, cada uma sua
+     * obra, e o inverso — recusar a segunda — não traria nada a ninguém.
+     */
+    public function derivedProjects(): HasMany
+    {
+        return $this->hasMany(self::class, 'source_project_id')->latest();
+    }
+
+    /** OBRA-01: só um projecto de arquitectura ou de design pode ser origem. */
+    public function canBeSource(): bool
+    {
+        return in_array($this->type, self::SOURCE_TYPES, true);
+    }
+
+    /**
+     * A ligação existe mas a origem já não está visível — foi para a
+     * reciclagem. Vale a pena dizê-lo na área interna: sem isto as plantas
+     * herdadas desapareciam da obra sem explicação nenhuma.
+     */
+    public function hasMissingSource(): bool
+    {
+        return $this->source_project_id !== null && $this->sourceProject === null;
+    }
+
+    /**
+     * OBRA-02: as plantas aprovadas do projecto de origem, sem cópia dos
+     * ficheiros — a planta continua a ser do projecto que a desenhou.
+     *
+     * «Aprovada» é lido na versão e não no estado da planta: o estado passa a
+     * `substituida` mal entre uma revisão nova, e uma planta assinada pelo
+     * cliente não deixa de estar assinada só porque o estúdio começou a mexer
+     * na revisão seguinte. O que a obra mostra é a versão aprovada mais
+     * recente — o último desenho que o cliente aceitou levar para a construção.
+     * Um desenho por aprovar nunca entra aqui.
+     *
+     * @return Collection<int, Plan>
+     */
+    public function inheritedApprovedPlans(): Collection
+    {
+        $source = $this->sourceProject;
+
+        if ($source === null) {
+            return new Collection;
+        }
+
+        $approved = fn ($query) => $query->whereNotNull('approved_at')->orderByDesc('version');
+
+        return $source->plans()
+            ->whereHas('versions', $approved)
+            ->with(['versions' => $approved, 'versions.approver'])
+            ->get();
+    }
+
+    /**
+     * Uma obra não pode ser origem de si própria, nem fechar um ciclo com quem
+     * já a aponta. Sobe a cadeia a partir do candidato: se lá encontrar este
+     * projecto, a ligação fecharia o círculo. O registo dos visitados trava o
+     * ciclo que já exista nos dados, para a verificação não correr para sempre.
+     */
+    public function wouldCycleThroughSource(int $candidateId): bool
+    {
+        $target = (int) $this->getKey();
+        $seen = [];
+        $currentId = $candidateId;
+
+        while ($currentId !== null) {
+            if ($currentId === $target || isset($seen[$currentId])) {
+                return true;
+            }
+
+            $seen[$currentId] = true;
+
+            $next = self::withTrashed()->whereKey($currentId)->value('source_project_id');
+            $currentId = $next === null ? null : (int) $next;
+        }
+
+        return false;
     }
 
     /**

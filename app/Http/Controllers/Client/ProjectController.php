@@ -36,7 +36,22 @@ class ProjectController extends Controller
         $totalSpent = $expenses->sum('amount');
         $plans = $this->plansSentToClient($project);
 
-        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials', 'allowComments', 'plans'));
+        // OBRA-04: a continuidade entre o projecto e a obra, nos dois sentidos.
+        //
+        // O filtro pelo cliente autenticado está aqui de propósito, e não só na
+        // validação da área interna que já impede ligações entre clientes
+        // diferentes: se alguma vez existir uma ligação assim — importada,
+        // corrigida à mão na base de dados, herdada de uma versão anterior — o
+        // portal não é o sítio onde ela se descobre. Um projecto que não é dele
+        // não aparece, nem sequer pelo nome.
+        //
+        // Uma origem na reciclagem devolve nulo pelo SoftDeletes e a secção
+        // simplesmente não aparece: a página do cliente não rebenta nem lhe
+        // mostra um nome que já não existe.
+        $sourceProject = $project->sourceProject()->where('client_id', $clientId)->first();
+        $derivedProjects = $project->derivedProjects()->where('client_id', $clientId)->get();
+
+        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials', 'allowComments', 'plans', 'sourceProject', 'derivedProjects'));
     }
 
     public function messages(Request $request, Project $project)

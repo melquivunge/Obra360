@@ -4,7 +4,9 @@
     // apoio, aparece ao pé dos documentos e só quando já existem plantas — ou a
     // quem as pode criar, senão a primeira nunca poderia ser feita.
     $canManagePlans = auth()->user()->can('manage-projects');
-    $showPlansTab = $project->showsPlans() || $canManagePlans;
+    // OBRA-02: uma obra sem plantas próprias mas com plantas herdadas do
+    // projecto de origem tem mesmo de abrir o separador — é lá que elas estão.
+    $showPlansTab = $project->showsPlans() || $canManagePlans || $inheritedPlans->isNotEmpty();
     $plansTab = $showPlansTab ? ['plantas' => 'Plantas'] : [];
 
     $tabs = array_merge(
@@ -94,6 +96,44 @@
                 </div>
                 @endforeach
             </div>
+            @php
+                // OBRA-03: a continuidade nos dois sentidos. O gestor só abre o
+                // que gere, por isso o que ele não pode abrir aparece como texto
+                // e não como uma ligação que lhe daria 403.
+                $isManager = auth()->user()->isManager();
+                $canOpen = fn ($other) => ! $isManager || (int) $other->manager_id === auth()->id();
+            @endphp
+            @if($project->sourceProject || $project->hasMissingSource() || $project->derivedProjects->isNotEmpty())
+            <div style="border-top:1px solid var(--border);padding-top:1rem;margin-bottom:1rem;">
+                <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground);margin-bottom:0.5rem;">Continuidade</p>
+                @if($project->sourceProject)
+                <p style="font-size:0.875rem;">
+                    Nasceu do projecto
+                    @if($canOpen($project->sourceProject))
+                    <a href="{{ route('admin.projects.show', $project->sourceProject) }}" style="color:var(--primary);font-weight:600;">{{ $project->sourceProject->name }}</a>
+                    @else
+                    <strong>{{ $project->sourceProject->name }}</strong>
+                    @endif
+                    <span style="color:var(--muted-foreground)">· {{ $project->sourceProject->typeLabel() }}</span>
+                </p>
+                @elseif($project->hasMissingSource())
+                <p style="font-size:0.875rem;color:var(--muted-foreground)">
+                    O projecto de origem foi removido. A ligação fica guardada e volta a valer se ele for restaurado.
+                </p>
+                @endif
+                @foreach($project->derivedProjects as $derived)
+                <p style="font-size:0.875rem;margin-top:0.25rem;">
+                    Deu origem a
+                    @if($canOpen($derived))
+                    <a href="{{ route('admin.projects.show', $derived) }}" style="color:var(--primary);font-weight:600;">{{ $derived->name }}</a>
+                    @else
+                    <strong>{{ $derived->name }}</strong>
+                    @endif
+                    <span style="color:var(--muted-foreground)">· {{ $derived->typeLabel() }}</span>
+                </p>
+                @endforeach
+            </div>
+            @endif
             @if($project->description)
             <div style="border-top:1px solid var(--border);padding-top:1rem;">
                 <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground);margin-bottom:0.5rem;">Descrição</p>
@@ -459,6 +499,46 @@
         </div>
         @endif
 
+        {{-- OBRA-02: as plantas aprovadas do projecto de origem.
+             Não são plantas desta obra e a interface não finge que são: nada
+             aqui se edita, envia ou apaga. A planta continua a ser do projecto
+             que a desenhou — corrigida lá, muda aqui no pedido seguinte, porque
+             não há cópia nenhuma pelo meio. Só entram versões aprovadas pelo
+             cliente: um desenho por aprovar não é o que se leva para a obra. --}}
+        @if($inheritedPlans->isNotEmpty())
+        <div style="background-color:var(--card);border:1px solid var(--border);border-left:3px solid oklch(0.6 0.18 220);border-radius:0.75rem;padding:1.25rem;">
+            <div class="flex flex-wrap items-baseline justify-between gap-2" style="margin-bottom:0.25rem;">
+                <h4 style="font-weight:600;">Plantas do projecto de origem</h4>
+                <a href="{{ route('admin.projects.show', $project->sourceProject) }}" style="font-size:0.8125rem;color:var(--primary);">{{ $project->sourceProject->name }} ↗</a>
+            </div>
+            <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:1rem;">
+                Versões aprovadas pelo cliente no projecto de origem. Não são plantas desta obra: vivem lá e são geridas lá.
+            </p>
+            <div class="space-y-2">
+                @foreach($inheritedPlans as $inherited)
+                @php $approvedVersion = $inherited->versions->first(); @endphp
+                <div class="flex flex-wrap items-center gap-3" style="font-size:0.8125rem;padding:0.625rem 0.75rem;border-radius:0.5rem;background-color:var(--surface);">
+                    <span style="font-weight:600;">{{ $inherited->name }}</span>
+                    <span style="font-size:0.6875rem;font-weight:500;padding:0.125rem 0.5rem;border-radius:9999px;background-color:var(--card);color:var(--muted-foreground);border:1px solid var(--border);">{{ $inherited->disciplineLabel() }}</span>
+                    <span class="badge badge-concluida">Aprovada {{ $approvedVersion->label() }}</span>
+                    <span style="color:var(--muted-foreground)" class="min-w-0 truncate">
+                        {{ $approvedVersion->isExternal() ? 'Endereço externo' : ($approvedVersion->original_name ?: strtoupper($approvedVersion->format)) }}
+                        @if($approvedVersion->humanSize()) · {{ $approvedVersion->humanSize() }} @endif
+                    </span>
+                    <span style="color:var(--muted-foreground)">aprovada a {{ $approvedVersion->approved_at->format('d/m/Y') }}</span>
+                    <span class="ml-auto">
+                        @if($approvedVersion->isExternal())
+                            <a href="{{ $approvedVersion->external_url }}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Abrir endereço ↗</a>
+                        @else
+                            <a href="{{ route('admin.projects.plans.versions.download', [$project->sourceProject, $inherited, $approvedVersion]) }}" style="color:var(--primary);">Descarregar</a>
+                        @endif
+                    </span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         @forelse($project->plans as $plan)
         @php
             $current = $plan->versions->first();
@@ -558,7 +638,11 @@
             @endif
         </div>
         @empty
+        @if($inheritedPlans->isEmpty())
         <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma planta registada.</p>
+        @else
+        <p style="color:var(--muted-foreground);font-size:0.875rem;">Esta obra não tem plantas próprias.</p>
+        @endif
         @endforelse
     </div>
     @endif

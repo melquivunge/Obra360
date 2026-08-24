@@ -20,6 +20,9 @@ class ProjectUpdate extends Model
         // cliente mostra a etiqueta do tipo — reutilizar 'planta' daria a uma
         // aprovação a legenda «Planta enviada».
         'planta_aprovada' => 'Planta aprovada',
+        // OBRA-01: a obra passou a continuar um projecto nosso. Tipo
+        // próprio para o histórico do cliente não lhe chamar «geral».
+        'origem' => 'Ligação ao projecto de origem',
         'status' => 'Mudança de status',
     ];
 

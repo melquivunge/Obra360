@@ -121,7 +121,9 @@ class ProjectPlanVersionController extends Controller
      */
     public function download(Project $project, Plan $plan, PlanVersion $version)
     {
-        $this->authorizeProjectAccess($project);
+        // Leitura, e não escrita: o gestor de uma obra descarrega também as
+        // plantas do projecto de origem dela (OBRA-02).
+        $this->authorizePlanReadAccess($project);
         $this->assertBelongsToProject($project, $plan);
         $this->assertBelongsToPlan($plan, $version);
 
