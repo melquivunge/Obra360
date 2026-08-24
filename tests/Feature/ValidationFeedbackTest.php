@@ -72,7 +72,7 @@ class ValidationFeedbackTest extends TestCase
             ->assertSee('O campo nome é obrigatório.')
             ->assertSee('value="Bairro Azul"', false)
             // Sem isto a página recarregava com o modal fechado e a mensagem escondida.
-            ->assertSee("openModal('modal-nova-obra')", false);
+            ->assertSee("window.obra360.openModal('modal-nova-obra')", false);
     }
 
     // ── Cliente ───────────────────────────────────────────────
@@ -110,7 +110,7 @@ class ValidationFeedbackTest extends TestCase
             ->assertSee(self::RESUMO)
             ->assertSee('O campo nome é obrigatório.')
             ->assertSee('value="Lobito"', false)
-            ->assertSee('openClientModal()', false);
+            ->assertSee("window.obra360.openModal('modal-create-client')", false);
     }
 
     // ── Utilizador ────────────────────────────────────────────
@@ -152,7 +152,7 @@ class ValidationFeedbackTest extends TestCase
         $response->assertOk()
             ->assertSee(self::RESUMO)
             ->assertSee('value="Ana Tavares"', false)
-            ->assertSee('openUserModal()', false);
+            ->assertSee("window.obra360.openModal('modal-create-user')", false);
     }
 
     // ── Definições ────────────────────────────────────────────
@@ -195,7 +195,7 @@ class ValidationFeedbackTest extends TestCase
             ->assertSee(self::RESUMO)
             ->assertSee('O campo nome é obrigatório.')
             ->assertSee('Betonagem da laje')
-            ->assertSee("openModal('modal-fase')", false)
+            ->assertSee('window.obra360.openModal("modal-fase")', false)
             // O separador das fases tem de estar aberto quando a página volta.
             ->assertSee("projectShow({$project->id}, 'fases')", false);
     }
@@ -242,7 +242,7 @@ class ValidationFeedbackTest extends TestCase
             ->assertSee(self::RESUMO)
             ->assertSee('O campo valor é obrigatório.')
             ->assertSee('value="Segunda tranche"', false)
-            ->assertSee("openModal('modal-pagamento')", false)
+            ->assertSee('window.obra360.openModal("modal-pagamento")', false)
             ->assertSee("projectShow({$project->id}, 'pagamentos')", false);
     }
 

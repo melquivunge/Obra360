@@ -5,7 +5,7 @@
             <h1 style="font-size:1.5rem;font-weight:700;">Usuários</h1>
             <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Gerencie os acessos ao sistema.</p>
         </div>
-        <button type="button" onclick="openUserModal()" class="btn-primary">
+        <button type="button" data-modal-open="modal-create-user" class="btn-primary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Novo usuário
         </button>
@@ -57,16 +57,16 @@
                         </td>
                         <td style="text-align:right;">
                             <div style="display:inline-flex;align-items:center;gap:0.75rem;">
-                                <a href="{{ route('users.edit', $user) }}" style="font-size:0.875rem;color:var(--primary);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">Editar</a>
+                                <a href="{{ route('users.edit', $user) }}" class="hover-fade" style="font-size:0.875rem;color:var(--primary);">Editar</a>
                                 <form method="POST" action="{{ route('users.toggle-active', $user) }}" style="display:inline;">
                                     @csrf
-                                    <button type="submit" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.color='var(--foreground)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                                    <button type="submit" class="hover-text-foreground" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground);">
                                         {{ $user->active ? 'Desativar' : 'Ativar' }}
                                     </button>
                                 </form>
-                                <form method="POST" action="{{ route('users.destroy', $user) }}" style="display:inline;" onsubmit="return confirm('Excluir este usuário?')">
+                                <form method="POST" action="{{ route('users.destroy', $user) }}" style="display:inline;" data-confirm="Excluir este usuário?">
                                     @csrf @method('DELETE')
-                                    <button type="submit" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--destructive);" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Excluir</button>
+                                    <button type="submit" class="hover-fade-strong" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--destructive);">Excluir</button>
                                 </form>
                             </div>
                         </td>
@@ -83,16 +83,13 @@
 </div>
 
 {{-- Create User Modal --}}
-<div id="modal-create-user"
-     style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;background:rgb(0 0 0 / 0.7);padding:1rem;"
-     onclick="if(event.target===this)closeUserModal()">
+<div id="modal-create-user" data-modal-overlay
+     style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;background:rgb(0 0 0 / 0.7);padding:1rem;">
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.875rem;width:100%;max-width:36rem;max-height:90vh;overflow-y:auto;padding:1.5rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
             <h2 style="font-size:1.125rem;font-weight:700;margin:0;">Novo usuário</h2>
-            <button type="button" onclick="closeUserModal()"
+            <button type="button" data-modal-close="modal-create-user" class="hover-surface"
                     style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"
-                    onmouseover="this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)'"
-                    onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'"
                     aria-label="Fechar">
                 <svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
             </button>
@@ -142,26 +139,20 @@
             </div>
             <div style="display:flex;gap:0.5rem;padding-top:0.5rem;">
                 <button type="submit" class="btn-primary">Criar usuário</button>
-                <button type="button" onclick="closeUserModal()" class="btn-secondary">Cancelar</button>
+                <button type="button" data-modal-close="modal-create-user" class="btn-secondary">Cancelar</button>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-function openUserModal() {
-    var m = document.getElementById('modal-create-user');
-    m.style.display = 'flex';
-    setTimeout(function(){ m.querySelector('input[name="name"]').focus(); }, 50);
-}
-function closeUserModal() {
-    document.getElementById('modal-create-user').style.display = 'none';
-}
-document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') closeUserModal();
-});
+{{-- Ver o comentário equivalente em admin/clients/index.blade.php: o modal
+     genérico vive em app.js; sobra só a reabertura depois de uma validação
+     falhada. --}}
 @if(old('_form') === 'create_user')
-document.addEventListener('DOMContentLoaded', function(){ openUserModal(); });
-@endif
+<script @cspNonce>
+document.addEventListener('DOMContentLoaded', function () {
+    window.obra360.openModal('modal-create-user');
+});
 </script>
+@endif
 </x-admin-layout>

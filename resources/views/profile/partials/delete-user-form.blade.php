@@ -29,8 +29,7 @@
                     <x-password-input id="password_delete" name="password"
                                       placeholder="Senha"
                                       style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
-                                      onfocus="this.style.borderColor='oklch(0.62 0.21 25)'"
-                                      onblur="this.style.borderColor='var(--color-border)'" />
+                                      class="focus-danger" />
                     @error('password', 'userDeletion')
                         <p style="font-size:0.75rem;color:oklch(0.62 0.21 25);margin-top:0.375rem;">{{ $message }}</p>
                     @enderror

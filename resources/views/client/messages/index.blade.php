@@ -6,8 +6,7 @@
         <a href="{{ route('portal.projects.show', $project) }}"
            style="display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;border-radius:0.5rem;border:1px solid var(--color-border);background-color:var(--color-card);color:var(--color-muted-foreground);text-decoration:none;flex-shrink:0;transition:border-color 0.15s,color 0.15s;"
            aria-label="Voltar para {{ $project->nounWithArticle() }}"
-           onmouseover="this.style.borderColor='var(--color-primary)';this.style.color='var(--color-primary)'"
-           onmouseout="this.style.borderColor='var(--color-border)';this.style.color='var(--color-muted-foreground)'">
+           class="hover-border-text-primary">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1rem;height:1rem;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
             </svg>
@@ -122,7 +121,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
-<script>
+<script @cspNonce>
 function chatClient(projectId, initialMessages) {
     return {
         messages: initialMessages || [],

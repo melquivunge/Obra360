@@ -30,11 +30,11 @@
         x-bind:aria-pressed="mostrar ? 'true' : 'false'"
         aria-label="{{ $showLabel }}"
         aria-pressed="false"
+        {{-- `.hover-eye` cobre o rato e o foco de teclado com a mesma regra CSS.
+             Eram quatro handlers em linha (mouseover/mouseout/focus/blur) até a
+             Content Security Policy passar a proibir script em atributo. --}}
+        class="hover-eye"
         style="position:absolute;top:0;right:0;height:100%;width:2.5rem;display:flex;align-items:center;justify-content:center;padding:0;margin:0;background:none;border:none;border-radius:0.5rem;color:var(--muted-foreground);cursor:pointer;opacity:0.75;transition:opacity 0.15s,color 0.15s;"
-        onmouseover="this.style.opacity='1';this.style.color='var(--primary)';"
-        onmouseout="this.style.opacity='0.75';this.style.color='var(--muted-foreground)';"
-        onfocus="this.style.opacity='1';this.style.color='var(--primary)';"
-        onblur="this.style.opacity='0.75';this.style.color='var(--muted-foreground)';"
     >
         {{-- Olho: senha oculta --}}
         <svg x-show="!mostrar" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"

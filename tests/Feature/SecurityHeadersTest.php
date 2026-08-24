@@ -16,7 +16,8 @@ class SecurityHeadersTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
-        $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
+        // DENY, alinhado com `frame-ancestors 'none'` da CSP.
+        $response->assertHeader('X-Frame-Options', 'DENY');
         $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->assertHeader('X-Permitted-Cross-Domain-Policies', 'none');
     }
@@ -26,7 +27,7 @@ class SecurityHeadersTest extends TestCase
         $this->get(route('login'))
             ->assertOk()
             ->assertHeader('X-Content-Type-Options', 'nosniff')
-            ->assertHeader('X-Frame-Options', 'SAMEORIGIN');
+            ->assertHeader('X-Frame-Options', 'DENY');
     }
 
     public function test_hsts_is_not_sent_over_plain_http(): void

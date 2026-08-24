@@ -17,9 +17,11 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\PlanController as ClientPlanController;
 use App\Http\Controllers\Client\ProjectController as ClientProjectController;
+use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\Portal\PushSubscriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\ExplainTruncatedUpload;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -224,6 +226,19 @@ Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->g
         ->middleware('throttle:30,1')
         ->name('push.unsubscribe');
 });
+
+// Relatórios de violação da Content Security Policy.
+//
+// Sem sessão e sem autenticação de propósito: o browser envia isto sozinho, com
+// `Content-Type: application/csp-report` e sem token CSRF — daí a exclusão do
+// middleware que ocupa o lugar do CSRF no grupo `web` (ver bootstrap/app.php).
+// É o único ponto anónimo de escrita da aplicação, por isso leva tecto: um
+// relatório por cada violação de cada página de cada visitante enche o log
+// depressa. Pôr `CSP_REPORT_URI=` vazio remove a directiva e cala-o de vez.
+Route::post('/_csp/report', [CspReportController::class, 'store'])
+    ->withoutMiddleware([ExplainTruncatedUpload::class])
+    ->middleware('throttle:30,1')
+    ->name('csp.report');
 
 // Profile (all authenticated)
 Route::middleware('auth')->group(function () {

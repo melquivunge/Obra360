@@ -12,12 +12,15 @@
             </div>
             @forelse($projects as $project)
             @php $last = $project->messages->first(); @endphp
+            {{-- O realce do item seleccionado é uma classe (`.is-active`), não um
+                 `style` mexido à mão: o hover de quem não está seleccionado passa a
+                 ser uma regra CSS e desaparecem três handlers em linha. --}}
             <button type="button"
-                onclick="openConversation({{ $project->id }}, @js($project->name))"
+                class="conversa-btn"
+                data-conversa-id="{{ $project->id }}"
+                data-conversa-nome="{{ $project->name }}"
                 id="proj-btn-{{ $project->id }}"
-                style="width:100%;text-align:left;padding:0.875rem 1rem;border:none;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;color:var(--foreground);"
-                onmouseover="if(currentProjectId!=={{ $project->id }})this.style.backgroundColor='var(--surface)'"
-                onmouseout="if(currentProjectId!=={{ $project->id }})this.style.backgroundColor=''">
+                style="width:100%;text-align:left;padding:0.875rem 1rem;border:none;border-bottom:1px solid var(--border);background:transparent;cursor:pointer;color:var(--foreground);">
                 <div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;">
                     <p style="font-size:0.875rem;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:160px;">{{ $project->name }}</p>
                     @if($last)<p style="font-size:0.7rem;color:var(--muted-foreground);white-space:nowrap;flex-shrink:0;">{{ $last->created_at->diffForHumans(null, true, 1) }}</p>@endif
@@ -55,7 +58,7 @@
             <div id="chat-ui" style="display:none;flex:1;flex-direction:column;min-height:0;">
                 <div id="chat-header" style="padding:0.75rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
                     {{-- Botão voltar (só mobile) --}}
-                    <button id="btn-back" onclick="backToList()" style="display:none;padding:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);flex-shrink:0;">
+                    <button id="btn-back" style="display:none;padding:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);flex-shrink:0;">
                         <svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
                     </button>
                     <div>
@@ -78,7 +81,7 @@
     </div>
 </div>
 
-<script>
+<script @cspNonce>
 let currentProjectId = null;
 let echoChannel = null;
 const myId = {{ auth()->id() }};
@@ -118,7 +121,7 @@ function backToList() {
     currentProjectId = null;
     document.getElementById('chat-ui').style.display = 'none';
     document.getElementById('chat-placeholder').style.display = 'flex';
-    document.querySelectorAll('[id^="proj-btn-"]').forEach(b => b.style.backgroundColor = '');
+    document.querySelectorAll('.conversa-btn').forEach(b => b.classList.remove('is-active'));
     applyLayout();
 }
 
@@ -152,12 +155,12 @@ async function openConversation(projectId, projectName) {
 
     if (currentProjectId) {
         const old = document.getElementById(`proj-btn-${currentProjectId}`);
-        if (old) old.style.backgroundColor = '';
+        if (old) old.classList.remove('is-active');
     }
 
     currentProjectId = projectId;
     const btn = document.getElementById(`proj-btn-${projectId}`);
-    if (btn) btn.style.backgroundColor = 'oklch(0.74 0.135 78 / 0.12)';
+    if (btn) btn.classList.add('is-active');
 
     // Mobile: mudar para painel de chat
     applyLayout();
@@ -209,6 +212,16 @@ async function sendMessage() {
         }
     } finally { btn.disabled = false; }
 }
+
+// Abrir uma conversa e voltar à lista. Eram `onclick=` no markup.
+document.addEventListener('click', function (e) {
+    const item = e.target.closest('.conversa-btn');
+    if (item) {
+        openConversation(Number(item.dataset.conversaId), item.dataset.conversaNome);
+        return;
+    }
+    if (e.target.closest('#btn-back')) backToList();
+});
 
 document.getElementById('chat-send').addEventListener('click', sendMessage);
 document.getElementById('chat-input').addEventListener('keydown', e => {

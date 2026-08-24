@@ -30,18 +30,16 @@
         <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             @foreach($projects as $project)
             <a href="{{ route('portal.projects.show', $project) }}"
-               class="group overflow-hidden flex flex-col"
-               style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:1rem;text-decoration:none;transition:border-color 0.2s,box-shadow 0.2s;"
-               onmouseover="this.style.borderColor='oklch(0.74 0.135 78 / 0.5)';this.style.boxShadow='0 10px 40px -10px rgba(0,0,0,0.5)'"
-               onmouseout="this.style.borderColor='var(--color-border)';this.style.boxShadow='none'">
+               class="hover-card-lift group overflow-hidden flex flex-col"
+               style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:1rem;text-decoration:none;transition:border-color 0.2s,box-shadow 0.2s;">
 
                 {{-- Capa: capa própria, última foto ou imagem padrão — o cartão mostra
                      sempre uma imagem, em vez do antigo estado vazio com o ícone de
                      edifício. Quem escolhe entre elas é o componente. --}}
                 <div style="height:180px;overflow:hidden;background-color:var(--color-surface);flex-shrink:0;">
                     <x-project-cover :src="$project->cover_url" alt="{{ $project->name }}"
-                                     style="width:100%;height:180px;object-fit:cover;transition:transform 0.3s;"
-                                     onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" />
+                                     class="hover-zoom"
+                                     style="width:100%;height:180px;object-fit:cover;transition:transform 0.3s;" />
                 </div>
 
                 {{-- Info --}}

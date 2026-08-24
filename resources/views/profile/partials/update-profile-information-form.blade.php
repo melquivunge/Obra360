@@ -11,8 +11,7 @@
             <label for="name" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Nome</label>
             <input id="name" name="name" type="text" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name"
                    style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
-                   onfocus="this.style.borderColor='var(--color-primary)'"
-                   onblur="this.style.borderColor='var(--color-border)'">
+                   class="focus-primary">
             @error('name')
                 <p style="font-size:0.75rem;color:oklch(0.62 0.21 25);margin-top:0.375rem;">{{ $message }}</p>
             @enderror
@@ -22,8 +21,7 @@
             <label for="email" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">E-mail</label>
             <input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" required autocomplete="username"
                    style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
-                   onfocus="this.style.borderColor='var(--color-primary)'"
-                   onblur="this.style.borderColor='var(--color-border)'">
+                   class="focus-primary">
             @error('email')
                 <p style="font-size:0.75rem;color:oklch(0.62 0.21 25);margin-top:0.375rem;">{{ $message }}</p>
             @enderror
@@ -50,8 +48,7 @@
             <label for="phone" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Celular</label>
             <input id="phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}" autocomplete="tel"
                    style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
-                   onfocus="this.style.borderColor='var(--color-primary)'"
-                   onblur="this.style.borderColor='var(--color-border)'"
+                   class="focus-primary"
                    placeholder="+351 9XX XXX XXX">
             @error('phone')
                 <p style="font-size:0.75rem;color:oklch(0.62 0.21 25);margin-top:0.375rem;">{{ $message }}</p>

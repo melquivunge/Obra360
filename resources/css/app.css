@@ -175,3 +175,91 @@
 .photo-item { aspect-ratio: 1; overflow: hidden; border-radius: 0.5rem; border: 1px solid var(--color-border); background-color: var(--color-surface); cursor: pointer; }
 .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
 .photo-item:hover img { transform: scale(1.03); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Estados de rato e de foco (CSP)
+
+   Estas classes substituem os pares `onmouseover`/`onmouseout` (e alguns
+   `onfocus`/`onblur`) que as vistas usavam para mexer no `style` do elemento.
+   Um handler em atributo é script em linha e a Content Security Policy bloqueia-o;
+   um `:hover` sempre foi o sítio certo para isto de qualquer forma.
+
+   O `!important` é necessário e não é preguiça: os elementos a que estas classes
+   se aplicam trazem o estado de repouso num atributo `style=`, que ganha a
+   qualquer regra de folha de estilos. Sem `!important` a regra de hover perdia
+   para a cor que o próprio elemento declara. Desaparece no dia em que esses
+   `style=` passarem a classes.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Fundo de superfície + texto em primeiro plano (itens de navegação, botões de
+   ícone das barras e dos modais). */
+.hover-surface:hover {
+    background-color: var(--surface) !important;
+    color: var(--foreground) !important;
+}
+
+/* Só o fundo — quando a cor do texto não muda. */
+.hover-surface-bg:hover {
+    background-color: var(--surface) !important;
+}
+
+/* Realce dourado suave (itens de lista das gavetas do portal). */
+.hover-primary-soft:hover {
+    background-color: oklch(0.74 0.135 78 / 0.1) !important;
+}
+
+/* Acção destrutiva: fundo e texto vermelhos. */
+.hover-danger:hover {
+    background-color: oklch(0.62 0.21 25 / 0.15) !important;
+    color: var(--destructive) !important;
+}
+
+/* Só a cor do texto. */
+.hover-text-primary:hover { color: var(--primary) !important; }
+.hover-text-danger:hover { color: var(--destructive) !important; }
+.hover-text-foreground:hover { color: var(--foreground) !important; }
+
+/* Contorno. */
+.hover-border-primary:hover { border-color: var(--primary) !important; }
+.hover-border-primary-soft:hover { border-color: oklch(0.74 0.135 78 / 0.4) !important; }
+.hover-border-text-primary:hover {
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+/* Cartão que se levanta (grelha de obras do portal). */
+.hover-card-lift:hover {
+    border-color: oklch(0.74 0.135 78 / 0.5) !important;
+    box-shadow: var(--shadow-elegant) !important;
+}
+
+/* Ampliação da miniatura. Fica no elemento que cresce, não no contentor. */
+.hover-zoom:hover { transform: scale(1.03) !important; }
+.hover-zoom-lg:hover { transform: scale(1.05) !important; }
+
+/* Opacidade. */
+.hover-opaque:hover { opacity: 1 !important; }
+.hover-fade:hover { opacity: 0.8 !important; }
+.hover-fade-strong:hover { opacity: 0.7 !important; }
+
+.hover-underline:hover { text-decoration: underline !important; }
+
+/* Botão do olho do campo de senha: o mesmo estado ao passar o rato e ao receber
+   o foco do teclado — quem navega por tabulação vê o mesmo que quem usa rato. */
+.hover-eye:hover,
+.hover-eye:focus-visible {
+    opacity: 1 !important;
+    color: var(--primary) !important;
+}
+
+/* Contorno do campo em foco. A regra base (`input:focus`) existe em @layer base,
+   mas perde para o `border:` que estes campos trazem no atributo `style`. */
+.focus-primary:focus { border-color: var(--primary) !important; }
+
+/* Confirmação de exclusão: o contorno do campo fica vermelho ao escrever. */
+.focus-danger:focus { border-color: var(--destructive) !important; }
+
+/* Botão de projecto na lista de conversas: o realce do seleccionado vem de
+   `.is-active`, escrito por JavaScript, e não de um `style` mexido à mão. */
+.conversa-btn.is-active { background-color: oklch(0.74 0.135 78 / 0.12); }
+.conversa-btn:not(.is-active):hover { background-color: var(--surface); }

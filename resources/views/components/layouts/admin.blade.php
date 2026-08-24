@@ -10,7 +10,7 @@
 <body style="background-color:var(--background);color:var(--foreground);">
 
     {{-- Mobile backdrop --}}
-    <div data-sidebar-backdrop
+    <div data-sidebar-backdrop data-sidebar-close
          class="fixed inset-0 z-40 hidden lg:hidden"
          style="background:rgba(0,0,0,0.7)"></div>
 
@@ -30,7 +30,7 @@
                 <span class="text-lg font-bold" style="color:var(--foreground)">{{ \App\Models\Setting::get('company_name', 'Obra360') }}</span>
             </a>
             <button type="button" class="lg:hidden" style="color:var(--muted-foreground)"
-                    onclick="document.querySelector('[data-sidebar]').classList.add('-translate-x-full');document.querySelector('[data-sidebar-backdrop]').classList.add('hidden');"
+                    data-sidebar-close
                     aria-label="Fechar menu">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -64,10 +64,8 @@
                 @continue(isset($item['roles']) && ! in_array(auth()->user()->role, $item['roles'], true))
                 @php $isActive = request()->is($item['match']) || (empty($item['exact']) && request()->is($item['match'].'/*')); @endphp
                 <a href="{{ $item['href'] }}"
-                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors"
-                   style="{{ $isActive ? 'color:var(--primary);background-color:oklch(0.74 0.135 78 / 0.1);border-left:2px solid var(--primary);padding-left:10px;' : 'color:var(--muted-foreground);border-left:2px solid transparent;' }}"
-                   onmouseover="{{ $isActive ? '' : "this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)';" }}"
-                   onmouseout="{{ $isActive ? '' : "this.style.backgroundColor='';this.style.color='var(--muted-foreground)';" }}">
+                   @class(['flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors', 'hover-surface' => ! $isActive])
+                   style="{{ $isActive ? 'color:var(--primary);background-color:oklch(0.74 0.135 78 / 0.1);border-left:2px solid var(--primary);padding-left:10px;' : 'color:var(--muted-foreground);border-left:2px solid transparent;' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-5 h-5 shrink-0" aria-hidden="true">
                         {!! $item['icon'] !!}
@@ -94,10 +92,8 @@
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit"
-                        class="flex items-center gap-3 px-3 py-2 rounded-lg w-full text-left text-sm font-medium transition-colors"
-                        style="color:var(--muted-foreground)"
-                        onmouseover="this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)'"
-                        onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'">
+                        class="hover-surface flex items-center gap-3 px-3 py-2 rounded-lg w-full text-left text-sm font-medium transition-colors"
+                        style="color:var(--muted-foreground)">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-5 h-5 shrink-0" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -136,22 +132,7 @@
         </main>
     </div>
 
-    <script>
-    // Mobile sidebar toggle
-    document.addEventListener('DOMContentLoaded', function() {
-        var toggle = document.querySelector('[data-sidebar-toggle]');
-        var sidebar = document.querySelector('[data-sidebar]');
-        var backdrop = document.querySelector('[data-sidebar-backdrop]');
-        if (!toggle || !sidebar || !backdrop) return;
-        toggle.addEventListener('click', function() {
-            sidebar.classList.remove('-translate-x-full');
-            backdrop.classList.remove('hidden');
-        });
-        backdrop.addEventListener('click', function() {
-            sidebar.classList.add('-translate-x-full');
-            backdrop.classList.add('hidden');
-        });
-    });
-    </script>
+    {{-- A abertura e o fecho da barra lateral vivem em resources/js/app.js: era
+         o mesmo código, palavra por palavra, que já lá estava. --}}
 </body>
 </html>

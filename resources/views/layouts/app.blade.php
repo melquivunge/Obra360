@@ -7,11 +7,13 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Scripts -->
+        {{-- A fonte da aplicação (Instrument Sans) é descarregada da Bunny na
+             build pelo laravel-vite-plugin e servida de public/build — nada é
+             pedido a um CDN em tempo de execução. O <link> para
+             fonts.bunny.net que estava aqui era um resto do esqueleto do
+             Breeze, apontava a uma fonte (Figtree) que o desenho não usa, e
+             seria a única origem externa que a Content Security Policy teria
+             de autorizar. --}}
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">

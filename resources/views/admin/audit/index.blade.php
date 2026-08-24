@@ -8,19 +8,19 @@
     </div>
 
     <form method="GET" action="{{ route('admin.audit.index') }}" class="flex flex-wrap gap-3">
-        <select name="action" style="max-width:12rem;" onchange="this.form.submit()">
+        <select name="action" style="max-width:12rem;" data-auto-submit>
             <option value="">Todas as ações</option>
             @foreach($actions as $key => $label)
                 <option value="{{ $key }}" {{ request('action') === $key ? 'selected' : '' }}>{{ $label }}</option>
             @endforeach
         </select>
-        <select name="type" style="max-width:14rem;" onchange="this.form.submit()">
+        <select name="type" style="max-width:14rem;" data-auto-submit>
             <option value="">Todos os tipos</option>
             @foreach($types as $class => $label)
                 <option value="{{ $class }}" {{ request('type') === $class ? 'selected' : '' }}>{{ $label }}</option>
             @endforeach
         </select>
-        <select name="user_id" style="max-width:14rem;" onchange="this.form.submit()">
+        <select name="user_id" style="max-width:14rem;" data-auto-submit>
             <option value="">Todos os usuários</option>
             @foreach($users as $u)
                 <option value="{{ $u->id }}" {{ (int) request('user_id') === $u->id ? 'selected' : '' }}>{{ $u->name }}</option>

@@ -8,8 +8,7 @@
 
     {{-- Back + Header --}}
     <div>
-        <a href="{{ route('portal.dashboard') }}" style="display:inline-flex;align-items:center;gap:0.375rem;font-size:0.875rem;color:var(--color-muted-foreground);text-decoration:none;margin-bottom:1rem;"
-           onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--color-muted-foreground)'">
+        <a href="{{ route('portal.dashboard') }}" class="hover-text-primary" style="display:inline-flex;align-items:center;gap:0.375rem;font-size:0.875rem;color:var(--color-muted-foreground);text-decoration:none;margin-bottom:1rem;">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1rem;height:1rem;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
             </svg>
@@ -198,8 +197,8 @@
                                         <video src="{{ $photoUrl }}" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>
                                     @else
                                         <img src="{{ $photoUrl }}" alt="{{ $photo->caption ?: $photo->title }}"
-                                             style="width:100%;height:100%;object-fit:cover;transition:transform 0.2s;"
-                                             onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                             class="hover-zoom-lg"
+                                             style="width:100%;height:100%;object-fit:cover;transition:transform 0.2s;">
                                     @endif
                                 </div>
                                 @endforeach
@@ -220,9 +219,10 @@
                                     <video src="{{ $photoUrl }}" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>
                                 @else
                                     <img src="{{ $photoUrl }}" alt="{{ $photo->caption ?: $photo->title }}"
+                                         class="hover-zoom-lg"
                                          style="width:100%;height:100%;object-fit:cover;transition:transform 0.2s;cursor:pointer;"
-                                         onclick="openLightbox(@js($photoUrl), @js($photo->caption ?: $photo->title ?? ''))"
-                                         onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                         data-lightbox-src="{{ $photoUrl }}"
+                                         data-lightbox-caption="{{ $photo->caption ?: $photo->title ?? '' }}">
                                 @endif
                             </div>
                             @endforeach
@@ -402,12 +402,12 @@
                         @if($pay->type === 'pix' && ($pay->pix_key || $pay->pix_qrcode))
                         <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--color-border);">
                             @if($pay->pix_key)<p style="font-size:0.8125rem;margin-bottom:0.25rem;"><strong>Chave PIX:</strong> <span style="font-family:monospace;">{{ $pay->pix_key }}</span></p>@endif
-                            @if($pay->pix_qrcode)<div style="margin-top:0.5rem;"><p style="font-size:0.75rem;color:var(--color-muted-foreground);margin-bottom:0.25rem;">Código copia-e-cola:</p><textarea readonly rows="2" onclick="this.select()" style="width:100%;font-family:monospace;font-size:0.7rem;resize:none;background:var(--color-surface);border:1px solid var(--color-border);border-radius:0.375rem;padding:0.5rem;">{{ $pay->pix_qrcode }}</textarea></div>@endif
+                            @if($pay->pix_qrcode)<div style="margin-top:0.5rem;"><p style="font-size:0.75rem;color:var(--color-muted-foreground);margin-bottom:0.25rem;">Código copia-e-cola:</p><textarea readonly rows="2" data-select-all style="width:100%;font-family:monospace;font-size:0.7rem;resize:none;background:var(--color-surface);border:1px solid var(--color-border);border-radius:0.375rem;padding:0.5rem;">{{ $pay->pix_qrcode }}</textarea></div>@endif
                         </div>
                         @elseif($pay->type === 'boleto' && $pay->barcode)
                         <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--color-border);">
                             <p style="font-size:0.75rem;color:var(--color-muted-foreground);margin-bottom:0.25rem;">Linha digitável:</p>
-                            <p onclick="navigator.clipboard.writeText('{{ $pay->barcode }}').then(()=>alert('Copiado!'))" style="font-family:monospace;font-size:0.8125rem;cursor:pointer;padding:0.5rem;background:var(--color-surface);border-radius:0.375rem;border:1px solid var(--color-border);" title="Clique para copiar">{{ $pay->barcode }}</p>
+                            <p data-copy="{{ $pay->barcode }}" style="font-family:monospace;font-size:0.8125rem;cursor:pointer;padding:0.5rem;background:var(--color-surface);border-radius:0.375rem;border:1px solid var(--color-border);" title="Clique para copiar">{{ $pay->barcode }}</p>
                         </div>
                         @endif
                     @endif
@@ -438,8 +438,8 @@
                             </p>
                         </div>
                         <a href="{{ route('portal.projects.documents.download', [$project, $doc]) }}" target="_blank" rel="noopener"
-                           style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.375rem 0.75rem;border:1px solid var(--color-border);border-radius:0.375rem;font-size:0.8125rem;color:var(--color-primary);text-decoration:none;flex-shrink:0;transition:border-color 0.15s;"
-                           onmouseover="this.style.borderColor='var(--color-primary)'" onmouseout="this.style.borderColor='var(--color-border)'">
+                           class="hover-border-primary"
+                           style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.375rem 0.75rem;border:1px solid var(--color-border);border-radius:0.375rem;font-size:0.8125rem;color:var(--color-primary);text-decoration:none;flex-shrink:0;transition:border-color 0.15s;">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
                             </svg>
@@ -524,7 +524,7 @@
                                 @if(! $current->isSuperseded() && ! $current->approved_at)
                                 <form method="POST" action="{{ route('portal.projects.plans.versions.approve', [$project, $plan, $current]) }}"
                                       x-data="{ sent: false }" @submit="sent = true"
-                                      onsubmit="return confirm('Aprovar a versão {{ $current->label() }} da planta &quot;{{ $plan->name }}&quot;? A aprovação fica registrada e não é reversível.')">
+                                      data-confirm="Aprovar a versão {{ $current->label() }} da planta &quot;{{ $plan->name }}&quot;? A aprovação fica registrada e não é reversível.">
                                     @csrf
                                     {{-- O `disabled` no envio evita o segundo pedido do duplo clique;
                                          o servidor não confia nele — a aprovação é idempotente lá. --}}
@@ -627,7 +627,7 @@
     </div>
 </div>
 
-<script>
+<script @cspNonce>
 function chatClient(projectId) {
     return {
         messages: [],
@@ -698,36 +698,16 @@ function chatClient(projectId) {
 
 {{-- Lightbox --}}
 <div id="lightbox-overlay"
-     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;flex-direction:column;gap:1rem;"
-     onclick="closeLightbox()">
-    <button onclick="closeLightbox();event.stopPropagation()"
-            style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:white;cursor:pointer;padding:0.5rem;border-radius:0.5rem;opacity:0.7;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+    <button type="button" data-lightbox-close class="hover-opaque"
+            style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:white;cursor:pointer;padding:0.5rem;border-radius:0.5rem;opacity:0.7;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:1.5rem;height:1.5rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
-    <img id="lightbox-img" src="" alt="" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:0.5rem;box-shadow:0 25px 60px rgba(0,0,0,0.6);" onclick="event.stopPropagation()">
+    <img id="lightbox-img" src="" alt="" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:0.5rem;box-shadow:0 25px 60px rgba(0,0,0,0.6);">
     <p id="lightbox-caption" style="color:rgba(255,255,255,0.7);font-size:0.875rem;text-align:center;max-width:60ch;"></p>
 </div>
 
-<script>
-function openLightbox(src, caption) {
-    const overlay = document.getElementById('lightbox-overlay');
-    const img = document.getElementById('lightbox-img');
-    const cap = document.getElementById('lightbox-caption');
-    if (!overlay || !img) return;
-    img.src = src;
-    img.alt = caption || '';
-    if (cap) cap.textContent = caption || '';
-    overlay.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-function closeLightbox() {
-    const overlay = document.getElementById('lightbox-overlay');
-    if (overlay) overlay.style.display = 'none';
-    document.body.style.overflow = '';
-}
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeLightbox();
-});
-</script>
+{{-- Abrir, fechar e a tecla Escape vivem em resources/js/app.js: era o mesmo
+     código aqui e em admin/projects/show.blade.php. A miniatura declara o que
+     mostrar em `data-lightbox-src` e `data-lightbox-caption`. --}}
 </x-client-layout>
