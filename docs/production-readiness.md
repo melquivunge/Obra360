@@ -107,7 +107,7 @@ The deliberate position is to leave the limit at 64 MB and treat the external ad
 
 ## Scheduled maintenance
 
-Sessions, cache and queues all live in the database (`SESSION_DRIVER`, `CACHE_STORE` and `QUEUE_CONNECTION` are all `database`), and `audit_logs` receives one row for every write to the nine models watched by `AuditObserver`. Production runs on shared hosting (HostGator, cPanel), where disk and database size are finite, so this data has to be swept. The schedule lives in `routes/console.php`.
+Sessions, cache and queues all live in the database (`SESSION_DRIVER`, `CACHE_STORE` and `QUEUE_CONNECTION` are all `database`), and `audit_logs` receives one row for every write to the eleven models watched by `AuditObserver`. Production runs on shared hosting (HostGator, cPanel), where disk and database size are finite, so this data has to be swept. The schedule lives in `routes/console.php`.
 
 | Task | Frequency (UTC) | Why |
 | --- | --- | --- |
@@ -199,6 +199,48 @@ php artisan schedule:run
 ### Known gap
 
 Expired rows in the `cache` table are only removed when the key is read again. Laravel ships no bulk prune for the database cache store (`cache:prune-stale-tags` is Redis-only), so a key that is written, expires and is never read again stays in the table. It is bounded in practice by the small, fixed set of cache keys the application uses (`ClientLayoutComposer`), but it is not swept by anything.
+
+## Content Security Policy
+
+`config/security.php` e `App\Http\Middleware\SecurityHeaders` são referenciados a partir do código para esta secção. Ela existe para responder a três perguntas: o que a política permite, por que permite, e como se passa de relato a imposição.
+
+### O estado atual
+
+O cabeçalho é montado por requisição em `SecurityHeaders::policy()`, com um nonce novo de cada vez. O nonce é gerado **antes** de `$next()`, porque é dentro dessa chamada que a vista é desenhada e precisa do valor; é registado no Vite (`Vite::useCspNonce()`) e lido pelas vistas através de `@cspNonce`, de modo que há uma única fonte de verdade por requisição.
+
+Três interruptores, todos em `config/security.php`:
+
+| Variável | Omissão | O que faz |
+| --- | --- | --- |
+| `CSP_ENABLED` | `true` | Desligar remove o cabeçalho por completo. É o travão de emergência: uma política mal calibrada quebra a aplicação inteira, e o operador tem de a poder desligar sem deploy. |
+| `CSP_REPORT_ONLY` | `true` em produção, `false` fora dela | Em relato o navegador comunica as violações e não bloqueia nada. Local e testes correm com a política **imposta**, para que uma violação nova apareça onde é barata de corrigir. |
+| `CSP_REPORT_URI` | `/_csp/report` | Destino dos relatórios. Vazio remove a directiva — o navegador passa a escrever só na consola dele, o que em produção equivale a não observar nada. |
+
+Há ainda `CSP_EXTRA_{SCRIPT,STYLE,IMG,FONT,CONNECT}_SRC`, listas separadas por vírgula, para origens que o ficheiro não pode adivinhar — um CDN novo, um WebSocket noutro domínio — sem obrigar a um deploy de código.
+
+### As duas cedências, e o que custaria fechá-las
+
+**`style-src` mantém `'unsafe-inline'`.** As telas da área interna desenham-se com atributos `style=` — perto de mil. Uma política com nonce em `style-src` obrigaria a reescrever cada uma dessas telas para classes ou para blocos `<style nonce>`. É uma cedência consciente: o alvo desta política é a injecção de *script*, não a de estilo.
+
+**`script-src` mantém `'unsafe-eval'`.** O Alpine 3 avalia as expressões dos `x-data` e `x-on` com `new Function`. Sai daqui no dia em que se passar à build CSP do Alpine (`@alpinejs/csp`), que obriga a registar cada componente como objecto em JavaScript em vez de o escrever no atributo — trabalho de vista a vista.
+
+O que **não** é cedido: `script-src` não tem `'unsafe-inline'`. Cada bloco `<script>` legítimo leva o nonce da requisição, incluindo os que o `@vite` gera. Um `<script>` injectado por um atacante não conhece o nonce e não corre. `tests/Feature/InlineScriptFreeViewsTest.php` impede a reintrodução de blocos sem nonce, e `tests/Feature/ContentSecurityPolicyTest.php` cobre a política, o nonce e a alternância entre relato e imposição.
+
+Duas directivas trazem `blob:` por causa do visualizador 3D: `img-src`, porque o `<model-viewer>` decodifica as texturas do GLB em memória e aponta-lhes URLs blob (sem isto o modelo desenha-se em cinzento), e `worker-src`, porque a geometria é descomprimida num worker criado a partir de um blob. `img-src` deliberadamente **não** tem `data:` — as imagens do navegador vêm todas de rotas autenticadas da própria origem, e as base64 do relatório em PDF são desenhadas pelo DomPDF no servidor, sem passar por um navegador.
+
+### Passar de relato a imposição
+
+1. Confirmar que produção está a receber relatórios: `CSP_REPORT_URI` não vazia e avisos `CSP violation` a aparecer em `storage/logs/`.
+2. Deixar correr o tempo suficiente para cobrir os fluxos reais — o portal do cliente, a área interna, o envio de plantas, o visualizador 3D, as mensagens em tempo real.
+3. Ler os relatórios e separar o que é violação legítima (uma origem que falta) do que é injecção. Origens em falta entram por `CSP_EXTRA_*_SRC`, não por alteração de código.
+4. Quando os relatórios pararem de trazer novidades, pôr `CSP_REPORT_ONLY=false` no `.env` e limpar a cache de configuração.
+5. Se algo quebrar, `CSP_ENABLED=false` remove o cabeçalho de imediato, sem deploy.
+
+O passo 4 continua por dar em produção — é o único ponto desta secção que ainda não está fechado.
+
+### Reverb e a directiva `connect-src`
+
+`config/security.php` lê `VITE_REVERB_HOST` e `VITE_REVERB_PORT`, e não `REVERB_*`, porque o endereço que a CSP tem de autorizar é o que o **navegador** usa; num deploy com Reverb atrás de um proxy os dois valores diferem. São emitidos os dois esquemas (`ws` e `wss`) e as formas com e sem porto: o pusher-js muda de esquema na reconexão e omite o porto quando é o predefinido, e uma política mais estreita quebrava justamente a reconexão — o pior momento possível para descobrir o problema. Sem host configurado nada é acrescentado e `connect-src` fica em `'self'`.
 
 ## WhatsApp delivery
 

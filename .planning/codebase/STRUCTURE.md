@@ -1,6 +1,6 @@
 # Estrutura do Código
 
-**Data da análise:** 2026-08-22
+**Data da análise:** 2026-08-24
 
 ## Mapa de directórios
 
@@ -9,24 +9,24 @@ Obra360/
 ├── app/                          # Código da aplicação (PHP)
 │   ├── Channels/                 # Canais de notificação (WhatsApp, WebPush)
 │   ├── Console/
-│   │   └── Commands/             # Comandos artisan (2)
+│   │   └── Commands/             # Comandos artisan (4)
 │   ├── Events/                   # Eventos de broadcasting
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── Admin/            # Área interna (12 controllers)
+│   │   │   ├── Admin/            # Área interna (15 controllers)
 │   │   │   ├── Auth/             # Autenticação (8 controllers)
-│   │   │   ├── Client/           # Portal do cliente (2 controllers)
+│   │   │   ├── Client/           # Portal do cliente (4 controllers)
 │   │   │   └── Portal/           # Subscrições push (1 controller)
-│   │   ├── Middleware/           # EnsureUserRole, EnsureUserIsActive, SecurityHeaders
+│   │   ├── Middleware/           # EnsureUserRole, EnsureUserIsActive, SecurityHeaders, ExplainTruncatedUpload
 │   │   ├── Requests/             # Classes FormRequest
 │   │   └── View/
 │   │       └── Composers/        # ClientLayoutComposer
-│   ├── Models/                   # Modelos Eloquent (13)
+│   ├── Models/                   # Modelos Eloquent (17)
 │   ├── Notifications/            # ProjectUpdateNotification
-│   ├── Observers/                # ProjectUpdateObserver, AuditObserver
+│   ├── Observers/                # ProjectUpdateObserver, AuditObserver, MediaCleanupObserver
 │   ├── Policies/                 # UserPolicy
 │   ├── Providers/                # AppServiceProvider
-│   ├── Support/                  # helpers.php (money), Thumbnail.php (GD)
+│   ├── Support/                  # helpers.php (money), Thumbnail.php (GD), PhaseTemplates.php
 │   ├── Traits/                   # AuthorizesProjectAccess
 │   └── View/
 │       └── Components/           # Componentes de layout
@@ -38,8 +38,8 @@ Obra360/
 ├── config/                       # Configuração (app, auth, database, filesystems, services, ...)
 │
 ├── database/
-│   ├── factories/                # 8 factories
-│   ├── migrations/               # 18 migrações
+│   ├── factories/                # 12 factories
+│   ├── migrations/               # 26 migrações
 │   └── seeders/                  # DatabaseSeeder
 │
 ├── docker/
@@ -49,7 +49,8 @@ Obra360/
 ├── docs/                         # production-readiness.md, registo-2026-08-21.md
 │
 ├── lang/
-│   └── pt_BR.json                # Traduções de strings do framework e de autenticação
+│   ├── pt_BR.json                # Traduções do framework e de autenticação
+│   └── pt_BR/validation.php      # Mensagens de validação (APP_LOCALE=pt_BR)
 │
 ├── public/
 │   ├── build/assets/             # Assets compilados pelo Vite
@@ -58,7 +59,7 @@ Obra360/
 ├── resources/
 │   ├── css/app.css               # Entrada Tailwind v4 + tokens de tema
 │   ├── js/app.js                 # Entrada JS (Alpine, Echo/Reverb, sidebar, flash)
-│   └── views/                    # 59 templates Blade
+│   └── views/                    # 70 templates Blade
 │       ├── admin/
 │       │   ├── audit/            # Página /admin/auditoria
 │       │   ├── clients/          # CRUD de clientes
@@ -72,8 +73,9 @@ Obra360/
 │       │   ├── projects/         # Detalhe da obra
 │       │   ├── messages/         # Fio de mensagens
 │       │   └── dashboard.blade.php
-│       ├── components/
+│       ├── components/           # 26 componentes + layouts/
 │       │   └── layouts/          # admin, client, guest
+│       ├── errors/               # 413.blade.php (envio acima do limite)
 │       ├── layouts/              # app, guest, navigation (legado do Breeze)
 │       ├── profile/              # edit + partials/
 │       └── users/                # Gestão de utilizadores
@@ -91,8 +93,8 @@ Obra360/
 │   └── logs/
 │
 ├── tests/
-│   ├── Feature/                  # 30 ficheiros (8 em Auth/)
-│   ├── Unit/                     # 2 ficheiros
+│   ├── Feature/                  # 55 arquivos (9 em Auth/)
+│   ├── Unit/                     # 2 arquivos
 │   └── TestCase.php
 │
 ├── .planning/codebase/           # Documentos de análise (gerados)
@@ -111,22 +113,23 @@ Obra360/
 ## Propósito dos directórios
 
 **app/Models/:**
-- Entidades Eloquent — 13 modelos: `User`, `Client`, `Project`, `ProjectPhase`, `Photo`, `Expense`, `Document`, `ProjectUpdate`, `Message`, `Payment`, `Setting`, `PushSubscription`, `AuditLog`
+- Entidades Eloquent — 17 modelos: `User`, `Client`, `Project`, `ProjectPhase`, `Photo`, `Expense`, `Document`, `ProjectUpdate`, `Message`, `Payment`, `Setting`, `PushSubscription`, `AuditLog`, `Plan`, `PlanVersion`, `PlanComment`, `BudgetItem`
 - `Project.php` concentra o cálculo de progresso e as agregações financeiras
 - `AuditLog.php` traz `ACTIONS` e `LABELS` (mapa de classe → etiqueta em português) e `UPDATED_AT = null` (a tabela só tem `created_at`)
 - Configuração de campos por atributos PHP 8 (`#[Fillable]`, `#[Hidden]`)
 
 **app/Http/Controllers/:**
-- `Admin/` (12) — `DashboardController`, `ProjectController`, `ProjectPhaseController`, `ProjectPhotoController`, `ProjectExpenseController`, `ProjectDocumentController`, `PaymentController`, `ClientController`, `MessageController`, `SettingController`, `ReportController`, `AuditLogController`
+- `Admin/` (15) — os doze anteriores mais `ProjectPlanController`, `ProjectPlanVersionController` e `ProjectBudgetItemController`
 - `Auth/` (8) — sessão, confirmação de palavra-passe, verificação de e-mail (notificação e prompt), nova palavra-passe, alteração de palavra-passe, link de reposição, verificação
-- `Client/` (2) — `DashboardController`, `ProjectController`
+- `Client/` (4) — `DashboardController`, `ProjectController`, `PlanController` (baixar, pré-visualizar, aprovar e comentar plantas), `UploadController` (fotos e documentos enviados pelo cliente)
 - `Portal/` (1) — `PushSubscriptionController`
-- Raiz — `Controller.php`, `ProfileController.php`, `UserController.php`
+- Raiz — `Controller.php`, `ProfileController.php`, `UserController.php`, `CspReportController.php`
 
 **app/Http/Middleware/:**
 - `EnsureUserRole.php` — `abort(403)` quando o papel não consta da lista da rota
 - `EnsureUserIsActive.php` — termina a sessão de utilizadores desactivados
-- `SecurityHeaders.php` — cabeçalhos de segurança em todo o grupo `web`; sem CSP (as vistas usam estilos e handlers inline)
+- `SecurityHeaders.php` — cabeçalhos de segurança em todo o grupo `web`, incluindo a Content-Security-Policy com nonce por requisição
+- `ExplainTruncatedUpload.php` — ocupa a vaga do middleware de CSRF no grupo `web`; um envio truncado sem `Content-Length` chega sem token, e sem isto a resposta seria «419 — página expirada»
 
 **app/Http/Requests/:**
 - `StoreUserRequest.php`, `UpdateUserRequest.php`, `ProfileUpdateRequest.php`, `Auth/LoginRequest.php`
@@ -148,7 +151,8 @@ Obra360/
 
 **app/Observers/:**
 - `ProjectUpdateObserver.php` — notificações por tipo de actualização, com interruptor por definição `notify_{tipo}`
-- `AuditObserver.php` — trilho de auditoria genérico com redacção de campos sensíveis
+- `AuditObserver.php` — trilho de auditoria genérico com redacção de campos sensíveis, sobre onze modelos
+- `MediaCleanupObserver.php` — apaga os arquivos do disco em `forceDeleting` de `Project` e `Plan`, quando a exclusão passa a definitiva
 
 **app/Policies/:**
 - `UserPolicy.php`
@@ -156,9 +160,10 @@ Obra360/
 **app/Support/:**
 - `helpers.php` — `currency_symbol()` e `money()`, carregados por `autoload.files` do `composer.json`
 - `Thumbnail.php` — miniaturas em GD puro (`MAX_EDGE = 480`, qualidade 78), gravadas em `thumbs/` ao lado do original
+- `PhaseTemplates.php` — etapas de entrega pré-definidas por tipo de projeto; as de arquitetura seguem a NBR 13532
 
 **app/Traits/:**
-- `AuthorizesProjectAccess.php` — `authorizeProjectAccess()` e `assertBelongsToProject()`
+- `AuthorizesProjectAccess.php` — `authorizeProjectAccess()` (restringe só o `manager`), `authorizePlanReadAccess()` (abre ao gestor o projeto de origem da obra dele) e `assertBelongsToProject()`
 
 **app/Providers/:**
 - `AppServiceProvider.php` — observers, view composer e Gates
@@ -166,12 +171,14 @@ Obra360/
 **app/Console/Commands/:**
 - `MigratePublicProjectMedia.php` — `obra360:media:migrate-public`
 - `GeneratePhotoThumbnails.php` — `obra360:photos:thumbnails`
+- `PruneAuditLogs.php` — `obra360:audit:prune` (retenção de 365 dias)
+- `PruneTrashedProjects.php` — `obra360:trash:prune` (reciclagem de 90 dias, apaga os arquivos)
 
 **database/migrations/:**
-- 18 migrações: 4 do framework (`0001_*`), domínio em `2026_06_27_1000xx` (clientes → definições → papéis), `2026_06_27_2000xx` (colunas em falta, pagamentos), `2026_06_27_210000_add_performance_indexes`, `2026_06_27_300001_create_push_subscriptions_table` e `2026_08_21_100000_create_audit_logs_table`
+- 26 migrações: 3 do framework (`0001_*`), domínio em `2026_06_27_*`, `2026_08_21_100000_create_audit_logs_table` e o bloco dos serviços de projeto — `2026_08_23_100000_add_type_to_projects_table`, `2026_08_23_200001_create_plans_table`, `2026_08_23_200002_create_plan_versions_table`, `2026_08_23_300001_add_source_project_id_to_projects_table`, `2026_08_24_100000_drop_external_url_from_photos_table`, `2026_08_24_200000_add_revisions_included_to_projects_table`, `2026_08_24_210000_create_plan_comments_table` e `2026_08_24_300000_create_budget_items_table`
 
 **database/factories/:**
-- `UserFactory` (com estados `admin()`, `manager()`, `financial()`, `unverified()`), `ClientFactory`, `ProjectFactory`, `ProjectPhaseFactory`, `PhotoFactory`, `ExpenseFactory`, `DocumentFactory`, `PaymentFactory`
+- `UserFactory` (com estados `admin()`, `manager()`, `financial()`, `unverified()`), `ClientFactory`, `ProjectFactory` (com estado `architecture()`), `ProjectPhaseFactory`, `PhotoFactory`, `ExpenseFactory`, `DocumentFactory`, `PaymentFactory`, `PlanFactory`, `PlanVersionFactory`, `PlanCommentFactory`, `BudgetItemFactory`
 
 **database/seeders/:**
 - `DatabaseSeeder.php` — administrador inicial e definições base; exige `SEED_ADMIN_PASSWORD` em produção
@@ -184,19 +191,20 @@ Obra360/
 - **profile/** — `edit.blade.php` e `partials/` (informação, palavra-passe, remoção de conta)
 - **components/layouts/** — `admin.blade.php`, `client.blade.php`, `guest.blade.php`
 - **layouts/** — `app.blade.php`, `guest.blade.php`, `navigation.blade.php` (herdados do Breeze)
-- **components/** — `text-input`, `primary-button`, `secondary-button`, `danger-button`, `data-table`, `badge`, `modal`, `dropdown`, `dropdown-link`, `nav-item`, `nav-link`, `responsive-nav-link`, `input-label`, `input-error`, `flash-message`, `auth-session-status`, `application-logo`
+- **components/** (26 arquivos, mais `layouts/`) — os anteriores mais `form-errors` e `field-error` (erros de validação em toda a área interna), `project-cover` (capa com imagem padrão), `project-type`, `plan-comments`, `revision-counter`, `budget-plan`, `model-viewer` (visualizador 3D) e `password-input`
 - **users/** — `index`, `create`, `edit`
 
 **routes/web.php:**
 - Grupos de middleware:
   - `role:admin,manager,financial` + prefixo `admin` — dashboard, relatórios, leitura de obras, capa e fotos, mensagens
   - `role:admin` + prefixo `admin` — auditoria, clientes, definições
-  - `role:admin,manager` + prefixo `admin` — CRUD de obras, fases, fotos, documentos, actualizações manuais
+  - `role:admin,manager` + prefixo `admin` — CRUD de obras, fases, fotos, documentos, plantas e versões, actualizações manuais
   - `role:admin,financial` + prefixo `admin` — despesas e pagamentos
   - `role:admin` — recurso `usuarios` (nomes `users.*`) e `users.toggle-active`
-  - `role:client` + prefixo `portal` — dashboard, obra, capa, fotos, mensagens, download de documentos, subscrições push
+  - `role:client` + prefixo `portal` — dashboard, obra, capa, fotos, mensagens, download de documentos, plantas (baixar, pré-visualizar, aprovar, comentar), envio de fotos e documentos, subscrições push
   - `auth` — perfil
 - URLs em português, nomes de rota em inglês
+- Todas as escritas têm `throttle`: `120,1` nas leves, `30,1` no envio de documentos e plantas, `20,1` nos envios de fotos
 
 **routes/channels.php:**
 - `project.{projectId}` e `App.Models.User.{id}`
@@ -204,19 +212,21 @@ Obra360/
 **routes/auth.php:**
 - Login, logout, reposição e alteração de palavra-passe, verificação de e-mail, confirmação de palavra-passe. **Sem rota de registo**
 
-**lang/pt_BR.json:**
-- Ficheiro de tradução JSON com as mensagens do framework, de autenticação e de validação usadas pela aplicação
+**lang/:**
+- `pt_BR.json` — mensagens do framework e de autenticação
+- `pt_BR/validation.php` — mensagens de validação
+- `config/app.php` tem `'locale' => env('APP_LOCALE', 'pt_BR')` e `.env.example` tem `APP_LOCALE=pt_BR`: até 24/08 a aplicação corria em `en` e nada disto era lido
 
 **storage/app/private/:**
 - Raiz do disco `local` (`config/filesystems.php`), com `serve => true`
-- Contém `covers/`, `projects/{id}/photos/`, `projects/{id}/photos/thumbs/`, `projects/{id}/receipts/`, `projects/{id}/documents/`
+- Contém `covers/`, `projects/{id}/photos/`, `projects/{id}/photos/thumbs/`, `projects/{id}/receipts/`, `projects/{id}/documents/` e `projects/{id}/plans/{plan}/`
 
 **storage/app/public/:**
 - Raiz do disco `public`, exposto por `/storage`
-- Guarda o logótipo da empresa (`branding/`, escrito por `Admin\SettingController@update`) e ficheiros de media legados ainda por migrar
+- Guarda apenas a logomarca da empresa (`branding/`, escrita por `Admin\SettingController@update`). A mídia legada foi migrada em 22/08 e as chamadas defensivas ao disco `public` nas remoções foram retiradas em 24/08
 
 **tests/Feature/ e tests/Unit/:**
-- 32 ficheiros de teste (30 em `Feature/`, 8 dos quais em `Feature/Auth/`, e 2 em `Unit/`); 221 testes segundo `./vendor/bin/phpunit --list-tests`
+- 57 arquivos de teste (55 em `Feature/`, 9 dos quais em `Feature/Auth/`, e 2 em `Unit/`); **540 testes e 1609 asserções, todos passando** (`php artisan test`, 2026-08-24)
 
 ## Localizações-chave
 
@@ -227,7 +237,7 @@ Obra360/
 - `bootstrap/app.php` — configuração da aplicação
 
 **Configuração:**
-- `config/app.php`, `config/database.php`, `config/auth.php`, `config/filesystems.php` (discos `local`, `public`, `s3`), `config/services.php` (WhatsApp, VAPID)
+- `config/app.php`, `config/database.php`, `config/auth.php`, `config/filesystems.php` (discos `local`, `public`, `s3` — o driver `league/flysystem-aws-s3-v3` ainda não está instalado), `config/services.php` (WhatsApp, VAPID), `config/security.php` (CSP e origem do Reverb)
 - `.env` (não versionado; modelo em `.env.example`)
 - `vite.config.js`
 
@@ -308,4 +318,4 @@ Obra360/
 
 ---
 
-*Análise de estrutura: 2026-08-22*
+*Análise de estrutura: 2026-08-24*

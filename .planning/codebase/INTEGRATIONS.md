@@ -1,6 +1,6 @@
 # External Integrations
 
-**Analysis Date:** 2026-08-20
+**Analysis Date:** 2026-08-20 — *revisto e corrigido em 2026-08-24; as correcções estão em português do Brasil, como o resto de `.planning/codebase/`*
 
 ## APIs & External Services
 
@@ -13,12 +13,13 @@
   - Endpoint: `https://graph.facebook.com/v18.0/{$phoneId}/messages`
   - Message type: Text messages with optional preview URL
   - Error handling: Retries on HTTP failures and connection errors; logs warnings with hashed phone numbers
+- **Correcção (24/08):** sem credenciais o canal deixou de sair calado. Regista um aviso por notificação não entregue, nomeando qual das duas definições falta e nada mais — nem o token, nem o número do remetente, nem o do destinatário (`tests/Feature/WhatsAppChannelTest.php`)
   - Phone normalization: Requires 10+ digits, stored as digits-only
 
 **Web Push Notifications (VAPID):**
 - Service: Browser native Web Push API (no external provider; self-hosted push)
 - What it's used for: Send push notifications to PWA users who have subscribed
-- SDK/Client: `minishlink/web-push` (PHP library, installed separately if PWA enabled)
+- SDK/Client: `minishlink/web-push` v8.0.0 — **instalado desde 21/08** (antes o canal era um no-op). O `WebPushChannel` ainda guarda em `class_exists(WebPush::class)`, mas o pacote existe
 - Auth: VAPID public/private keys (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`)
 - Implementation: `app/Channels/WebPushChannel.php`
   - Generates VAPID keys via: `php artisan tinker` → `[Minishlink\WebPush\VAPID::createVapidKeys()['publicKey'], Minishlink\WebPush\VAPID::createVapidKeys()['privateKey']]`
@@ -54,18 +55,22 @@
 - `failed_jobs` - Failed job records (queue retries)
 - `sessions` - User session records (database session driver)
 - `cache` - Cache entries (database cache driver)
+- `audit_logs` — trilho de auditoria, uma linha por escrita nos onze modelos observados (retenção de 365 dias por `obra360:audit:prune`)
+- `plans`, `plan_versions`, `plan_comments` — plantas, revisões numeradas e comentários presos a cada versão
+- `budget_items` — orçamento por linhas (ADV-04)
+- `projects.type`, `projects.source_project_id` e `projects.revisions_included` — colunas acrescentadas pelos serviços de arquitetura e design
 
 **File Storage:**
 - Type: Local filesystem (default, no S3 currently deployed)
 - Implementation: League Flysystem with local disk driver
 - Storage paths:
-  - Private: `storage/app/private/` (user data, documents, backups)
-  - Public: `storage/app/public/` (photos, attachments served via `/storage`)
+  - Private: `storage/app/private/` — **toda a mídia das obras e projetos**: `covers/`, `projects/{id}/photos/`, `.../photos/thumbs/`, `.../receipts/`, `.../documents/` e `.../plans/{plan}/`. Servida só por rota autenticada
+  - Public: `storage/app/public/` — **apenas a logomarca da empresa** (`branding/`). A mídia legada foi migrada em 22/08 e o fallback de leitura foi removido
 - Symlink: `public/storage` → `storage/app/public` (created by `artisan storage:link`)
 - Upload limits (PHP config):
   - Max file size: 64MB
   - Max post size: 64MB
-- S3 Support: Prepared via flysystem abstraction (`config/filesystems.php` s3 disk config) but requires AWS credentials in `.env`
+- S3 Support: o disco está declarado e o código nunca usa caminhos absolutos, mas `league/flysystem-aws-s3-v3` **não está instalado** — em `composer.lock` aparece só como sugestão do framework. Falta o driver e as credenciais
 
 **Caching:**
 - Driver: Database (default)
@@ -78,7 +83,7 @@
 **Auth Provider:**
 - Type: Custom with Laravel Breeze scaffolding
 - Implementation: Laravel built-in authentication + session-based (no OAuth/SAML)
-- User model: `app/Models/User.php` with roles (`admin`, `company`, `client`)
+- User model: `app/Models/User.php` com quatro papéis — `admin`, `manager`, `financial`, `client` (`User::ROLE_*`). O financeiro lê todas as obras e escreve despesas e cobranças em qualquer uma; o gestor está limitado às obras que gere
 - Session storage: Database driver (`SESSION_DRIVER=database`)
 - Session lifetime: 120 minutes (`SESSION_LIFETIME=120`)
 - Session encryption: Enabled (`SESSION_ENCRYPT=true`)
@@ -198,7 +203,7 @@
 ## Webhooks & Callbacks
 
 **Incoming:**
-- None detected (application receives WhatsApp events but no inbound webhook handlers found)
+- Nenhum externo. Existe uma rota interna de recolha: `POST /_csp/report` (`CspReportController`), para onde o navegador envia as violações de Content-Security-Policy; escreve um aviso por violação em `storage/logs`
 
 **Outgoing:**
 - WhatsApp notifications: Sent via `app/Channels/WhatsAppChannel.php` to Meta Graph API
@@ -226,4 +231,4 @@
 
 ---
 
-*Integration audit: 2026-08-20*
+*Integration audit: 2026-08-20 — revisto em 2026-08-24*

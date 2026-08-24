@@ -1,6 +1,6 @@
 # Convenções de Código
 
-**Data da análise:** 2026-08-22
+**Data da análise:** 2026-08-24
 
 ## Padrões de nomenclatura
 
@@ -145,7 +145,8 @@ class User extends Authenticatable
 - `protected static function booted()` em `ProjectPhase` recalcula o progresso da obra em `saved` e `deleted`
 
 **Soft deletes:**
-- `User`, `Project`, `Client`, `Photo`, `Document`, `Expense`
+- `User`, `Project`, `Client`, `Photo`, `Document`, `Expense` e `Plan`
+- `PlanVersion` **não** usa soft delete, de propósito: uma versão substituída continua legível para sempre (PLAN-04)
 - Consulta com `withTrashed()` / `onlyTrashed()`
 
 **Lógica de domínio no modelo:**
@@ -158,7 +159,7 @@ class User extends Authenticatable
 - `UserController` usa o trait `AuthorizesRequests` e chama `$this->authorize()`
 - Os controllers de obra usam o trait `AuthorizesProjectAccess` e começam sempre por `$this->authorizeProjectAccess($project)`, seguido de `$this->assertBelongsToProject($project, $filho)` quando a rota é aninhada
 - Métodos RESTful (`index`, `create`, `store`, `show`, `edit`, `update`, `destroy`); acções extra com nome explícito: `cover()`, `download()`, `markPaid()`, `toggleActive()`, `linkUser()`, `unlinkUser()`, `storeUpdate()`, `pdf()`
-- Um controller por recurso aninhado: fases, fotos, despesas e documentos têm classes próprias, e o `Admin\ProjectController` fica com o CRUD da obra, a galeria filtrada e as actualizações manuais
+- Um controller por recurso aninhado: fases, fotos, despesas, documentos, plantas, versões de planta e linhas de orçamento têm classes próprias. O `Admin\ProjectController` fica com o CRUD da obra, a paginação de cada separador da página, a galeria filtrada, as actualizações manuais e as regras da ligação ao projeto de origem
 
 ## Validação de pedidos
 
@@ -214,7 +215,7 @@ $data = $request->validate([
 
 **Padrão:**
 - Em `app/Http/Middleware/`, com `handle(Request $request, Closure $next): Response`
-- Registo em `bootstrap/app.php`: `EnsureUserIsActive` e `SecurityHeaders` são anexados ao grupo `web`; `EnsureUserRole` fica com o alias `role`
+- Registo em `bootstrap/app.php`: `EnsureUserIsActive` e `SecurityHeaders` são anexados ao grupo `web`; `ExplainTruncatedUpload` ocupa a vaga do middleware de CSRF nesse grupo; `EnsureUserRole` fica com o alias `role`
 - Aplicação nas rotas por `middleware(['auth', 'role:admin,manager'])`
 
 ## Componentes Blade
@@ -242,9 +243,11 @@ $data = $request->validate([
 - **Etiquetas de domínio:** constantes em português dentro das classes — `Project::STATUSES`, `AuditLog::LABELS`, `ReportController::TYPES`
 
 **Ficheiros de tradução:**
-- Existe um único ficheiro: `lang/pt_BR.json`, com as mensagens do framework, de autenticação e de validação
+- `lang/pt_BR.json` (framework e autenticação) e `lang/pt_BR/validation.php` (validação)
 - As strings das vistas **não** passam por `__()`; estão escritas literalmente no Blade
-- `APP_LOCALE` no `.env.example` está a `en`
+- `APP_LOCALE` está a `pt_BR` no `.env.example` e é o valor por omissão em `config/app.php` — até 24/08 estava a `en` e os arquivos de tradução nunca eram lidos
+- **Variante fixada em português do Brasil.** A oscilação pt-BR/pt-PT foi resolvida; sobra um único termo pt-PT em texto visível, «ficheiro», em `resources/views/components/model-viewer.blade.php`
+- **O vocabulário segue o tipo do registro:** «obra» para construção e remodelação, «projeto» para arquitetura e design de interiores (`Project::noun()`, `nounWithArticle()`, `typeLabel()`). Onde o texto nomeia o conjunto — o menu, o título da listagem — o nome é fixo, «Obras e Projetos»
 
 ## Base de dados e consultas
 
@@ -260,11 +263,12 @@ $data = $request->validate([
 
 **Controlo de acesso por papel:**
 - Constantes `User::ROLE_ADMIN|ROLE_MANAGER|ROLE_FINANCIAL|ROLE_CLIENT` e os métodos `isAdmin()`, `isManager()`, `isFinancial()`, `isClient()`
-- Três níveis: middleware `role:` na rota, Gates (`access-admin`, `manage-users`, `access-financial`) e o trait `AuthorizesProjectAccess` ao nível da obra
+- Três níveis: middleware `role:` na rota, Gates (`access-admin`, `manage-users`, `manage-projects`, `access-financial`) e o trait `AuthorizesProjectAccess` ao nível da obra
+- O trait restringe **apenas** o `manager`. O financeiro lê todas as obras e escreve despesas e cobranças em qualquer uma; o âmbito dele vem dos grupos `role:`, não de uma coluna por obra
 
 **Definições:**
 - Lidas por `Setting::get('chave', 'omissão')`, com cache `rememberForever`; escritas por `Setting::set()`, que invalida a chave
-- Chaves em uso: `company_name`, `company_email`, `company_phone`, `allow_comments`, `show_client_financials`, `currency`, `progress_mode`, `logo_url` e `notify_{tipo}` por cada tipo de `ProjectUpdate::TYPES`
+- Chaves em uso: `company_name`, `company_email`, `company_phone`, `allow_comments`, `allow_client_uploads`, `show_client_financials`, `currency`, `progress_mode`, `logo_url` e `notify_{tipo}` por cada tipo de `ProjectUpdate::TYPES`
 
 **Formatação de dinheiro:**
 - Nunca `number_format()` directo nas vistas — usa-se sempre `money($valor)`, que resolve o símbolo a partir da definição `currency`
@@ -272,10 +276,11 @@ $data = $request->validate([
 **Limitação de taxa:**
 - Login com bloqueio ao fim de 5 tentativas por `email|IP` (`LoginRequest`)
 - `throttle:20,1` no envio de mensagens do cliente, `throttle:60,1` em marcar como lidas, `throttle:10,1`/`throttle:30,1` nas subscrições push, `throttle:6,1` nas rotas de verificação de e-mail
+- **Todas as escritas da área interna têm tecto desde 24/08:** `throttle:120,1` nas escritas leves (uma linha por requisição), `throttle:30,1` no envio de documentos e de versões de planta, `throttle:20,1` nos envios de fotos
 
 **Gestão de sessão:**
 - Sessões em base de dados; invalidação manual com `DB::table('sessions')->where('user_id', $user->id)->delete()` ao desactivar um utilizador
 
 ---
 
-*Análise de convenções: 2026-08-22*
+*Análise de convenções: 2026-08-24*

@@ -77,9 +77,20 @@ aprovou. O histórico nunca é apagado: uma versão substituída continua legív
 - **LIM-02**: um ficheiro acima do limite dá uma mensagem que explica o limite e sugere o endereço externo
 - **LIM-03**: fica documentado como aumentar o limite no cPanel, com o custo e o risco
 
-## Fora do âmbito desta fase
+## Fora do âmbito desta fase — todos entregues a seguir
 
-Comentários sobre uma versão concreta da planta; contagem de revisões incluídas
-no contrato; visualizador 3D no browser para GLB; etapas de entrega
-pré-definidas por tipo de projecto. Todos foram considerados e adiados por
-dependerem do que fica construído aqui.
+*Atualizado em 2026-08-24, em português do Brasil.*
+
+Os quatro itens adiados dependiam do que esta fase construiu, e foram entregues
+nos dias seguintes, assim que essa base existiu:
+
+| Item adiado | Entregue em | Onde vive no código |
+|---|---|---|
+| Comentários sobre uma versão concreta da planta | `cc566bf` (24/08) | `App\Models\PlanComment`, migração `2026_08_24_210000_create_plan_comments_table`, `<x-plan-comments>`, `storeComment()` na área interna e no portal, `tests/Feature/PlanCommentTest.php` |
+| Contagem de revisões incluídas no contrato | `cc566bf` (24/08) | `projects.revisions_included` (migração `2026_08_24_200000`), `Project::revisionsUsed()`, `revisionsRemaining()`, `hasRevisionLimit()`, `revisionLimitExceeded()`, `<x-revision-counter>`, `tests/Feature/RevisionAllowanceTest.php` |
+| Visualizador 3D no navegador para GLB | `9baed6c` (24/08) | `<x-model-viewer>`, `@google/model-viewer` importado sob demanda em `resources/js/app.js`, `PlanVersion::VIEWABLE_3D_FORMATS` (GLB e GLTF), `tests/Feature/Model3dViewerTest.php`. A CSP precisou de `blob:` em `img-src` e `worker-src` para as texturas e o worker de descompressão |
+| Etapas de entrega pré-definidas por tipo de projeto | `d93782c` (24/08) | `App\Support\PhaseTemplates`, aplicadas por `Admin\ProjectPhaseController`, `tests/Feature/PhaseTemplateTest.php`. As de arquitetura seguem a NBR 13532 |
+
+Nada continua fora do âmbito desta funcionalidade. O estado de cada requisito
+TIPO, PLAN, PORT, OBRA e LIM está na tabela de rastreabilidade de
+`.planning/REQUIREMENTS.md`.

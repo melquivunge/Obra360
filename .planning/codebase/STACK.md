@@ -1,6 +1,6 @@
 # Stack Tecnológica
 
-**Data da análise:** 2026-08-22
+**Data da análise:** 2026-08-24
 
 ## Linguagens
 
@@ -37,7 +37,8 @@
 - Vite 8 (`vite` ^8.2.1) — bundler; configuração em `vite.config.js`
 - `laravel-vite-plugin` ^3.2 — liga o Vite ao manifest de assets do Laravel
 - Tailwind CSS v4 (`tailwindcss` ^4.0.0, `@tailwindcss/vite` ^4.3.3) — integrado como plugin do Vite
-- Alpine.js ^3.16.2 — usado em modais, dropdowns e toggles
+- Alpine.js ^3.16.2 — usado em modais, dropdowns, separadores e toggles. É a razão de `script-src` manter `'unsafe-eval'` na CSP: o Alpine 3 avalia as expressões dos atributos com `new Function`
+- `@google/model-viewer` ^4.3.1 — visualizador 3D para GLB e GLTF; importado sob demanda em `resources/js/app.js`, só quando a página tem um `<model-viewer>`, porque traz um motor WebGL de cerca de 1 MB
 
 **Broadcasting/WebSockets (cliente):**
 - `laravel-echo` ^2.4.0 — cliente de broadcasting; instanciado com `broadcaster: 'reverb'` em `resources/js/app.js`, dentro de um `try/catch` para não bloquear a UI
@@ -97,7 +98,7 @@
 
 **Ambiente:**
 - Configurado por `.env`; modelo em `.env.example`
-- Aplicação: `APP_NAME`, `APP_KEY`, `APP_ENV`, `APP_URL`, `APP_DEBUG`, `APP_LOCALE` (valor de exemplo: `en`)
+- Aplicação: `APP_NAME`, `APP_KEY`, `APP_ENV`, `APP_URL`, `APP_DEBUG`, `APP_LOCALE` (`pt_BR` desde 24/08 — antes era `en`, e o `lang/pt_BR.json` nunca chegava a ser lido)
 - Base de dados: `DB_CONNECTION` (mysql), `DB_HOST` (db), `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `DB_ROOT_PASSWORD`
 - Filas: `QUEUE_CONNECTION` (database)
 - Cache: `CACHE_STORE` (database)
@@ -108,7 +109,9 @@
 - WhatsApp: `WHATSAPP_PHONE_ID`, `WHATSAPP_TOKEN` (lidos por `config/services.php`)
 - Web Push VAPID: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
 - Seeding: `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` (o `DatabaseSeeder` recusa correr em produção sem a segunda)
-- AWS: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_USE_PATH_STYLE_ENDPOINT`
+- AWS: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_USE_PATH_STYLE_ENDPOINT` — todas vazias no exemplo, e o driver ainda não está instalado
+- Content-Security-Policy (`config/security.php`): `CSP_ENABLED` (omissão: ligada), `CSP_REPORT_ONLY` (omissão: relato em produção, imposição fora dela), `CSP_REPORT_URI` (omissão: `/_csp/report`) e `CSP_EXTRA_{SCRIPT,STYLE,IMG,FONT,CONNECT}_SRC`
+- Reverb visto pelo navegador (lido por `config/security.php` para o `connect-src`): `VITE_REVERB_HOST`, `VITE_REVERB_PORT`, `VITE_REVERB_SCHEME`
 
 **Build de frontend:**
 - `vite.config.js`
@@ -155,4 +158,4 @@
 
 ---
 
-*Análise de stack: 2026-08-22*
+*Análise de stack: 2026-08-24*
