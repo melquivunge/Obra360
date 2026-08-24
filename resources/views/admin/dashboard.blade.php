@@ -4,14 +4,14 @@
     {{-- Header --}}
     <div>
         <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">Dashboard</h1>
-        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Visão geral do portfólio de obras · {{ now()->format('d/m/Y') }}</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Visão geral do portfólio de obras e projectos · {{ now()->format('d/m/Y') }}</p>
     </div>
 
     {{-- KPI Cards --}}
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
         @php
             $cards = [
-                ['label'=>'Obras',          'value'=>$totalProjects,  'accent'=>false],
+                ['label'=>'Obras e projectos', 'value'=>$totalProjects, 'accent'=>false],
                 ['label'=>'Em andamento',   'value'=>$inProgress,     'accent'=>true],
                 ['label'=>'Concluídas',     'value'=>$completed,      'accent'=>false],
                 ['label'=>'Pausadas',       'value'=>$paused,         'accent'=>false],
@@ -36,8 +36,8 @@
     <div class="grid gap-6 lg:grid-cols-2">
         @if($lateProjects->isNotEmpty())
         <div style="background-color:var(--card);border:1px solid oklch(0.6 0.18 40 / 0.4);border-radius:0.75rem;padding:1.25rem;">
-            <h2 style="font-size:1rem;font-weight:700;color:oklch(0.7 0.16 40);">Obras atrasadas ({{ $lateCount }})</h2>
-            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">Previsão de término já passou e a obra não está concluída.</p>
+            <h2 style="font-size:1rem;font-weight:700;color:oklch(0.7 0.16 40);">Em atraso ({{ $lateCount }})</h2>
+            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">Previsão de término já passou e o trabalho não está concluído.</p>
             <div class="space-y-2">
                 @foreach($lateProjects as $late)
                 <a href="{{ route('admin.projects.show', $late) }}" class="flex items-center justify-between"
@@ -59,7 +59,7 @@
         @if($nearCompletionProjects->isNotEmpty())
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
             <h2 style="font-size:1rem;font-weight:700;">Perto da conclusão ({{ $nearCompletionCount }})</h2>
-            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">Obras em andamento com 80% ou mais de progresso.</p>
+            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">Em andamento com 80% ou mais de progresso.</p>
             <div class="space-y-2">
                 @foreach($nearCompletionProjects as $near)
                 <a href="{{ route('admin.projects.show', $near) }}" class="flex items-center justify-between"
@@ -83,8 +83,8 @@
         {{-- Recent projects --}}
         <div class="lg:col-span-2" style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
             <div class="flex items-center justify-between mb-4">
-                <h2 style="font-size:1rem;font-weight:700;">Obras recentes</h2>
-                <a href="{{ route('admin.projects.index') }}" style="font-size:0.8rem;color:var(--primary);">Ver todas →</a>
+                <h2 style="font-size:1rem;font-weight:700;">Obras e projectos recentes</h2>
+                <a href="{{ route('admin.projects.index') }}" style="font-size:0.8rem;color:var(--primary);">Ver todos →</a>
             </div>
             <div class="space-y-2">
                 @forelse($recentProjects as $project)
@@ -103,7 +103,7 @@
                     </div>
                 </a>
                 @empty
-                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">Nenhuma obra cadastrada.</p>
+                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">Nenhuma obra ou projecto cadastrado.</p>
                 @endforelse
             </div>
         </div>

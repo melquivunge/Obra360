@@ -22,7 +22,7 @@ class DashboardKpiTest extends TestCase
         $this->actingAs(User::factory()->admin()->create())
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Obras atrasadas (1)')
+            ->assertSee('Em atraso (1)')
             ->assertSee('Obra Atrasada');
     }
 
@@ -37,7 +37,7 @@ class DashboardKpiTest extends TestCase
         $this->actingAs(User::factory()->admin()->create())
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertDontSee('Obras atrasadas');
+            ->assertDontSee('Em atraso');
     }
 
     public function test_a_project_without_an_expected_date_is_never_late(): void
@@ -50,7 +50,7 @@ class DashboardKpiTest extends TestCase
         $this->actingAs(User::factory()->admin()->create())
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertDontSee('Obras atrasadas');
+            ->assertDontSee('Em atraso');
     }
 
     public function test_projects_at_or_above_eighty_percent_are_near_completion(): void

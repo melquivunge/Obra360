@@ -2,13 +2,13 @@
 <div class="space-y-6 p-6 md:p-8">
     <div class="flex items-center justify-between">
         <div>
-            <h1 style="font-size:1.5rem;font-weight:700;">Obras</h1>
-            <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Cadastre e acompanhe todas as obras.</p>
+            <h1 style="font-size:1.5rem;font-weight:700;">Obras e Projectos</h1>
+            <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Cadastre e acompanhe todas as obras e projectos.</p>
         </div>
         @can('manage-projects')
         <button type="button" onclick="openModal('modal-nova-obra')" class="btn-primary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            Nova obra
+            Nova obra ou projecto
         </button>
         @endcan
     </div>
@@ -109,7 +109,7 @@
         </div>
         @empty
         <div class="md:col-span-2 xl:col-span-3" style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:3rem;text-align:center;color:var(--muted-foreground);">
-            Nenhuma obra encontrada.
+            Nenhuma obra ou projecto encontrado.
         </div>
         @endforelse
     </div>
@@ -122,7 +122,7 @@
 <div id="modal-nova-obra" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-nova-obra')">
     <div class="modal-box" style="max-width:42rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-            <h2 class="modal-title" style="margin:0;">Nova obra</h2>
+            <h2 class="modal-title" style="margin:0;">Nova obra ou projecto</h2>
             <button type="button" onclick="closeModal('modal-nova-obra')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)'" onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'" aria-label="Fechar">
                 <svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
             </button>
@@ -147,7 +147,7 @@
                 </div>
             </div>
             <div>
-                <label class="field-label">Nome da obra <span style="color:var(--destructive)">*</span></label>
+                <label class="field-label">Nome <span style="color:var(--destructive)">*</span></label>
                 <input type="text" name="name" value="{{ old('name') }}" required id="obra-nome">
                 <x-field-error field="name" form="nova_obra" />
             </div>
@@ -212,7 +212,7 @@
                 <textarea name="notes" rows="2" style="resize:vertical;">{{ old('notes') }}</textarea>
             </div>
             <div style="display:flex;gap:0.5rem;padding-top:0.25rem;">
-                <button type="submit" class="btn-primary">Criar obra</button>
+                <button type="submit" class="btn-primary">Criar</button>
                 <button type="button" onclick="closeModal('modal-nova-obra')" class="btn-secondary">Cancelar</button>
             </div>
         </form>

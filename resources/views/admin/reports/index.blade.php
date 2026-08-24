@@ -2,16 +2,16 @@
 <div class="space-y-6 p-6 md:p-8">
     <div>
         <h1 style="font-size:1.5rem;font-weight:700;">Relatórios</h1>
-        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Escolha uma obra para ver e exportar os relatórios.</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Escolha uma obra ou projecto para ver e exportar os relatórios.</p>
     </div>
 
     <form method="GET" action="{{ route('admin.reports.index') }}" class="flex gap-3">
-        <input type="search" name="q" value="{{ request('q') }}" placeholder="Procurar obra..." style="max-width:20rem;">
+        <input type="search" name="q" value="{{ request('q') }}" placeholder="Procurar obra ou projecto..." style="max-width:20rem;">
         <button type="submit" class="btn-primary">Procurar</button>
     </form>
 
     @if($projects->isEmpty())
-        <p class="rep-empty" style="color:var(--muted-foreground);font-style:italic;">Nenhuma obra encontrada.</p>
+        <p class="rep-empty" style="color:var(--muted-foreground);font-style:italic;">Nenhuma obra ou projecto encontrado.</p>
     @else
         <div class="space-y-3">
         @foreach($projects as $project)

@@ -28,7 +28,7 @@
                     <label class="field-label">Perfil <span style="color:var(--destructive)">*</span></label>
                     <select name="role" required>
                         <option value="admin"     @selected(old('role',$user->role)==='admin')>Administrador</option>
-                        <option value="manager"   @selected(old('role',$user->role)==='manager')>Gestor da Obra</option>
+                        <option value="manager"   @selected(old('role',$user->role)==='manager')>Gestor</option>
                         <option value="financial" @selected(old('role',$user->role)==='financial')>Financeiro</option>
                         <option value="client"    @selected(old('role',$user->role)==='client')>Cliente</option>
                     </select>
