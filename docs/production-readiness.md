@@ -36,6 +36,8 @@ php artisan obra360:media:migrate-public --commit --delete-source
 
 Production was migrated on 2026-08-22. The dry-run found eight media records whose files were on neither disk — the production database had been copied from a local environment and the files never followed. They were uploaded by hand into `storage/app/private`; the dry-run now reports `already_private: 8`, `missing_public: 0`.
 
+Because that migration is confirmed done in production, the defensive `Storage::disk('public')->delete()` calls that followed every private-disk delete (project cover replacement, photo, document and expense removal) were removed on 2026-08-24. They could only ever match a file the migration had already moved. `SettingController` still writes and deletes the company logo on the public disk — that is a genuine public asset, not legacy media, and is unaffected.
+
 ## Access and deletion decisions
 
 The `financial` role now has a decided surface: it owns the money across the whole portfolio and never touches project structure.
@@ -52,7 +54,7 @@ Plans follow the same split. Creating a plan, uploading a version, sending a ver
 
 `Plan` and `PlanVersion` are both watched by `AuditObserver`, for the same reason `Document` is — a plan is a contractual artefact, and "which drawing was current, who uploaded it, when it was sent, when it was superseded" is exactly what the trail exists to answer. Auditing only `Plan` would record the label and lose the facts, because those columns live on `plan_versions`. It is also where PORT-05 will read from once the client can approve a version in the portal.
 
-Project deletion remains a soft delete. Media files are not removed during soft delete so future restore remains possible. Permanent media cleanup should be implemented with an explicit force-delete lifecycle or queued cleanup job.
+Project deletion remains a soft delete, and media files are **not** removed at that moment so a restore stays possible. What was missing until 2026-08-24 was the other end of that lifecycle: nothing ever made the deletion permanent, so the photos, receipts, documents and plans of a project deleted two years ago stayed in `storage/app/private/projects/{id}/` forever. See *Recycle bin retention* below for the mechanism that closes it.
 
 ## Upload size limit (plans)
 
@@ -112,6 +114,7 @@ Sessions, cache and queues all live in the database (`SESSION_DRIVER`, `CACHE_ST
 | `auth:clear-resets` | daily, 03:00 | Password reset tokens expire after 60 minutes but their rows stay behind. The table is tiny, so daily is more than enough — running it hourly would spend a process for nothing. |
 | `queue:prune-failed --hours=168` | weekly, Sunday 03:30 | Failed queued jobs (project notifications, mostly). Seven days of retention keeps a full week of failures available for diagnosis; the table only grows when something breaks, so a weekly sweep is enough. |
 | `obra360:audit:prune --commit` | daily, 04:00 | The fastest-growing table. Daily rather than weekly so each run deletes roughly one day's worth of rows and stays short, instead of accumulating a week and issuing one large `DELETE` against a shared MySQL server. |
+| `obra360:trash:prune --commit` | weekly, Monday 04:30 | Makes expired soft deletes permanent and removes their files from disk. Weekly rather than daily because the recycle bin does not grow every day and each run touches the filesystem, not just the database; 04:30 keeps it clear of the audit sweep at 04:00. |
 
 Deliberately not scheduled: `cache:prune-stale-tags` (Redis only — this install uses the `database` cache store), `queue:prune-batches` (nothing in the application calls `Bus::batch()`, so `job_batches` is always empty). The `sessions` table needs no task: Laravel sweeps it by lottery on 2% of requests (`config/session.php`).
 
@@ -133,6 +136,36 @@ php artisan obra360:audit:prune --days=180 --commit
 The command is a dry run unless `--commit` is passed, and it refuses a `--days` value that is not a positive integer — a window of zero would wipe the entire audit trail.
 
 One year was chosen because it covers a full project lifecycle plus the following year's account closing, which is the window in which "who changed this and when" is actually asked (client complaint, disputed amount, accounting audit). A shorter window would delete history while the project is still running. Raise it if a longer legal retention applies; the trade-off is table size on shared hosting.
+
+### Recycle bin retention
+
+`obra360:trash:prune` makes an expired soft delete permanent and removes the files that came with it. It covers the two deletions that leave files behind: a **project** (`Admin\ProjectController::destroy`) and a **plan** (`Admin\ProjectPlanController::destroy`, PLAN-09, which deliberately keeps the whole version history). The default window is **90 days**, and it is configurable:
+
+```bash
+# Dry run with the default window — counts and lists, deletes nothing.
+php artisan obra360:trash:prune
+
+# Dry run with a different window.
+php artisan obra360:trash:prune --days=30
+
+# Actually delete.
+php artisan obra360:trash:prune --days=30 --commit
+```
+
+Like `obra360:audit:prune`, it is a dry run unless `--commit` is passed, and it refuses a `--days` value that is not a positive integer — a window of zero would empty the recycle bin including whatever was deleted five minutes ago by mistake.
+
+**Why 90 days, and why shorter than the audit trail.** A deletion by mistake is discovered in days; 90 days is a full quarter, which also covers the manager who was away for two months and only noticed the missing project on returning. Past that it stops being safety and becomes dead weight on a shared account — and it is the *files* (photos, plans, receipts) that fill the disk, not the rows, which is exactly why this window is shorter than the 365 days kept for `audit_logs`, a table of text.
+
+**Where the files are actually deleted.** Not in the command — in `App\Observers\MediaCleanupObserver`, on the `forceDeleting` event of `Project` and `Plan`. Any permanent deletion therefore cleans the disk, whether it comes from the scheduled command, a `tinker` session, or a future recycle-bin screen. `forceDeleting` and not `forceDeleted` because the child rows (photos, documents, expenses, plan versions) disappear by `cascadeOnDelete` in the same instant, and after the delete there is no way to know what those paths were. The one path that does **not** fire it is a mass `forceDelete()` on a query builder, which fires no model events at all — the command iterates model by model precisely for that reason.
+
+Two cases the cleanup deliberately handles:
+
+- **Plan versions stored at an external address** (PLAN-08) have `path` null and `external_url` set. There is no file of ours to delete, and the address on the other side is not ours to touch — `storedMediaPaths()` filters them out.
+- **A project that is still the origin of another** (OBRA-01). The foreign key is `nullOnDelete`, so deleting the origin permanently does not break anything structurally — it just leaves the derived project with no link and without the approved plans it was inheriting, and that does not come back. The command therefore postpones such a project (reported as `obras_adiadas`) for as long as any project pointing at it is still live or still inside its own restore window. When the derived project expires too, both go in the same run.
+
+**A known asymmetry.** Removing a photo, document or expense one at a time deletes its file immediately, in the controller, while keeping the row soft-deleted — so restoring one of those rows today would give back a record whose file is gone. That is pre-existing behaviour, covered by `DocumentAccessTest` and `PhotoGalleryTest`, and it was left alone here. Aligning it (keep the file, let the retention window remove it) is worth doing when a restore screen actually exists; until then nothing in the application can restore those rows anyway. The prune command needs no change for it: the file is already missing, and deleting a missing file is a no-op.
+
+`tests/Feature/PruneTrashedProjectsTest.php` locks the behaviour in from both directions — nothing that can still be restored loses its files, and everything past the window does.
 
 ### The cron entry (required — nothing above runs without it)
 
@@ -166,3 +199,11 @@ php artisan schedule:run
 ### Known gap
 
 Expired rows in the `cache` table are only removed when the key is read again. Laravel ships no bulk prune for the database cache store (`cache:prune-stale-tags` is Redis-only), so a key that is written, expires and is never read again stays in the table. It is bounded in practice by the small, fixed set of cache keys the application uses (`ClientLayoutComposer`), but it is not swept by anything.
+
+## WhatsApp delivery
+
+`App\Channels\WhatsAppChannel` needs `WHATSAPP_PHONE_ID` and `WHATSAPP_TOKEN` in the environment. Until 2026-08-24 it returned silently when either was absent: editing `.env` in cPanel and dropping the token stopped every WhatsApp notification with no trace anywhere — not in the log, not in the queue, not in the portal.
+
+It now logs a warning per undelivered notification, naming which of the two settings is missing and nothing else. The value that is missing is precisely the one that must never appear in plain text, so neither the token nor the sender's phone id is written; the recipient's number is not written either, matching the existing failure path, which logs only `to_hash` (a SHA-256 of the number). A misconfigured environment is therefore noisy in `storage/logs/` rather than invisible — which is the point.
+
+API failures were already handled and are unchanged: the channel logs a warning and rethrows so the queue worker retries.
