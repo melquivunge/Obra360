@@ -176,11 +176,14 @@ class ProjectCoverTest extends TestCase
 
     /**
      * Quando o registo tem capa mas o ficheiro não está no disco a rota devolve
-     * 404 — o onerror troca para a imagem padrão em vez de retirar o elemento, e
-     * anula-se a si próprio antes da troca para não entrar em ciclo se também
-     * essa falhar.
+     * 404 — a imagem padrão entra no lugar em vez de se retirar o elemento.
+     *
+     * O comportamento vive em resources/js/app.js desde a introdução da CSP; a
+     * vista declara apenas o endereço da reserva. O handler `onerror=` em linha
+     * que existia aqui não pode voltar: seria script em atributo e a política
+     * bloqueia-o.
      */
-    public function test_the_onerror_falls_back_to_the_default_image_without_looping(): void
+    public function test_the_cover_declares_the_default_image_as_fallback_without_an_inline_handler(): void
     {
         $project = $this->projectWithCover();
 
@@ -190,9 +193,10 @@ class ProjectCoverTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString(
-            "onerror=\"this.onerror=null;this.src='".$this->defaultCover()."'\"",
+            'data-fallback-src="'.$this->defaultCover().'"',
             $html
         );
+        $this->assertStringNotContainsString('onerror=', $html);
         $this->assertStringNotContainsString('this.closest(\'[data-capa]\').remove()', $html);
     }
 }

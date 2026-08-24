@@ -89,10 +89,8 @@
             <div class="space-y-2">
                 @forelse($recentProjects as $project)
                 <a href="{{ route('admin.projects.show', $project) }}"
-                   class="flex items-center justify-between p-3 rounded-lg transition-colors"
-                   style="border:1px solid var(--border)"
-                   onmouseover="this.style.borderColor='oklch(0.74 0.135 78 / 0.4)'"
-                   onmouseout="this.style.borderColor='var(--border)'">
+                   class="hover-border-primary-soft flex items-center justify-between p-3 rounded-lg transition-colors"
+                   style="border:1px solid var(--border)">
                     <div class="min-w-0">
                         <p class="font-medium truncate" style="font-size:0.875rem;">{{ $project->name }}</p>
                         <p style="font-size:0.75rem;color:var(--muted-foreground)" class="truncate">{{ $project->client?->name }} · {{ $project->location ?: '—' }}</p>

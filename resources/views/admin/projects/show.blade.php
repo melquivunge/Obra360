@@ -92,7 +92,7 @@
             @can('manage-projects')
             <div class="flex gap-2">
                 <a href="{{ route('admin.projects.edit', $project) }}" class="btn-secondary">Editar</a>
-                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projeto' }}?')">
+                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" data-confirm="Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projeto' }}?">
                     @csrf @method('DELETE')
                     <button type="submit" class="btn-danger">Excluir</button>
                 </form>
@@ -204,7 +204,7 @@
     <div x-show="tab==='fases'" x-cloak class="space-y-4">
         @can('manage-projects')
         <div class="flex justify-end">
-            <button type="button" onclick="openModal('modal-fase')" class="btn-primary">
+            <button type="button" data-modal-open="modal-fase" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Nova fase
             </button>
@@ -225,12 +225,12 @@
                 </div>
                 @can('manage-projects')
                 <div class="flex gap-1 shrink-0">
-                    <button type="button" @click="editing=!editing" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''">
+                    <button type="button" @click="editing=!editing" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
                     </button>
-                    <form method="POST" action="{{ route('admin.projects.phases.destroy', [$project, $phase]) }}" onsubmit="return confirm('Remover fase?')">
+                    <form method="POST" action="{{ route('admin.projects.phases.destroy', [$project, $phase]) }}" data-confirm="Remover fase?">
                         @csrf @method('DELETE')
-                        <button type="submit" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;" onmouseover="this.style.backgroundColor='oklch(0.62 0.21 25 / 0.15)';this.style.color='var(--destructive)'" onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'">
+                        <button type="submit" class="hover-danger" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                         </button>
                     </form>
@@ -299,15 +299,15 @@
         {{-- Filtros da galeria (FOTO-04) --}}
         <form method="GET" action="{{ route('admin.projects.show', $project) }}" class="flex flex-wrap gap-2" style="margin-bottom:0.75rem;">
             <input type="hidden" name="tab" value="fotos">
-            <select name="photo_phase" style="max-width:14rem;" onchange="this.form.submit()">
+            <select name="photo_phase" style="max-width:14rem;" data-auto-submit>
                 <option value="">Todas as fases</option>
                 @foreach($phases as $ph)
                     <option value="{{ $ph->id }}" {{ (int) request('photo_phase') === $ph->id ? 'selected' : '' }}>{{ $ph->name }}</option>
                 @endforeach
             </select>
-            <input type="date" name="photo_from" value="{{ request('photo_from') }}" style="max-width:11rem;" onchange="this.form.submit()" title="De">
-            <input type="date" name="photo_to" value="{{ request('photo_to') }}" style="max-width:11rem;" onchange="this.form.submit()" title="Até">
-            <select name="photo_order" style="max-width:11rem;" onchange="this.form.submit()">
+            <input type="date" name="photo_from" value="{{ request('photo_from') }}" style="max-width:11rem;" data-auto-submit title="De">
+            <input type="date" name="photo_to" value="{{ request('photo_to') }}" style="max-width:11rem;" data-auto-submit title="Até">
+            <select name="photo_order" style="max-width:11rem;" data-auto-submit>
                 <option value="recentes" {{ request('photo_order') !== 'antigas' ? 'selected' : '' }}>Mais recentes</option>
                 <option value="antigas" {{ request('photo_order') === 'antigas' ? 'selected' : '' }}>Mais antigas</option>
             </select>
@@ -326,11 +326,12 @@
                 @if($photo->media_type === 'video')
                 <video src="{{ $photoUrl }}" style="width:100%;height:100%;object-fit:cover;" muted></video>
                 @else
-                <img src="{{ $thumbUrl }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;" onclick="openLightbox(@js($photoUrl), @js($photo->caption ?? ''))">
+                <img src="{{ $thumbUrl }}" alt="{{ $photo->caption }}" loading="lazy" style="cursor:pointer;"
+                     data-lightbox-src="{{ $photoUrl }}" data-lightbox-caption="{{ $photo->caption ?? '' }}">
                 @endif
                 @if($photo->caption)<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:0.5rem;font-size:0.75rem;color:#fff;">{{ $photo->caption }}</div>@endif
                 @can('manage-projects')
-                <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" onsubmit="return confirm('Remover foto?')" style="position:absolute;top:4px;right:4px;">
+                <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" data-confirm="Remover foto?" style="position:absolute;top:4px;right:4px;">
                     @csrf @method('DELETE')
                     <button type="submit" style="background:rgba(0,0,0,0.6);border:none;border-radius:0.25rem;color:#fff;cursor:pointer;padding:0.25rem;">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -354,7 +355,7 @@
     <div x-show="tab==='despesas'" x-cloak class="space-y-4">
         @can('access-financial')
         <div class="flex justify-end">
-            <button type="button" onclick="novaDespesa()" class="btn-primary">
+            <button type="button" data-despesa-nova class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Registrar despesa
             </button>
@@ -392,13 +393,14 @@
                                 @endphp
                                 @can('access-financial')
                                 <button type="button" title="Editar despesa"
-                                        onclick='editarDespesa(@json($expData))'
-                                        style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                                        data-despesa-editar="{{ json_encode($expData) }}"
+                                        class="hover-text-primary"
+                                        style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
                                 </button>
-                                <form method="POST" action="{{ route('admin.projects.expenses.destroy', [$project, $exp]) }}" onsubmit="return confirm('Remover despesa?')">
+                                <form method="POST" action="{{ route('admin.projects.expenses.destroy', [$project, $exp]) }}" data-confirm="Remover despesa?">
                                     @csrf @method('DELETE')
-                                    <button type="submit" style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                                    <button type="submit" class="hover-text-danger" style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                                     </button>
                                 </form>
@@ -433,7 +435,7 @@
                 </div>
             </div>
             @can('access-financial')
-            <button type="button" onclick="openModal('modal-pagamento')" class="btn-primary">
+            <button type="button" data-modal-open="modal-pagamento" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Nova cobrança
             </button>
@@ -474,9 +476,9 @@
                                         <button type="submit" title="Marcar como pago" style="padding:0.25rem 0.5rem;border-radius:0.375rem;background:none;border:1px solid var(--border);cursor:pointer;font-size:0.7rem;color:oklch(0.55 0.16 145)">✓ Pago</button>
                                     </form>
                                     @endif
-                                    <form method="POST" action="{{ route('admin.projects.payments.destroy', [$project, $pay]) }}" onsubmit="return confirm('Remover cobrança?')">
+                                    <form method="POST" action="{{ route('admin.projects.payments.destroy', [$project, $pay]) }}" data-confirm="Remover cobrança?">
                                         @csrf @method('DELETE')
-                                        <button type="submit" style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                                        <button type="submit" class="hover-text-danger" style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                                         </button>
                                     </form>
@@ -500,7 +502,7 @@
     <div x-show="tab==='documentos'" x-cloak class="space-y-4">
         @can('manage-projects')
         <div class="flex justify-end">
-            <button type="button" onclick="openModal('modal-documento')" class="btn-primary">
+            <button type="button" data-modal-open="modal-documento" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Enviar documento
             </button>
@@ -517,13 +519,13 @@
                         · {{ $doc->created_at->format('d/m/Y') }}
                     </p>
                 </div>
-                <a href="{{ route('admin.projects.documents.download', [$project, $doc]) }}" target="_blank" rel="noopener" style="padding:0.5rem;color:var(--muted-foreground)" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                <a href="{{ route('admin.projects.documents.download', [$project, $doc]) }}" target="_blank" rel="noopener" class="hover-text-primary" style="padding:0.5rem;color:var(--muted-foreground)">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                 </a>
                 @can('manage-projects')
-                <form method="POST" action="{{ route('admin.projects.documents.destroy', [$project, $doc]) }}" onsubmit="return confirm('Remover documento?')">
+                <form method="POST" action="{{ route('admin.projects.documents.destroy', [$project, $doc]) }}" data-confirm="Remover documento?">
                     @csrf @method('DELETE')
-                    <button type="submit" style="padding:0.5rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                    <button type="submit" class="hover-text-danger" style="padding:0.5rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                     </button>
                 </form>
@@ -544,7 +546,7 @@
 
         @if($canManagePlans)
         <div class="flex justify-end">
-            <button type="button" onclick="openModal('modal-planta')" class="btn-primary">
+            <button type="button" data-modal-open="modal-planta" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Nova planta
             </button>
@@ -632,15 +634,17 @@
                     </form>
                     @endif
                     <button type="button" class="btn-primary" style="font-size:0.8125rem;"
-                            onclick="novaVersao({{ $plan->id }}, @js($plan->name), {{ $plan->versions->count() + 1 }})">
+                            data-versao-planta="{{ $plan->id }}"
+                            data-versao-nome="{{ $plan->name }}"
+                            data-versao-numero="{{ $plan->versions->count() + 1 }}">
                         Nova versão
                     </button>
                     <button type="button" @click="editing=!editing" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;" title="Editar planta">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
                     </button>
-                    <form method="POST" action="{{ route('admin.projects.plans.destroy', [$project, $plan]) }}" onsubmit="return confirm('Remover a planta &quot;{{ $plan->name }}&quot;? O histórico de versões é mantido.')">
+                    <form method="POST" action="{{ route('admin.projects.plans.destroy', [$project, $plan]) }}" data-confirm="Remover a planta &quot;{{ $plan->name }}&quot;? O histórico de versões é mantido.">
                         @csrf @method('DELETE')
-                        <button type="submit" style="padding:0.375rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" title="Remover planta" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
+                        <button type="submit" class="hover-text-danger" style="padding:0.375rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" title="Remover planta">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                         </button>
                     </form>
@@ -709,7 +713,7 @@
     <div x-show="tab==='historico'" x-cloak class="space-y-4">
         @can('manage-projects')
         <div class="flex justify-end">
-            <button type="button" onclick="openModal('modal-historico')" class="btn-primary">
+            <button type="button" data-modal-open="modal-historico" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 Nova atualização
             </button>
@@ -777,7 +781,7 @@
                 </div>
             </div>
         </div>
-        <script>
+        <script @cspNonce>
         (function(){
             const projectId = {{ $project->id }};
             const myId = {{ auth()->id() }};
@@ -839,7 +843,7 @@
     </div>
 </div>
 
-<script>
+<script @cspNonce>
 function projectShow(id, initialTab){ return {
     tab: initialTab || 'geral',
     // Reflectir o separador no URL: os POST desta página (fotos, fases, despesas,
@@ -853,18 +857,19 @@ function projectShow(id, initialTab){ return {
         window.history.replaceState(window.history.state, '', url);
     },
 }; }
-function openModal(id){ var m=document.getElementById(id);if(!m)return;m.style.display='flex';var f=m.querySelector('select,input:not([type=hidden]):not([type=file]):not([type=checkbox]),textarea');if(f)setTimeout(function(){f.focus();},50); }
-function closeModal(id){ var m=document.getElementById(id);if(m)m.style.display='none'; }
-document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-overlay').forEach(function(m){m.style.display='none';});});
+// Abrir, fechar, clicar fora e Escape vivem em resources/js/app.js para
+// qualquer `[data-modal-overlay]`; esta página chama por `window.obra360`
+// apenas onde é código a decidir: editar uma despesa, começar uma versão nova,
+// reabrir o modal cujo formulário falhou a validação.
 </script>
 
 @can('manage-projects')
 {{-- Modal: Nova Fase --}}
-<div id="modal-fase" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-fase')">
+<div id="modal-fase" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
       <h2 class="modal-title" style="margin:0;">Nova fase</h2>
-      <button type="button" onclick="closeModal('modal-fase')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+      <button type="button" data-modal-close="modal-fase" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.phases.store', $project) }}" class="space-y-4">
       @csrf
@@ -891,7 +896,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <div><label class="field-label">Previsão de término</label><input type="date" name="expected_end_date" value="{{ old('expected_end_date') }}"><x-field-error field="expected_end_date" form="nova_fase" /></div>
       </div>
       <div><label class="field-label">Descrição da fase</label><textarea name="description" rows="2" style="resize:vertical;" placeholder="Descreva o que será feito nesta fase...">{{ old('description') }}</textarea><x-field-error field="description" form="nova_fase" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Adicionar fase</button><button type="button" onclick="closeModal('modal-fase')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Adicionar fase</button><button type="button" data-modal-close="modal-fase" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
@@ -899,11 +904,11 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
 
 @can('access-financial')
 {{-- Modal: Registrar Despesa --}}
-<div id="modal-despesa" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-despesa')">
+<div id="modal-despesa" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box" style="max-width:40rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
       <h2 class="modal-title" id="titulo-despesa" style="margin:0;">Registrar despesa</h2>
-      <button type="button" onclick="closeModal('modal-despesa')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+      <button type="button" data-modal-close="modal-despesa" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form id="form-despesa" method="POST" action="{{ route('admin.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
       @csrf
@@ -923,7 +928,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <div><label class="field-label">Comprovante</label><input type="file" name="receipt" style="padding:0.375rem;"><x-field-error field="receipt" :form="$expenseForm" /></div>
         <div><label class="field-label">Notas</label><input type="text" name="notes"><x-field-error field="notes" :form="$expenseForm" /></div>
       </div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary" id="despesa-submit">Registrar despesa</button><button type="button" onclick="fecharDespesa()" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary" id="despesa-submit">Registrar despesa</button><button type="button" data-modal-close="modal-despesa" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
@@ -931,11 +936,11 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
 
 @can('manage-projects')
 {{-- Modal: Enviar Documento --}}
-<div id="modal-documento" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-documento')">
+<div id="modal-documento" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
       <h2 class="modal-title" style="margin:0;">Enviar documento</h2>
-      <button type="button" onclick="closeModal('modal-documento')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+      <button type="button" data-modal-close="modal-documento" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.documents.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
       @csrf
@@ -952,7 +957,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <div><label class="field-label">Visibilidade</label><select name="visibility"><option value="interno" {{ old('visibility')==='interno'?'selected':'' }}>Interno (só equipe)</option><option value="cliente" {{ old('visibility')==='cliente'?'selected':'' }}>Cliente (visível no portal)</option></select><x-field-error field="visibility" form="novo_documento" /></div>
         <div><label class="field-label">Notas</label><input type="text" name="notes" value="{{ old('notes') }}"><x-field-error field="notes" form="novo_documento" /></div>
       </div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar documento</button><button type="button" onclick="closeModal('modal-documento')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar documento</button><button type="button" data-modal-close="modal-documento" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
@@ -960,11 +965,11 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
 
 @can('access-financial')
 {{-- Modal: Nova Cobrança --}}
-<div id="modal-pagamento" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-pagamento')">
+<div id="modal-pagamento" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box" style="max-width:40rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
       <h2 class="modal-title" style="margin:0;">Nova cobrança</h2>
-      <button type="button" onclick="closeModal('modal-pagamento')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+      <button type="button" data-modal-close="modal-pagamento" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.payments.store', $project) }}" class="space-y-4" x-data="{ type: @js(old('type', 'pix')) }">
       @csrf
@@ -995,7 +1000,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">Código copia-e-cola / QR</label><textarea name="pix_qrcode" rows="2" style="resize:vertical;" placeholder="00020126…">{{ old('pix_qrcode') }}</textarea><x-field-error field="pix_qrcode" form="nova_cobranca" /></div>
         <div class="sm:col-span-2"><label class="field-label">Descrição / observações</label><textarea name="description" rows="2" style="resize:vertical;">{{ old('description') }}</textarea><x-field-error field="description" form="nova_cobranca" /></div>
       </div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar cobrança</button><button type="button" onclick="closeModal('modal-pagamento')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar cobrança</button><button type="button" data-modal-close="modal-pagamento" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
@@ -1003,11 +1008,11 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
 
 @can('manage-projects')
 {{-- Modal: Nova Atualização --}}
-<div id="modal-historico" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-historico')">
+<div id="modal-historico" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
       <h2 class="modal-title" style="margin:0;">Nova atualização</h2>
-      <button type="button" onclick="closeModal('modal-historico')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+      <button type="button" data-modal-close="modal-historico" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.updates.store', $project) }}" class="space-y-4">
       @csrf
@@ -1017,7 +1022,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
 
       <div><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required><x-field-error field="title" form="nova_atualizacao" /></div>
       <div><label class="field-label">Descrição</label><textarea name="description" rows="3" style="resize:vertical;">{{ old('description') }}</textarea><x-field-error field="description" form="nova_atualizacao" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Registrar</button><button type="button" onclick="closeModal('modal-historico')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Registrar</button><button type="button" data-modal-close="modal-historico" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
@@ -1026,11 +1031,11 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
 @if($showPlansTab)
 @can('manage-projects')
 {{-- Modal: Nova Planta --}}
-<div id="modal-planta" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-planta')">
+<div id="modal-planta" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
       <h2 class="modal-title" style="margin:0;">Nova planta</h2>
-      <button type="button" onclick="closeModal('modal-planta')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+      <button type="button" data-modal-close="modal-planta" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.plans.store', $project) }}" class="space-y-4">
       @csrf
@@ -1046,18 +1051,18 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
       </div>
       <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="discipline" form="nova_planta" /></div>
       <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;" maxlength="1000">{{ old('notes') }}</textarea><x-field-error field="notes" form="nova_planta" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar planta</button><button type="button" onclick="closeModal('modal-planta')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar planta</button><button type="button" data-modal-close="modal-planta" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
 
 {{-- Modal: Nova Versão (o mesmo modal serve todas as plantas; o destino é
      definido em JS, como no modal das despesas) --}}
-<div id="modal-versao" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-versao')">
+<div id="modal-versao" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
       <h2 class="modal-title" style="margin:0;">Nova versão <span id="versao-numero" style="color:var(--muted-foreground)"></span></h2>
-      <button type="button" onclick="closeModal('modal-versao')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
+      <button type="button" data-modal-close="modal-versao" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:1rem;" id="versao-planta"></p>
     <form id="form-versao" method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -1089,12 +1094,12 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <x-field-error field="external_url" :form="$versionForm" />
       </div>
       <div><label class="field-label">Nota de alterações</label><textarea name="change_note" rows="2" style="resize:vertical;" maxlength="1000" placeholder="O que mudou em relação à versão anterior">{{ old('change_note') }}</textarea><x-field-error field="change_note" :form="$versionForm" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar versão</button><button type="button" onclick="closeModal('modal-versao')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar versão</button><button type="button" data-modal-close="modal-versao" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
 
-<script>
+<script @cspNonce>
 @php $versaoUrlTemplate = route('admin.projects.plans.versions.store', [$project, '__ID__']); @endphp
 const versaoStoreUrl = id => @json($versaoUrlTemplate).replace('__ID__', id);
 
@@ -1105,46 +1110,37 @@ function novaVersao(planId, planName, nextVersion) {
     document.getElementById('versao-form').value = 'nova_versao_' + planId;
     document.getElementById('versao-planta').textContent = planName;
     document.getElementById('versao-numero').textContent = 'v' + nextVersion;
-    openModal('modal-versao');
+    window.obra360.openModal('modal-versao');
 }
+
+// O botão "Nova versão" de cada planta traz os três valores em atributos; era
+// uma chamada a novaVersao() num handler de clique construído em Blade.
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-versao-planta]');
+    if (!btn) return;
+    novaVersao(Number(btn.dataset.versaoPlanta), btn.dataset.versaoNome, Number(btn.dataset.versaoNumero));
+});
 </script>
 @endcan
 @endif
 
 {{-- Lightbox --}}
 <div id="lightbox-overlay"
-     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;flex-direction:column;gap:1rem;"
-     onclick="closeLightbox()">
-    <button onclick="closeLightbox();event.stopPropagation()"
-            style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:white;cursor:pointer;padding:0.5rem;border-radius:0.5rem;opacity:0.7;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+    <button type="button" data-lightbox-close class="hover-opaque"
+            style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:white;cursor:pointer;padding:0.5rem;border-radius:0.5rem;opacity:0.7;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:1.5rem;height:1.5rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
-    <img id="lightbox-img" src="" alt="" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:0.5rem;box-shadow:0 25px 60px rgba(0,0,0,0.6);" onclick="event.stopPropagation()">
+    {{-- Sem `event.stopPropagation()`: o fecho só reage ao próprio fundo e ao
+         botão de fechar, portanto carregar na imagem já não fecha nada. --}}
+    <img id="lightbox-img" src="" alt="" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:0.5rem;box-shadow:0 25px 60px rgba(0,0,0,0.6);">
     <p id="lightbox-caption" style="color:rgba(255,255,255,0.7);font-size:0.875rem;text-align:center;max-width:60ch;"></p>
 </div>
 
-<script>
-function openLightbox(src, caption) {
-    const overlay = document.getElementById('lightbox-overlay');
-    const img = document.getElementById('lightbox-img');
-    const cap = document.getElementById('lightbox-caption');
-    if (!overlay || !img) return;
-    img.src = src;
-    img.alt = caption || '';
-    if (cap) cap.textContent = caption || '';
-    overlay.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-function closeLightbox() {
-    const overlay = document.getElementById('lightbox-overlay');
-    if (overlay) overlay.style.display = 'none';
-    document.body.style.overflow = '';
-}
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && document.getElementById('lightbox-overlay')?.style.display === 'flex') closeLightbox();
-});
-
+{{-- O lightbox (abrir, fechar, Escape) vive em resources/js/app.js: era o
+     mesmo código aqui e em client/projects/show.blade.php. A miniatura declara
+     `data-lightbox-src` e `data-lightbox-caption`. --}}
+<script @cspNonce>
 // ── Despesas: o mesmo modal serve para criar e editar (DESP-03) ──────────────
 @php
     // Atribuídos primeiro de propósito: @json divide a expressão pela vírgula,
@@ -1177,7 +1173,7 @@ function editarDespesa(despesa) {
 
     preencherDespesa(despesa);
 
-    openModal('modal-despesa');
+    window.obra360.openModal('modal-despesa');
 }
 
 function novaDespesa() {
@@ -1190,12 +1186,19 @@ function novaDespesa() {
     document.getElementById('titulo-despesa').textContent = 'Registrar despesa';
     form.spent_at.value = @json(now()->toDateString());
 
-    openModal('modal-despesa');
+    window.obra360.openModal('modal-despesa');
 }
 
-function fecharDespesa() {
-    closeModal('modal-despesa');
-}
+// Os botões da tabela de despesas. O de editar traz a linha inteira em JSON no
+// atributo, tal como trazia no `onclick` que aqui estava.
+document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-despesa-nova]')) {
+        novaDespesa();
+        return;
+    }
+    const editar = e.target.closest('[data-despesa-editar]');
+    if (editar) editarDespesa(JSON.parse(editar.dataset.despesaEditar));
+});
 </script>
 
 {{-- ─────────────────────────────────────────────────────────────────────────
@@ -1232,10 +1235,10 @@ function fecharDespesa() {
         : null;
 @endphp
 @if($errors->any() && $submittedForm !== null)
-<script>
+<script @cspNonce>
 document.addEventListener('DOMContentLoaded', function () {
 @if(isset($modaisPorMarcador[$submittedForm]))
-    openModal(@json($modaisPorMarcador[$submittedForm]));
+    window.obra360.openModal(@json($modaisPorMarcador[$submittedForm]));
 @elseif($submittedForm === 'despesa_nova')
     if (typeof novaDespesa === 'function') {
         novaDespesa();

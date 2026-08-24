@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Observers\AuditObserver;
 use App\Observers\MediaCleanupObserver;
 use App\Observers\ProjectUpdateObserver;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -39,6 +40,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // `@cspNonce` escreve o atributo `nonce="…"` de um bloco <script>.
+        //
+        // O valor vem do Vite porque é lá que o middleware SecurityHeaders o
+        // regista, e é o mesmo que o `@vite` aplica às etiquetas que gera —
+        // um único nonce por pedido, uma única fonte de verdade. Sem CSP
+        // activa (ou fora do grupo `web`) o valor é nulo e o atributo sai
+        // vazio, o que é inofensivo: um nonce vazio nunca casa com nada e a
+        // política também não está lá para o exigir.
+        Blade::directive(
+            'cspNonce',
+            fn () => "<?php echo 'nonce=\"'.e(\\Illuminate\\Support\\Facades\\Vite::cspNonce()).'\"'; ?>",
+        );
+
         ProjectUpdate::observe(ProjectUpdateObserver::class);
 
         // Audit trail (SEC-05). ProjectUpdate is deliberately absent: it is

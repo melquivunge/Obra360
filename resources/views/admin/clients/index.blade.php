@@ -5,7 +5,7 @@
             <h1 style="font-size:1.5rem;font-weight:700;">Clientes</h1>
             <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Gerencie os clientes da empresa.</p>
         </div>
-        <button type="button" onclick="openClientModal()" class="btn-primary">
+        <button type="button" data-modal-open="modal-create-client" class="btn-primary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Novo cliente
         </button>
@@ -63,16 +63,14 @@
                             <div class="flex gap-1 justify-end">
                                 <a href="{{ route('admin.clients.edit', $client) }}"
                                    style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);display:inline-flex;"
-                                   onmouseover="this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)'"
-                                   onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'" title="Editar">
+                                   class="hover-surface" title="Editar">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
                                 </a>
-                                <form method="POST" action="{{ route('admin.clients.destroy', $client) }}" onsubmit="return confirm('Excluir este cliente?')">
+                                <form method="POST" action="{{ route('admin.clients.destroy', $client) }}" data-confirm="Excluir este cliente?">
                                     @csrf @method('DELETE')
                                     <button type="submit"
                                             style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;display:inline-flex;"
-                                            onmouseover="this.style.backgroundColor='oklch(0.62 0.21 25 / 0.15)';this.style.color='var(--destructive)'"
-                                            onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'" title="Excluir">
+                                            class="hover-danger" title="Excluir">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                                     </button>
                                 </form>
@@ -93,16 +91,13 @@
 </div>
 
 {{-- Create Client Modal --}}
-<div id="modal-create-client"
-     style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;background:rgb(0 0 0 / 0.7);padding:1rem;"
-     onclick="if(event.target===this)closeClientModal()">
+<div id="modal-create-client" data-modal-overlay
+     style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;background:rgb(0 0 0 / 0.7);padding:1rem;">
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.875rem;width:100%;max-width:38rem;max-height:90vh;overflow-y:auto;padding:1.5rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
             <h2 style="font-size:1.125rem;font-weight:700;margin:0;">Novo cliente</h2>
-            <button type="button" onclick="closeClientModal()"
+            <button type="button" data-modal-close="modal-create-client" class="hover-surface"
                     style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"
-                    onmouseover="this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)'"
-                    onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'"
                     aria-label="Fechar">
                 <svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
             </button>
@@ -177,26 +172,22 @@
 
             <div style="display:flex;gap:0.5rem;padding-top:0.25rem;">
                 <button type="submit" class="btn-primary">Criar cliente</button>
-                <button type="button" onclick="closeClientModal()" class="btn-secondary">Cancelar</button>
+                <button type="button" data-modal-close="modal-create-client" class="btn-secondary">Cancelar</button>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-function openClientModal() {
-    var m = document.getElementById('modal-create-client');
-    m.style.display = 'flex';
-    setTimeout(function(){ m.querySelector('input[name="name"]').focus(); }, 50);
-}
-function closeClientModal() {
-    document.getElementById('modal-create-client').style.display = 'none';
-}
-document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape') closeClientModal();
-});
+{{-- Abrir, fechar, clicar fora e a tecla Escape são tratados por
+     resources/js/app.js para qualquer `[data-modal-overlay]`. Aqui fica só o
+     caso próprio desta página: um erro de validação recarregou a página e o
+     formulário que falhou vivia dentro do modal — sem isto a mensagem existia
+     por detrás de um botão fechado. --}}
 @if(old('_form') === 'create_client')
-document.addEventListener('DOMContentLoaded', function(){ openClientModal(); });
-@endif
+<script @cspNonce>
+document.addEventListener('DOMContentLoaded', function () {
+    window.obra360.openModal('modal-create-client');
+});
 </script>
+@endif
 </x-admin-layout>

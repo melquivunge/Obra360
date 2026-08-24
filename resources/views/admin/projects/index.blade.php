@@ -6,7 +6,7 @@
             <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Cadastre e acompanhe todas as obras e projetos.</p>
         </div>
         @can('manage-projects')
-        <button type="button" onclick="openModal('modal-nova-obra')" class="btn-primary">
+        <button type="button" data-modal-open="modal-nova-obra" class="btn-primary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
             Nova obra ou projeto
         </button>
@@ -21,19 +21,19 @@
 
     {{-- Filters --}}
     <form method="GET" action="{{ route('admin.projects.index') }}" class="flex flex-wrap gap-3">
-        <select name="client_id" style="max-width:16rem;" onchange="this.form.submit()">
+        <select name="client_id" style="max-width:16rem;" data-auto-submit>
             <option value="">Todos os clientes</option>
             @foreach($clients as $c)
             <option value="{{ $c->id }}" {{ request('client_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
             @endforeach
         </select>
-        <select name="type" style="max-width:14rem;" onchange="this.form.submit()">
+        <select name="type" style="max-width:14rem;" data-auto-submit>
             <option value="">Todos os tipos</option>
             @foreach(\App\Models\Project::TYPES as $k => $v)
             <option value="{{ $k }}" {{ request('type') === $k ? 'selected' : '' }}>{{ $v }}</option>
             @endforeach
         </select>
-        <select name="status" style="max-width:14rem;" onchange="this.form.submit()">
+        <select name="status" style="max-width:14rem;" data-auto-submit>
             <option value="">Todos os status</option>
             @foreach(\App\Models\Project::STATUSES as $k => $v)
             <option value="{{ $k }}" {{ request('status') === $k ? 'selected' : '' }}>{{ $v }}</option>
@@ -47,9 +47,7 @@
     {{-- Cards --}}
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         @forelse($projects as $project)
-        <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;display:flex;flex-direction:column;transition:border-color 0.15s;"
-             onmouseover="this.style.borderColor='oklch(0.74 0.135 78 / 0.4)'"
-             onmouseout="this.style.borderColor='var(--border)'">
+        <div class="hover-border-primary-soft" style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;display:flex;flex-direction:column;transition:border-color 0.15s;">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex items-start gap-3 min-w-0">
                     {{-- Capa: miniatura discreta. Sem capa própria — ou com o ficheiro em
@@ -92,15 +90,13 @@
                 </a>
                 <div class="flex gap-1">
                     <a href="{{ route('admin.projects.edit', $project) }}"
-                       style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);display:inline-flex;"
-                       onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''">
+                       class="hover-surface-bg"
+                       style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);display:inline-flex;">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
                     </a>
-                    <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projeto' }} e todos os dados?')">
+                    <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" data-confirm="Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projeto' }} e todos os dados?">
                         @csrf @method('DELETE')
-                        <button type="submit" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;display:inline-flex;"
-                                onmouseover="this.style.backgroundColor='oklch(0.62 0.21 25 / 0.15)';this.style.color='var(--destructive)'"
-                                onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'">
+                        <button type="submit" class="hover-danger" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;display:inline-flex;">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                         </button>
                     </form>
@@ -119,11 +115,11 @@
 
 {{-- Modal: Nova Obra --}}
 @can('manage-projects')
-<div id="modal-nova-obra" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-nova-obra')">
+<div id="modal-nova-obra" class="modal-overlay" data-modal-overlay style="display:none;">
     <div class="modal-box" style="max-width:42rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
             <h2 class="modal-title" style="margin:0;">Nova obra ou projeto</h2>
-            <button type="button" onclick="closeModal('modal-nova-obra')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)'" onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'" aria-label="Fechar">
+            <button type="button" data-modal-close="modal-nova-obra" class="hover-surface" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" aria-label="Fechar">
                 <svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -213,26 +209,20 @@
             </div>
             <div style="display:flex;gap:0.5rem;padding-top:0.25rem;">
                 <button type="submit" class="btn-primary">Criar</button>
-                <button type="button" onclick="closeModal('modal-nova-obra')" class="btn-secondary">Cancelar</button>
+                <button type="button" data-modal-close="modal-nova-obra" class="btn-secondary">Cancelar</button>
             </div>
         </form>
     </div>
 </div>
 @endcan
 
-<script>
-function openModal(id) {
-    var m = document.getElementById(id);
-    m.style.display = 'flex';
-    var first = m.querySelector('select,input:not([type=hidden]):not([type=file]):not([type=checkbox]),textarea');
-    if (first) setTimeout(function(){ first.focus(); }, 50);
-}
-function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
-}
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') document.querySelectorAll('.modal-overlay').forEach(function(m){ m.style.display='none'; }); });
+{{-- Abrir, fechar, clicar fora e Escape estão em resources/js/app.js. Sobra a
+     reabertura do modal quando a validação falhou. --}}
 @if(old('_form') === 'nova_obra')
-document.addEventListener('DOMContentLoaded', function(){ openModal('modal-nova-obra'); });
-@endif
+<script @cspNonce>
+document.addEventListener('DOMContentLoaded', function () {
+    window.obra360.openModal('modal-nova-obra');
+});
 </script>
+@endif
 </x-admin-layout>

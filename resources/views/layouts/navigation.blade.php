@@ -47,9 +47,10 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
 
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
+                            {{-- Sair é um POST desenhado como item de menu. O
+                                 `onclick` que fazia a submissão era script em
+                                 linha; o marcador é tratado em app.js. --}}
+                            <x-dropdown-link :href="route('logout')" data-submit-closest>
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
@@ -93,9 +94,7 @@
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
 
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
+                    <x-responsive-nav-link :href="route('logout')" data-submit-closest>
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
