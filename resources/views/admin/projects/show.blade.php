@@ -544,6 +544,8 @@
     @if($showPlansTab)
     <div x-show="tab==='plantas'" x-cloak class="space-y-4">
 
+        <x-revision-counter :project="$project" />
+
         @if($canManagePlans)
         <div class="flex justify-end">
             <button type="button" data-modal-open="modal-planta" class="btn-primary">

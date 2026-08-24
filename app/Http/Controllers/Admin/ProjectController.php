@@ -82,6 +82,7 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'expected_end_date' => 'nullable|date',
             'budget' => 'nullable|numeric|min:0',
+            'revisions_included' => 'nullable|integer|min:0|max:999',
             'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
             'type' => 'required|in:'.implode(',', array_keys(Project::TYPES)),
             // OBRA-01: a origem é opcional, mas o servidor é quem decide se ela
@@ -227,6 +228,7 @@ class ProjectController extends Controller
             'start_date' => 'nullable|date',
             'expected_end_date' => 'nullable|date',
             'budget' => 'nullable|numeric|min:0',
+            'revisions_included' => 'nullable|integer|min:0|max:999',
             'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
             'type' => 'required|in:'.implode(',', array_keys(Project::TYPES)),
             // OBRA-01: a mesma regra da criação, mais a que só existe aqui —
