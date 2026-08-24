@@ -21,7 +21,7 @@
         shadow-intensity="1"
         style="width:100%;height:22rem;background-color:var(--surface, #1a1a1a);border:1px solid var(--border, #333);border-radius:0.5rem;">
         <p style="padding:1rem;font-size:0.8125rem;color:var(--muted-foreground);">
-            A carregar o modelo 3D… Se não aparecer, o seu navegador pode não suportar WebGL — o ficheiro continua disponível para baixar.
+            Carregando o modelo 3D… Se não aparecer, o seu navegador pode não suportar WebGL — o arquivo continua disponível para baixar.
         </p>
     </model-viewer>
     <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.375rem;">
