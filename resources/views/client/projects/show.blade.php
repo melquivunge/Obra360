@@ -461,6 +461,12 @@
                     Estão aqui as versões que foram enviadas para você. Aprove a versão atual quando ela estiver conforme.
                 </p>
 
+                {{-- O cliente vê o mesmo contador que a equipe: é isso que evita
+                     a discussão sobre quantas alterações já foram feitas. --}}
+                <div style="margin-bottom:1.25rem;">
+                    <x-revision-counter :project="$project" />
+                </div>
+
                 @if(session('success'))
                 <div style="background-color:oklch(0.65 0.16 145 / 0.12);border:1px solid oklch(0.65 0.16 145 / 0.35);border-radius:0.5rem;padding:0.75rem 0.875rem;margin-bottom:1rem;font-size:0.875rem;color:oklch(0.65 0.16 145);">
                     {{ session('success') }}
@@ -541,6 +547,10 @@
                             </div>
                         </div>
 
+                        <x-plan-comments :version="$current"
+                                         :action="route('portal.projects.plans.versions.comments.store', [$project, $plan, $current])"
+                                         :form="'comentario_versao_'.$current->id" />
+
                         {{-- PORT-02: as versões anteriores continuam disponíveis. --}}
                         @if($history->isNotEmpty())
                         <div style="margin-top:0.875rem;padding-top:0.875rem;border-top:1px solid var(--color-border);">
@@ -562,6 +572,10 @@
                                     <span class="ml-auto flex flex-wrap items-center gap-2">
                                         @include('client.projects.partials.plan-version-links', ['project' => $project, 'plan' => $plan, 'version' => $old])
                                     </span>
+
+                                    <x-plan-comments :version="$old"
+                                                     :action="route('portal.projects.plans.versions.comments.store', [$project, $plan, $old])"
+                                                     :form="'comentario_versao_'.$old->id" />
                                 </div>
                                 @endforeach
                             </div>

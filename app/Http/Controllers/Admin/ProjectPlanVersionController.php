@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use App\Models\PlanComment;
 use App\Models\PlanVersion;
 use App\Models\Project;
 use App\Models\ProjectUpdate;
@@ -119,6 +120,28 @@ class ProjectPlanVersionController extends Controller
      * liga directamente ao endereço. Reencaminhar para ele a partir de uma rota
      * autenticada faria da aplicação um redireccionador aberto.
      */
+    /**
+     * O comentário da equipa, no mesmo fio do cliente. Fica preso à versão,
+     * portanto continua legível quando ela for substituída — um pedido feito
+     * sobre a v2 lê-se na v2, e não solto numa conversa de meses.
+     */
+    public function storeComment(Request $request, Project $project, Plan $plan, PlanVersion $version)
+    {
+        $this->authorizeProjectAccess($project);
+        $this->assertBelongsToProject($project, $plan);
+        abort_unless((int) $version->plan_id === (int) $plan->id, 404);
+
+        $data = $request->validate(['body' => 'required|string|max:2000']);
+
+        PlanComment::create([
+            'plan_version_id' => $version->id,
+            'user_id' => auth()->id(),
+            'body' => $data['body'],
+        ]);
+
+        return back()->with('success', 'Comentário adicionado.');
+    }
+
     public function download(Project $project, Plan $plan, PlanVersion $version)
     {
         // Leitura, e não escrita: o gestor de uma obra descarrega também as

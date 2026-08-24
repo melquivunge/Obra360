@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'client_id', 'manager_id', 'name', 'code', 'type', 'source_project_id', 'description', 'location',
-    'start_date', 'expected_end_date', 'completed_at', 'budget', 'status',
+    'start_date', 'expected_end_date', 'completed_at', 'budget', 'revisions_included', 'status',
     'progress', 'show_financials', 'cover_image_path', 'notes',
 ])]
 class Project extends Model
@@ -71,6 +71,7 @@ class Project extends Model
             'start_date' => 'date',
             'expected_end_date' => 'date',
             'completed_at' => 'datetime',
+            'revisions_included' => 'integer',
         ];
     }
 
@@ -192,6 +193,54 @@ class Project extends Model
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * Quantas revisões o trabalho já consumiu.
+     *
+     * Conta apenas as versões **enviadas ao cliente**, e só a partir da
+     * segunda de cada planta: a primeira entrega não é uma revisão, e uma
+     * versão que o estúdio criou e descartou sem mostrar não gastou nada a
+     * ninguém. É por planta e somado, porque é assim que o trabalho acontece —
+     * cada desenho tem o seu vaivém.
+     */
+    public function revisionsUsed(): int
+    {
+        return PlanVersion::query()
+            ->whereIn('plan_id', $this->plans()->withTrashed()->reorder()->select('id'))
+            ->whereNotNull('sent_to_client_at')
+            ->reorder()
+            ->selectRaw('plan_id, count(*) as total')
+            ->groupBy('plan_id')
+            ->pluck('total')
+            ->map(fn (int $total): int => max($total - 1, 0))
+            ->sum();
+    }
+
+    /** Nulo quando o contrato não fixou limite — que não é o mesmo que zero. */
+    public function revisionsRemaining(): ?int
+    {
+        return $this->revisions_included === null
+            ? null
+            : $this->revisions_included - $this->revisionsUsed();
+    }
+
+    public function hasRevisionLimit(): bool
+    {
+        return $this->revisions_included !== null;
+    }
+
+    /**
+     * O limite foi ultrapassado. Isto **nunca** impede um envio: o estúdio
+     * pode decidir oferecer uma revisão, e um sistema que trava o trabalho
+     * acaba contornado por fora. Serve para o número estar à vista dos dois
+     * lados antes da discussão acontecer.
+     */
+    public function revisionLimitExceeded(): bool
+    {
+        $remaining = $this->revisionsRemaining();
+
+        return $remaining !== null && $remaining < 0;
     }
 
     /** OBRA-01: só um projecto de arquitectura ou de design pode ser origem. */

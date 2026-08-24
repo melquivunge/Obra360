@@ -81,6 +81,12 @@
                     <label class="field-label">Orçamento ({{ currency_symbol() }})</label>
                     <input type="number" step="0.01" min="0" name="budget" value="{{ old('budget', $project->budget) }}">
                 </div>
+                <div>
+                    <label class="field-label">Revisões incluídas no contrato</label>
+                    <input type="number" min="0" max="999" name="revisions_included" value="{{ old('revisions_included', $project->revisions_included) }}" placeholder="Sem limite">
+                    <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">Deixe vazio se o contrato não fixa limite. Vazio não é o mesmo que zero.</p>
+                    <x-field-error field="revisions_included" :form="$formulario ?? null" />
+                </div>
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>

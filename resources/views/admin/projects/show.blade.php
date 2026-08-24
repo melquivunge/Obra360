@@ -544,6 +544,8 @@
     @if($showPlansTab)
     <div x-show="tab==='plantas'" x-cloak class="space-y-4">
 
+        <x-revision-counter :project="$project" />
+
         @if($canManagePlans)
         <div class="flex justify-end">
             <button type="button" data-modal-open="modal-planta" class="btn-primary">
@@ -679,6 +681,10 @@
                             <a href="{{ route('admin.projects.plans.versions.download', [$project, $plan, $version]) }}" style="color:var(--primary);">Baixar</a>
                         @endif
                     </span>
+
+                    <x-plan-comments :version="$version"
+                                     :action="route('admin.projects.plans.versions.comments.store', [$project, $plan, $version])"
+                                     :form="'comentario_versao_'.$version->id" />
                 </div>
                 @endforeach
             </div>
