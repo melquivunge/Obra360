@@ -130,6 +130,8 @@ Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.
 
         // Phases (nested under project)
         Route::post('/obras/{project}/fases', [ProjectPhaseController::class, 'store'])->name('projects.phases.store');
+        // Literal depois do segmento fixo `fases`, nunca no lugar de {phase}.
+        Route::post('/obras/{project}/fases/modelo', [ProjectPhaseController::class, 'applyTemplate'])->name('projects.phases.template');
         Route::put('/obras/{project}/fases/{phase}', [ProjectPhaseController::class, 'update'])->name('projects.phases.update');
         Route::delete('/obras/{project}/fases/{phase}', [ProjectPhaseController::class, 'destroy'])->name('projects.phases.destroy');
 

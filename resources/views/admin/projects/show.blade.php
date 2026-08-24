@@ -203,6 +203,23 @@
     {{-- TAB: Fases --}}
     <div x-show="tab==='fases'" x-cloak class="space-y-4">
         @can('manage-projects')
+        {{-- O modelo de etapas só aparece enquanto não houver fase nenhuma:
+             depois de o trabalho começar, criar cinco de uma vez atrapalha. --}}
+        @if(\App\Support\PhaseTemplates::availableFor($project))
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:0.875rem 1rem;border:1px solid var(--border);border-radius:0.5rem;background-color:var(--surface);">
+            <div>
+                <p style="font-size:0.875rem;font-weight:600;">Começar pelas etapas habituais deste tipo de trabalho</p>
+                <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.125rem;">
+                    Cria {{ count(\App\Support\PhaseTemplates::for($project->type)) }} etapas em 0%. São um ponto de partida — pode editar, reordenar ou excluir qualquer uma.
+                </p>
+            </div>
+            <form method="POST" action="{{ route('admin.projects.phases.template', $project) }}">
+                @csrf
+                <button type="submit" class="btn-secondary" style="white-space:nowrap;">Criar etapas</button>
+            </form>
+        </div>
+        @endif
+
         <div class="flex justify-end">
             <button type="button" data-modal-open="modal-fase" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
