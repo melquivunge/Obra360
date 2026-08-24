@@ -29,6 +29,15 @@
             @empty
             <p style="padding:1.5rem;font-size:0.875rem;color:var(--muted-foreground);">Nenhuma obra ou projeto cadastrado.</p>
             @endforelse
+
+            {{-- A lista é paginada: as conversas mais recentes vêm primeiro e as
+                 restantes ficam a uma página de distância, em vez de virem todas
+                 na mesma resposta. --}}
+            @if($projects->hasPages())
+            <div style="padding:0.75rem 1rem;border-top:1px solid var(--border);flex-shrink:0;">
+                {{ $projects->onEachSide(0)->links() }}
+            </div>
+            @endif
         </div>
 
         {{-- PAINEL: Chat --}}

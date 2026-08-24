@@ -344,6 +344,10 @@
             </p>
             @endforelse
         </div>
+        {{-- A galeria é paginada: os filtros e o separador viajam nos links. --}}
+        @if($photos->hasPages())
+        <div>{{ $photos->links() }}</div>
+        @endif
     </div>
 
     {{-- TAB: Despesas --}}
@@ -367,7 +371,7 @@
                 <table class="data-table">
                     <thead style="background-color:var(--surface)"><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Fornecedor</th><th style="text-align:right">Valor</th><th></th></tr></thead>
                     <tbody>
-                        @forelse($project->expenses as $exp)
+                        @forelse($expenses as $exp)
                         <tr>
                             <td style="color:var(--muted-foreground);white-space:nowrap;">{{ $exp->spent_at?->format('d/m/Y') }}</td>
                             <td>{{ \App\Models\Expense::CATEGORIES[$exp->category]??$exp->category }}</td>
@@ -408,15 +412,16 @@
                 </table>
             </div>
         </div>
+        @if($expenses->hasPages())
+        <div>{{ $expenses->links() }}</div>
+        @endif
     </div>
 
     {{-- TAB: Pagamentos --}}
     <div x-show="tab==='pagamentos'" x-cloak class="space-y-4">
         <div class="flex items-center justify-between gap-3">
-            @php
-                $totalPaid    = $payments->where('status','paid')->sum('amount');
-                $totalPending = $payments->where('status','pending')->sum('amount');
-            @endphp
+            {{-- Os totais vêm somados em SQL, do controlador: a lista abaixo é
+                 paginada e somar só a página visível daria o número errado. --}}
             <div class="flex gap-3 flex-wrap">
                 <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:0.75rem 1rem;">
                     <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">Pendente</p>
@@ -486,6 +491,9 @@
                 </table>
             </div>
         </div>
+        @if($payments->hasPages())
+        <div>{{ $payments->links() }}</div>
+        @endif
     </div>
 
     {{-- TAB: Documentos --}}
@@ -499,7 +507,7 @@
         </div>
         @endcan
         <div class="space-y-2">
-            @forelse($project->documents as $doc)
+            @forelse($documents as $doc)
             <div class="flex items-center gap-3 p-3 rounded-lg" style="background-color:var(--card);border:1px solid var(--border);">
                 <svg class="w-5 h-5 shrink-0" style="color:var(--primary)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
                 <div class="min-w-0 flex-1">
@@ -525,6 +533,9 @@
             <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhum documento enviado.</p>
             @endforelse
         </div>
+        @if($documents->hasPages())
+        <div>{{ $documents->links() }}</div>
+        @endif
     </div>
 
     {{-- TAB: Plantas --}}
@@ -705,7 +716,7 @@
         </div>
         @endcan
         <div class="space-y-2">
-            @forelse($project->updates as $upd)
+            @forelse($updates as $upd)
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
                 <div class="flex items-center justify-between" style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.25rem;">
                     <span class="badge badge-planejada">{{ \App\Models\ProjectUpdate::TYPES[$upd->type]??$upd->type }}</span>
@@ -718,6 +729,9 @@
             <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma atualização registrada.</p>
             @endforelse
         </div>
+        @if($updates->hasPages())
+        <div>{{ $updates->links() }}</div>
+        @endif
     </div>
 
     {{-- TAB: Mensagens --}}
@@ -728,7 +742,19 @@
                 <p style="font-size:0.75rem;color:var(--muted-foreground)">Conversa em tempo real</p>
             </div>
             <div id="msg-list" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;">
-                @forelse($project->messages as $msg)
+                {{-- A conversa carrega as mensagens mais recentes; as anteriores
+                     ficam a um clique, na «página seguinte» deste paginador. --}}
+                @if($messages->hasMorePages())
+                <div style="text-align:center;">
+                    <a href="{{ $messages->nextPageUrl() }}" style="font-size:0.8125rem;color:var(--primary);">Ver mensagens anteriores</a>
+                </div>
+                @endif
+                @if($messages->currentPage() > 1)
+                <div style="text-align:center;">
+                    <a href="{{ $messages->previousPageUrl() }}" style="font-size:0.8125rem;color:var(--muted-foreground);">Voltar às mensagens recentes</a>
+                </div>
+                @endif
+                @forelse($messages as $msg)
                 @php $mine = $msg->user_id === auth()->id(); @endphp
                 <div style="display:flex;justify-content:{{ $mine?'flex-end':'flex-start' }};">
                     <div style="max-width:80%;border-radius:1rem;padding:0.625rem 0.875rem;font-size:0.875rem;background:{{ $mine?'var(--primary)':'var(--surface)' }};color:{{ $mine?'var(--primary-foreground)':'var(--foreground)' }};">
