@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ProjectPhase;
 use App\Models\ProjectUpdate;
+use App\Support\PhaseTemplates;
 use App\Traits\AuthorizesProjectAccess;
 use Illuminate\Http\Request;
 
@@ -32,6 +33,42 @@ class ProjectPhaseController extends Controller
         ProjectUpdate::log($project->id, 'Nova fase: '.$data['name'], 'fase');
 
         return back()->with('success', 'Fase adicionada.');
+    }
+
+    /**
+     * Aplica o modelo de etapas do tipo do projeto.
+     *
+     * É uma acção explícita e não algo que acontece ao criar o projeto: ver
+     * cinco fases aparecerem sem as pedir é intrusivo, e o estúdio pode ter o
+     * seu próprio faseamento. Só se oferece a um projeto ainda sem fases.
+     *
+     * As etapas nascem em 0%, portanto o progresso derivado continua em zero —
+     * e o modo manual, se estiver ligado, continua a mandar (FASE-04).
+     */
+    public function applyTemplate(Project $project)
+    {
+        $this->authorizeProjectAccess($project);
+
+        abort_unless(PhaseTemplates::availableFor($project), 404);
+
+        $ordem = 0;
+
+        foreach (PhaseTemplates::for($project->type) as $etapa) {
+            ProjectPhase::create([
+                'project_id' => $project->id,
+                'name' => $etapa['name'],
+                'description' => $etapa['description'],
+                'status' => 'pendente',
+                'percentage' => 0,
+                'sort_order' => $ordem++,
+            ]);
+        }
+
+        // Uma entrada e não cinco: o histórico é visível ao cliente, e cinco
+        // linhas «Nova fase» no mesmo minuto são ruído, não informação.
+        ProjectUpdate::log($project->id, 'Etapas de entrega definidas', 'fase');
+
+        return back()->with('success', 'Etapas de entrega criadas. Ajuste as que precisar.');
     }
 
     public function update(Request $request, Project $project, ProjectPhase $phase)
