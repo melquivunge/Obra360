@@ -370,6 +370,8 @@
 
     {{-- TAB: Despesas --}}
     <div x-show="tab==='despesas'" x-cloak class="space-y-4">
+
+        <x-budget-plan :project="$project" :can-edit="auth()->user()->can('access-financial')" />
         @can('access-financial')
         <div class="flex justify-end">
             <button type="button" data-despesa-nova class="btn-primary">
