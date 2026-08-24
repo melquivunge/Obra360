@@ -18,14 +18,14 @@ class AuditLog extends Model
         'created' => 'Criação',
         'updated' => 'Alteração',
         'deleted' => 'Remoção',
-        'restored' => 'Restauro',
+        'restored' => 'Restauração',
     ];
 
     /** Human labels for the models we audit. */
     public const LABELS = [
         Project::class => 'Obra',
         Client::class => 'Cliente',
-        User::class => 'Utilizador',
+        User::class => 'Usuário',
         Expense::class => 'Despesa',
         Payment::class => 'Pagamento',
         Photo::class => 'Foto',

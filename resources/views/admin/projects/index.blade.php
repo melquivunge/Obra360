@@ -2,13 +2,13 @@
 <div class="space-y-6 p-6 md:p-8">
     <div class="flex items-center justify-between">
         <div>
-            <h1 style="font-size:1.5rem;font-weight:700;">Obras e Projectos</h1>
-            <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Cadastre e acompanhe todas as obras e projectos.</p>
+            <h1 style="font-size:1.5rem;font-weight:700;">Obras e Projetos</h1>
+            <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Cadastre e acompanhe todas as obras e projetos.</p>
         </div>
         @can('manage-projects')
         <button type="button" onclick="openModal('modal-nova-obra')" class="btn-primary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            Nova obra ou projecto
+            Nova obra ou projeto
         </button>
         @endcan
     </div>
@@ -96,7 +96,7 @@
                        onmouseover="this.style.backgroundColor='var(--surface)'" onmouseout="this.style.backgroundColor=''">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
                     </a>
-                    <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projecto' }} e todos os dados?')">
+                    <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projeto' }} e todos os dados?')">
                         @csrf @method('DELETE')
                         <button type="submit" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;display:inline-flex;"
                                 onmouseover="this.style.backgroundColor='oklch(0.62 0.21 25 / 0.15)';this.style.color='var(--destructive)'"
@@ -109,7 +109,7 @@
         </div>
         @empty
         <div class="md:col-span-2 xl:col-span-3" style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:3rem;text-align:center;color:var(--muted-foreground);">
-            Nenhuma obra ou projecto encontrado.
+            Nenhuma obra ou projeto encontrado.
         </div>
         @endforelse
     </div>
@@ -122,7 +122,7 @@
 <div id="modal-nova-obra" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal('modal-nova-obra')">
     <div class="modal-box" style="max-width:42rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-            <h2 class="modal-title" style="margin:0;">Nova obra ou projecto</h2>
+            <h2 class="modal-title" style="margin:0;">Nova obra ou projeto</h2>
             <button type="button" onclick="closeModal('modal-nova-obra')" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);" onmouseover="this.style.backgroundColor='var(--surface)';this.style.color='var(--foreground)'" onmouseout="this.style.backgroundColor='';this.style.color='var(--muted-foreground)'" aria-label="Fechar">
                 <svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
             </button>

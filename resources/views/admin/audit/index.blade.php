@@ -3,7 +3,7 @@
     <div>
         <h1 style="font-size:1.5rem;font-weight:700;">Auditoria</h1>
         <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">
-            Registo de criações, alterações e remoções no sistema.
+            Registro de criações, alterações e remoções no sistema.
         </p>
     </div>
 
@@ -21,7 +21,7 @@
             @endforeach
         </select>
         <select name="user_id" style="max-width:14rem;" onchange="this.form.submit()">
-            <option value="">Todos os utilizadores</option>
+            <option value="">Todos os usuários</option>
             @foreach($users as $u)
                 <option value="{{ $u->id }}" {{ (int) request('user_id') === $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
             @endforeach
@@ -32,7 +32,7 @@
     </form>
 
     @if($logs->isEmpty())
-        <p style="color:var(--muted-foreground);font-style:italic;font-size:0.875rem;">Nenhum registo encontrado.</p>
+        <p style="color:var(--muted-foreground);font-style:italic;font-size:0.875rem;">Nenhum registro encontrado.</p>
     @else
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;overflow:hidden;">
         <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
@@ -42,7 +42,7 @@
                     <th style="padding:0.625rem 0.75rem;text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-foreground);">Quem</th>
                     <th style="padding:0.625rem 0.75rem;text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-foreground);">Ação</th>
                     <th style="padding:0.625rem 0.75rem;text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-foreground);">Tipo</th>
-                    <th style="padding:0.625rem 0.75rem;text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-foreground);">Registo</th>
+                    <th style="padding:0.625rem 0.75rem;text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-foreground);">Registro</th>
                     <th style="padding:0.625rem 0.75rem;text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted-foreground);">IP</th>
                 </tr>
             </thead>

@@ -24,7 +24,7 @@
 
 <h3 class="rep-h3">Últimas atualizações</h3>
 @if($updates->isEmpty())
-    <p class="rep-empty">Sem atualizações registadas.</p>
+    <p class="rep-empty">Sem atualizações registradas.</p>
 @else
     <table class="rep-table">
         <thead><tr><th>Data</th><th>Título</th><th>Por</th></tr></thead>

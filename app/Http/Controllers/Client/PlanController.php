@@ -100,7 +100,7 @@ class PlanController extends Controller
         // sempre, mas o que se aprova é o desenho que está em vigor.
         if ($version->isSuperseded()) {
             return $this->backToPlans()->withErrors([
-                'plan_version' => 'Esta versão foi substituída por uma revisão mais recente. Só a versão corrente pode ser aprovada.',
+                'plan_version' => 'Esta versão foi substituída por uma revisão mais recente. Só a versão atual pode ser aprovada.',
             ]);
         }
 
@@ -133,7 +133,7 @@ class PlanController extends Controller
         if (! $approved) {
             return $this->backToPlans()->with(
                 'success',
-                "A versão {$version->label()} da planta «{$plan->name}» já estava aprovada.",
+                "A versão {$version->label()} da planta \"{$plan->name}\" já estava aprovada.",
             );
         }
 

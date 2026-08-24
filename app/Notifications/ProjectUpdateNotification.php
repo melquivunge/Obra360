@@ -70,9 +70,9 @@ class ProjectUpdateNotification extends Notification implements ShouldQueue
             ? "\n".Str::limit(strip_tags($this->update->description), 120)
             : '';
 
-        return "🏗️ *{$company}* — Actualização na obra *{$project->name}*\n\n"
+        return "🏗️ *{$company}* — Atualização na obra *{$project->name}*\n\n"
             ."*{$this->update->title}*{$description}\n\n"
-            .'Aceda ao portal para ver todos os detalhes.';
+            .'Acesse o portal para ver todos os detalhes.';
     }
 
     public function toWebPush(mixed $notifiable): array

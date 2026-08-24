@@ -34,7 +34,7 @@
                     <tr>
                         <th>Nome</th>
                         <th>Documento</th>
-                        <th>Contacto</th>
+                        <th>Contato</th>
                         <th>Cidade</th>
                         <th>Status</th>
                         <th style="text-align:right;">Ações</th>
@@ -161,7 +161,7 @@
                     Acesso ao portal
                     <span style="font-weight:400;color:var(--muted-foreground);margin-left:0.25rem;">— opcional</span>
                 </p>
-                <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0 0 0.875rem;">Preencha a senha para criar automaticamente um utilizador de acesso para este cliente.</p>
+                <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0 0 0.875rem;">Preencha a senha para criar automaticamente um usuário de acesso para este cliente.</p>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label class="field-label">Senha</label>

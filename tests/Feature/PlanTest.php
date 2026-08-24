@@ -216,7 +216,7 @@ class PlanTest extends TestCase
         $this->actingAs($this->manager)
             ->get(route('admin.projects.show', $this->project))
             ->assertOk()
-            ->assertSee('Limite deste servidor: '.PlanVersion::maxUploadLabel().' por ficheiro.', false);
+            ->assertSee('Limite deste servidor: '.PlanVersion::maxUploadLabel().' por arquivo.', false);
     }
 
     /**

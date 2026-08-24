@@ -19,7 +19,7 @@
         </div>
 
         <div>
-            <label for="email" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Email</label>
+            <label for="email" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">E-mail</label>
             <input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" required autocomplete="username"
                    style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
                    onfocus="this.style.borderColor='var(--color-primary)'"
@@ -31,15 +31,15 @@
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div style="margin-top:0.5rem;">
                     <p style="font-size:0.8125rem;color:var(--color-muted-foreground);">
-                        O teu endereço de email não está verificado.
+                        Seu endereço de e-mail não está verificado.
                         <button form="send-verification"
                                 style="background:none;border:none;padding:0;font-size:0.8125rem;color:var(--color-primary);cursor:pointer;text-decoration:underline;">
-                            Clica aqui para reenviar o email de verificação.
+                            Clique aqui para reenviar o e-mail de verificação.
                         </button>
                     </p>
                     @if (session('status') === 'verification-link-sent')
                         <p style="margin-top:0.375rem;font-size:0.8125rem;color:var(--color-primary);">
-                            Um novo link de verificação foi enviado para o teu email.
+                            Um novo link de verificação foi enviado para o seu e-mail.
                         </p>
                     @endif
                 </div>
@@ -47,7 +47,7 @@
         </div>
 
         <div>
-            <label for="phone" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Telemóvel</label>
+            <label for="phone" style="display:block;font-size:0.8125rem;font-weight:500;margin-bottom:0.375rem;color:var(--color-foreground);">Celular</label>
             <input id="phone" name="phone" type="tel" value="{{ old('phone', $user->phone) }}" autocomplete="tel"
                    style="width:100%;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;box-sizing:border-box;"
                    onfocus="this.style.borderColor='var(--color-primary)'"
@@ -59,7 +59,7 @@
         </div>
 
         <div style="display:flex;align-items:center;gap:1rem;">
-            <button type="submit" class="btn-primary">Guardar</button>
+            <button type="submit" class="btn-primary">Salvar</button>
 
             @if (session('status') === 'profile-updated')
                 <p
@@ -68,7 +68,7 @@
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
                     style="font-size:0.8125rem;color:var(--color-primary);"
-                >Guardado.</p>
+                >Salvo.</p>
             @endif
         </div>
     </form>

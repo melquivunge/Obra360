@@ -189,7 +189,7 @@ class ProjectSourceLinkTest extends TestCase
 
         $this->assertDatabaseHas('project_updates', [
             'project_id' => Project::where('name', 'ObraResidenciaAlfa')->firstOrFail()->id,
-            'title' => 'Ligada ao projecto de origem: ProjectoArquiteturaAlfa',
+            'title' => 'Vinculada ao projeto de origem: ProjectoArquiteturaAlfa',
             'type' => 'origem',
         ]);
     }
@@ -319,7 +319,7 @@ class ProjectSourceLinkTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('admin.projects.show', $work))
             ->assertOk()
-            ->assertSee('Plantas do projecto de origem')
+            ->assertSee('Plantas do projeto de origem')
             ->assertSee('PlantaAprovadaAlfa');
     }
 
@@ -347,7 +347,7 @@ class ProjectSourceLinkTest extends TestCase
             ->get(route('admin.projects.show', $work))
             ->assertOk()
             ->assertDontSee('PlantaAprovadaAlfa')
-            ->assertDontSee('Plantas do projecto de origem');
+            ->assertDontSee('Plantas do projeto de origem');
     }
 
     public function test_the_inherited_plans_are_read_from_the_source_and_never_copied(): void
@@ -425,7 +425,7 @@ class ProjectSourceLinkTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('admin.projects.show', $work))
             ->assertOk()
-            ->assertSee('Nasceu do projecto')
+            ->assertSee('Nasceu do projeto')
             ->assertSee('ProjectoArquiteturaAlfa');
     }
 
@@ -439,7 +439,7 @@ class ProjectSourceLinkTest extends TestCase
         $this->actingAs($this->clientUserFor($work))
             ->get(route('portal.projects.show', $work))
             ->assertOk()
-            ->assertSee('Esta obra nasceu do projecto')
+            ->assertSee('Esta obra nasceu do projeto')
             ->assertSee('ProjectoArquiteturaAlfa');
     }
 
@@ -468,7 +468,7 @@ class ProjectSourceLinkTest extends TestCase
             ->get(route('portal.projects.show', $work))
             ->assertOk()
             ->assertDontSee('ProjectoDeOutroCliente')
-            ->assertDontSee('Esta obra nasceu do projecto');
+            ->assertDontSee('Esta obra nasceu do projeto');
     }
 
     // ── A origem removida ───────────────────────────────────
@@ -484,7 +484,7 @@ class ProjectSourceLinkTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('admin.projects.show', $work))
             ->assertOk()
-            ->assertSee('O projecto de origem foi removido')
+            ->assertSee('O projeto de origem foi removido')
             ->assertDontSee('PlantaAprovadaAlfa');
 
         // A ligação sobrevive: é o que permite restaurar a continuidade inteira.
@@ -504,7 +504,7 @@ class ProjectSourceLinkTest extends TestCase
             ->get(route('admin.projects.show', $work))
             ->assertOk()
             ->assertSee('PlantaAprovadaAlfa')
-            ->assertDontSee('O projecto de origem foi removido');
+            ->assertDontSee('O projeto de origem foi removido');
     }
 
     public function test_the_client_portal_survives_a_removed_source(): void
@@ -517,7 +517,7 @@ class ProjectSourceLinkTest extends TestCase
         $this->actingAs($this->clientUserFor($work))
             ->get(route('portal.projects.show', $work))
             ->assertOk()
-            ->assertDontSee('Esta obra nasceu do projecto')
+            ->assertDontSee('Esta obra nasceu do projeto')
             ->assertDontSee('ProjectoArquiteturaAlfa');
     }
 
@@ -531,7 +531,7 @@ class ProjectSourceLinkTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('admin.projects.edit', $work))
             ->assertOk()
-            ->assertSee('O projecto de origem desta obra foi removido');
+            ->assertSee('O projeto de origem desta obra foi removido');
 
         // O formulário não desenha o campo nesse estado, por isso o pedido
         // chega sem ele — e a ligação fica como estava.

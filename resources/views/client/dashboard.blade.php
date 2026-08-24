@@ -23,7 +23,7 @@
                  class="w-12 h-12 mx-auto mb-4" style="color:var(--color-muted-foreground);opacity:0.4;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21" />
             </svg>
-            <p style="color:var(--color-muted-foreground);font-size:0.9375rem;">Você ainda não tem obras ou projectos vinculados.</p>
+            <p style="color:var(--color-muted-foreground);font-size:0.9375rem;">Você ainda não tem obras ou projetos vinculados.</p>
             <p style="color:var(--color-muted-foreground);font-size:0.8125rem;margin-top:0.375rem;opacity:0.7;">Entre em contato com a equipe para liberar seu acesso.</p>
         </div>
     @else

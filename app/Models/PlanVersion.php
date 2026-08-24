@@ -142,9 +142,9 @@ class PlanVersion extends Model
     public static function overLimitMessage(): string
     {
         return sprintf(
-            'O ficheiro excede o limite de %s do servidor. Escolha um ficheiro mais pequeno '
-            .'ou guarde esta versão com um endereço externo (Google Drive, WeTransfer, '
-            .'OneDrive) em vez do ficheiro.',
+            'O arquivo excede o limite de %s do servidor. Escolha um arquivo menor '
+            .'ou salve esta versão com um endereço externo (Google Drive, WeTransfer, '
+            .'OneDrive) em vez do arquivo.',
             self::maxUploadLabel(),
         );
     }
@@ -154,8 +154,8 @@ class PlanVersion extends Model
     {
         return sprintf(
             'O envio excedeu o limite de %s do servidor e não chegou a ser recebido. '
-            .'Escolha um ficheiro mais pequeno ou guarde esta versão com um endereço externo '
-            .'(Google Drive, WeTransfer, OneDrive) em vez do ficheiro.',
+            .'Escolha um arquivo menor ou salve esta versão com um endereço externo '
+            .'(Google Drive, WeTransfer, OneDrive) em vez do arquivo.',
             self::maxUploadLabel(),
         );
     }

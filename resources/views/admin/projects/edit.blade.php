@@ -2,7 +2,7 @@
 <div class="p-6 md:p-8 max-w-3xl">
     <div class="mb-6 flex items-start justify-between">
         <div>
-            <a href="{{ route('admin.projects.show', $project) }}" style="font-size:0.875rem;color:var(--muted-foreground)">← {{ $project->isSiteWork() ? 'Obra' : 'Projecto' }}</a>
+            <a href="{{ route('admin.projects.show', $project) }}" style="font-size:0.875rem;color:var(--muted-foreground)">← {{ $project->isSiteWork() ? 'Obra' : 'Projeto' }}</a>
             <h1 style="font-size:1.5rem;font-weight:700;margin-top:0.5rem;">Editar {{ $project->noun() }}</h1>
         </div>
         <a href="{{ route('admin.projects.show', $project) }}" class="btn-secondary">Ver {{ $project->noun() }}</a>
@@ -34,7 +34,7 @@
             </div>
             @unless($project->hasMissingSource())
             <div x-show="(sources[client] ?? []).length" x-cloak>
-                <label class="field-label">Projecto de origem</label>
+                <label class="field-label">Projeto de origem</label>
                 <select name="source_project_id" x-model="source">
                     <option value="">Nenhum</option>
                     <template x-for="source_option in (sources[client] ?? [])" :key="source_option.id">
@@ -42,7 +42,7 @@
                     </template>
                 </select>
                 <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">
-                    {{ ucfirst($project->nounWithArticle()) }} mostra as plantas aprovadas do projecto de origem, sem cópias.
+                    {{ ucfirst($project->nounWithArticle()) }} mostra as plantas aprovadas do projeto de origem, sem cópias.
                 </p>
                 <x-field-error field="source_project_id" />
             </div>
@@ -52,7 +52,7 @@
                  apagaria a ligação ao guardar qualquer outra alteração, e o que
                  se quer é o contrário — restaurar o projecto devolve tudo. --}}
             <p style="font-size:0.75rem;color:var(--muted-foreground);">
-                O projecto de origem dest{{ $project->isSiteWork() ? 'a obra' : 'e projecto' }} foi removido. A ligação fica guardada e volta a valer se ele for restaurado.
+                O projeto de origem dest{{ $project->isSiteWork() ? 'a obra' : 'e projeto' }} foi removido. O vínculo fica salvo e volta a valer se ele for restaurado.
             </p>
             @endunless
             <div>

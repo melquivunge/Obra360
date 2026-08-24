@@ -20,7 +20,7 @@ class ValidationFeedbackTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const RESUMO = 'Não foi possível guardar. Corrija o seguinte:';
+    private const RESUMO = 'Não foi possível salvar. Corrija o seguinte:';
 
     /**
      * Quantas vezes um texto aparece na página — é assim que se demonstra que
@@ -91,7 +91,7 @@ class ValidationFeedbackTest extends TestCase
         $response->assertOk()
             ->assertSee(self::RESUMO)
             ->assertSee('O campo nome é obrigatório.')
-            ->assertSee('O campo e-mail tem de ser um endereço de e-mail válido.')
+            ->assertSee('O campo e-mail deve ser um endereço de e-mail válido.')
             ->assertSee('value="Benguela"', false);
     }
 
@@ -332,7 +332,7 @@ class ValidationFeedbackTest extends TestCase
             ->getContent();
 
         $this->assertSame(1, $this->occurrences($html, self::RESUMO));
-        $this->assertStringContainsString('O campo utilizador é obrigatório.', $html);
+        $this->assertStringContainsString('O campo usuário é obrigatório.', $html);
         // O nome do cliente continua no campo dele, intacto.
         $this->assertStringContainsString('value="'.$client->name.'"', $html);
     }
@@ -353,7 +353,7 @@ class ValidationFeedbackTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString('O campo cliente é obrigatório.', $html);
-        $this->assertStringContainsString('O valor escolhido para estado é inválido.', $html);
+        $this->assertStringContainsString('O valor escolhido para status é inválido.', $html);
         // Nem o nome da coluna, nem a frase original do framework.
         $this->assertStringNotContainsString('client id', $html);
         $this->assertStringNotContainsString('field is required', $html);

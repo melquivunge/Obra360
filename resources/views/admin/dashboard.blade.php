@@ -4,14 +4,14 @@
     {{-- Header --}}
     <div>
         <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">Dashboard</h1>
-        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Visão geral do portfólio de obras e projectos · {{ now()->format('d/m/Y') }}</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Visão geral do portfólio de obras e projetos · {{ now()->format('d/m/Y') }}</p>
     </div>
 
     {{-- KPI Cards --}}
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
         @php
             $cards = [
-                ['label'=>'Obras e projectos', 'value'=>$totalProjects, 'accent'=>false],
+                ['label'=>'Obras e projetos', 'value'=>$totalProjects, 'accent'=>false],
                 ['label'=>'Em andamento',   'value'=>$inProgress,     'accent'=>true],
                 ['label'=>'Concluídas',     'value'=>$completed,      'accent'=>false],
                 ['label'=>'Pausadas',       'value'=>$paused,         'accent'=>false],
@@ -83,7 +83,7 @@
         {{-- Recent projects --}}
         <div class="lg:col-span-2" style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
             <div class="flex items-center justify-between mb-4">
-                <h2 style="font-size:1rem;font-weight:700;">Obras e projectos recentes</h2>
+                <h2 style="font-size:1rem;font-weight:700;">Obras e projetos recentes</h2>
                 <a href="{{ route('admin.projects.index') }}" style="font-size:0.8rem;color:var(--primary);">Ver todos →</a>
             </div>
             <div class="space-y-2">
@@ -103,7 +103,7 @@
                     </div>
                 </a>
                 @empty
-                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">Nenhuma obra ou projecto cadastrado.</p>
+                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">Nenhuma obra ou projeto cadastrado.</p>
                 @endforelse
             </div>
         </div>

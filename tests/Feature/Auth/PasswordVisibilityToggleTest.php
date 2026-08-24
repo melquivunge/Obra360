@@ -14,7 +14,7 @@ class PasswordVisibilityToggleTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
-        $response->assertSee('aria-label="Mostrar palavra-passe"', false);
+        $response->assertSee('aria-label="Mostrar senha"', false);
     }
 
     public function test_login_password_field_keeps_its_name_id_and_autocomplete(): void

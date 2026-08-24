@@ -28,7 +28,7 @@ class Project extends Model
     public const TYPES = [
         'construcao' => 'Construção',
         'remodelacao' => 'Remodelação',
-        'arquitetura' => 'Projecto de arquitectura',
+        'arquitetura' => 'Projeto de arquitetura',
         'design_interiores' => 'Design de interiores',
     ];
 
@@ -269,7 +269,7 @@ class Project extends Model
      */
     public function noun(): string
     {
-        return $this->isSiteWork() ? 'obra' : 'projecto';
+        return $this->isSiteWork() ? 'obra' : 'projeto';
     }
 
     /**
@@ -280,8 +280,8 @@ class Project extends Model
     public static function collectionLabel(bool $hasSiteWork, bool $hasDesignWork): string
     {
         return match (true) {
-            $hasSiteWork && $hasDesignWork => 'Minhas Obras e Projectos',
-            $hasDesignWork => 'Meus Projectos',
+            $hasSiteWork && $hasDesignWork => 'Minhas Obras e Projetos',
+            $hasDesignWork => 'Meus Projetos',
             default => 'Minhas Obras',
         };
     }

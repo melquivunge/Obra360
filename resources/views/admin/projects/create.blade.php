@@ -1,8 +1,8 @@
 <x-admin-layout>
 <div class="p-6 md:p-8 max-w-3xl">
     <div class="mb-6">
-        <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obras e Projectos</a>
-        <h1 style="font-size:1.5rem;font-weight:700;margin-top:0.5rem;">Nova obra ou projecto</h1>
+        <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obras e Projetos</a>
+        <h1 style="font-size:1.5rem;font-weight:700;margin-top:0.5rem;">Nova obra ou projeto</h1>
     </div>
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;">
         {{--
@@ -38,7 +38,7 @@
                 </div>
             </div>
             <div x-show="(sources[client] ?? []).length" x-cloak>
-                <label class="field-label">Projecto de origem</label>
+                <label class="field-label">Projeto de origem</label>
                 <select name="source_project_id" x-model="source">
                     <option value="">Nenhum</option>
                     <template x-for="source_option in (sources[client] ?? [])" :key="source_option.id">
@@ -46,8 +46,8 @@
                     </template>
                 </select>
                 <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">
-                    Este cliente já tem projectos connosco. Ligue ao que lhe deu origem: as plantas aprovadas
-                    desse projecto passam a aparecer aqui, sem cópias — se forem corrigidas lá, aparece logo aqui a versão certa.
+                    Este cliente já tem projetos com a gente. Vincule ao que lhe deu origem: as plantas aprovadas
+                    desse projeto passam a aparecer aqui, sem cópias — se forem corrigidas lá, aparece logo aqui a versão certa.
                 </p>
                 <x-field-error field="source_project_id" />
             </div>

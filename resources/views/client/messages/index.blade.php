@@ -112,7 +112,7 @@
         </div>
         @else
         <div style="border-top:1px solid var(--color-border);padding:0.875rem;color:var(--color-muted-foreground);font-size:0.875rem;text-align:center;">
-            As mensagens estão desativadas pela equipa.
+            As mensagens estão desativadas pela equipe.
         </div>
         @endif
     </div>

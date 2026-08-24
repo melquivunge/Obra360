@@ -68,7 +68,7 @@ class ProjectController extends Controller
                 'id' => $m->id,
                 'body' => $m->body,
                 'created_at' => $m->created_at->format('d/m/Y H:i'),
-                'user_name' => $m->user?->name ?? 'Equipa',
+                'user_name' => $m->user?->name ?? 'Equipe',
                 'user_id' => $m->user_id,
                 'is_mine' => $m->user_id === auth()->id(),
             ])->values()->toArray();

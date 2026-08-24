@@ -35,7 +35,7 @@ class ProjectPlanController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        return back()->with('success', 'Planta criada. Carregue a primeira versão.');
+        return back()->with('success', 'Planta criada. Envie a primeira versão.');
     }
 
     public function update(Request $request, Project $project, Plan $plan)

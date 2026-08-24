@@ -10,11 +10,11 @@ use Tests\TestCase;
 /**
  * O vocabulário da área interna, pela mesma regra que o portal do cliente já
  * segue (ver ProjectTypeTest): onde o texto fala de um registo concreto, segue
- * o tipo desse registo — «obra» para construção e remodelação, «projecto» para
- * arquitectura e design de interiores.
+ * o tipo desse registo — «obra» para construção e remodelação, «projeto» para
+ * arquitetura e design de interiores.
  *
  * Onde o texto nomeia o conjunto — o menu lateral, o título da listagem, o
- * atalho de voltar para ela — o nome é fixo, «Obras e Projectos», porque a
+ * atalho de voltar para ela — o nome é fixo, «Obras e Projetos», porque a
  * lista mistura os quatro tipos e um menu que mudasse de nome conforme o que lá
  * está seria pior do que um menu com um nome estável.
  */
@@ -29,16 +29,16 @@ class AdminVocabularyTest extends TestCase
 
     // ── Um registo concreto segue o seu tipo ────────────────
 
-    public function test_the_edit_page_of_an_architecture_project_says_projecto(): void
+    public function test_the_edit_page_of_an_architecture_project_says_projeto(): void
     {
         $project = Project::factory()->architecture()->create();
 
         $this->actingAs($this->admin())
             ->get(route('admin.projects.edit', $project))
             ->assertOk()
-            ->assertSee('Editar projecto')
-            ->assertSee('Ver projecto')
-            ->assertSee('Nome do projecto')
+            ->assertSee('Editar projeto')
+            ->assertSee('Ver projeto')
+            ->assertSee('Nome do projeto')
             ->assertDontSee('Editar obra')
             ->assertDontSee('Nome da obra');
     }
@@ -53,18 +53,18 @@ class AdminVocabularyTest extends TestCase
             ->assertSee('Editar obra')
             ->assertSee('Ver obra')
             ->assertSee('Nome da obra')
-            ->assertDontSee('Editar projecto')
-            ->assertDontSee('Nome do projecto');
+            ->assertDontSee('Editar projeto')
+            ->assertDontSee('Nome do projeto');
     }
 
-    public function test_the_page_of_an_interior_design_project_says_projecto(): void
+    public function test_the_page_of_an_interior_design_project_says_projeto(): void
     {
         $project = Project::factory()->interiorDesign()->create();
 
         $this->actingAs($this->admin())
             ->get(route('admin.projects.show', $project))
             ->assertOk()
-            ->assertSee('Excluir este projecto?')
+            ->assertSee('Excluir este projeto?')
             ->assertDontSee('Excluir esta obra');
     }
 
@@ -76,7 +76,7 @@ class AdminVocabularyTest extends TestCase
             ->get(route('admin.projects.show', $project))
             ->assertOk()
             ->assertSee('Excluir esta obra?')
-            ->assertDontSee('Excluir este projecto');
+            ->assertDontSee('Excluir este projeto');
     }
 
     /**
@@ -95,8 +95,8 @@ class AdminVocabularyTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('admin.projects.edit', $derived))
             ->assertOk()
-            ->assertSee('O projecto de origem deste projecto foi removido')
-            ->assertDontSee('O projecto de origem desta obra foi removido');
+            ->assertSee('O projeto de origem deste projeto foi removido')
+            ->assertDontSee('O projeto de origem desta obra foi removido');
     }
 
     // ── O conjunto tem um nome fixo ─────────────────────────
@@ -108,16 +108,16 @@ class AdminVocabularyTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('admin.projects.index', ['type' => 'arquitetura']))
             ->assertOk()
-            ->assertSee('Obras e Projectos')
-            ->assertSee('Nova obra ou projecto');
+            ->assertSee('Obras e Projetos')
+            ->assertSee('Nova obra ou projeto');
 
         Project::factory()->create();
 
         $this->actingAs($this->admin())
             ->get(route('admin.projects.index', ['type' => 'construcao']))
             ->assertOk()
-            ->assertSee('Obras e Projectos')
-            ->assertSee('Nova obra ou projecto');
+            ->assertSee('Obras e Projetos')
+            ->assertSee('Nova obra ou projeto');
     }
 
     public function test_the_sidebar_names_the_collection_the_same_for_every_type(): void
@@ -127,7 +127,7 @@ class AdminVocabularyTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Obras e Projectos');
+            ->assertSee('Obras e Projetos');
     }
 
     public function test_the_back_link_of_a_design_project_points_to_the_collection(): void
@@ -137,6 +137,6 @@ class AdminVocabularyTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('admin.projects.show', $project))
             ->assertOk()
-            ->assertSee('← Obras e Projectos');
+            ->assertSee('← Obras e Projetos');
     }
 }
