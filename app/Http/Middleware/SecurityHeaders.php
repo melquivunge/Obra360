@@ -122,7 +122,10 @@ class SecurityHeaders
             // Sem `data:`. As imagens do browser vêm todas de rotas
             // autenticadas da própria origem; as base64 do relatório em PDF
             // são desenhadas pelo DomPDF no servidor e nunca passam por aqui.
-            'img-src' => array_merge(["'self'"], $this->extra('extra_img_src')),
+            // `blob:` por causa do visualizador 3D: o <model-viewer> decodifica
+            // as texturas do GLB em memória e aponta-lhes URLs blob. Sem isto o
+            // modelo desenha-se sem textura nenhuma, em cinzento.
+            'img-src' => array_merge(["'self'", 'blob:'], $this->extra('extra_img_src')),
 
             // As fontes (Instrument Sans, via Bunny) são descarregadas na
             // build e servidas de public/build — nada é pedido ao CDN em
@@ -139,7 +142,9 @@ class SecurityHeaders
             'media-src' => ["'self'"],
 
             // O service worker do PWA (public/sw.js).
-            'worker-src' => ["'self'"],
+            // `blob:` também aqui: o visualizador 3D descomprime a geometria
+            // num worker criado a partir de um blob.
+            'worker-src' => ["'self'", 'blob:'],
             'manifest-src' => ["'self'"],
         ];
 

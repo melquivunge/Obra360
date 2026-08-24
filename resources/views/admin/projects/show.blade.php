@@ -699,6 +699,11 @@
                         @endif
                     </span>
 
+                    @if($version->isViewable3d())
+                        <x-model-viewer :src="route('admin.projects.plans.versions.download', [$project, $plan, $version])"
+                                        :label="$plan->name.' — '.$version->label()" />
+                    @endif
+
                     <x-plan-comments :version="$version"
                                      :action="route('admin.projects.plans.versions.comments.store', [$project, $plan, $version])"
                                      :form="'comentario_versao_'.$version->id" />

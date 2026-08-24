@@ -44,6 +44,19 @@ class PlanVersion extends Model
     /** Formatos que o browser mostra sem descarregar (PORT-03, fatia seguinte). */
     public const PREVIEWABLE_FORMATS = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
 
+    /**
+     * Os únicos formatos 3D que um navegador desenha sem conversão. Revit,
+     * SketchUp e IFC ficam de fora: converter no servidor não é viável num
+     * alojamento partilhado, e prometer o que não se entrega é pior do que
+     * oferecer só o descarregamento.
+     */
+    public const VIEWABLE_3D_FORMATS = ['glb', 'gltf'];
+
+    public function isViewable3d(): bool
+    {
+        return ! $this->isExternal() && in_array($this->format, self::VIEWABLE_3D_FORMATS, true);
+    }
+
     protected function casts(): array
     {
         return [
