@@ -547,6 +547,11 @@
                             </div>
                         </div>
 
+                        @if($current->isViewable3d())
+                            <x-model-viewer :src="route('portal.projects.plans.versions.download', [$project, $plan, $current])"
+                                            :label="$plan->name.' — '.$current->label()" />
+                        @endif
+
                         <x-plan-comments :version="$current"
                                          :action="route('portal.projects.plans.versions.comments.store', [$project, $plan, $current])"
                                          :form="'comentario_versao_'.$current->id" />

@@ -250,3 +250,25 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => flash.remove(), 500);
     }, 4000);
 });
+
+// ── Visualizador 3D ──────────────────────────────────────────────────────────
+//
+// O `<model-viewer>` traz consigo um motor WebGL e pesa vários megabytes. Só
+// entra quando há mesmo um modelo na página, e só na primeira vez: carregá-lo
+// em todas as páginas para servir a minoria que tem um GLB seria fazer toda a
+// gente pagar por uma funcionalidade de poucos.
+let visualizador3dCarregado = false;
+
+function carregarVisualizador3d() {
+    if (visualizador3dCarregado || !document.querySelector('model-viewer')) {
+        return;
+    }
+
+    visualizador3dCarregado = true;
+    import('@google/model-viewer').catch((e) => console.warn('Visualizador 3D indisponível:', e));
+}
+
+document.addEventListener('DOMContentLoaded', carregarVisualizador3d);
+// Os modelos vivem dentro de separadores e blocos que abrem por clique: sem
+// isto, um GLB escondido no arranque nunca chegaria a ser desenhado.
+document.addEventListener('click', () => setTimeout(carregarVisualizador3d, 0));

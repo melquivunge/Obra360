@@ -96,16 +96,20 @@ class ContentSecurityPolicyTest extends TestCase
     }
 
     /**
-     * As imagens do browser vêm todas de rotas da própria origem. As base64 dos
-     * relatórios são desenhadas pelo DomPDF no servidor e nunca passam por uma
-     * política de browser.
+     * As imagens do browser vêm de rotas da própria origem, mais os blobs que
+     * o visualizador 3D cria em memória ao decodificar as texturas de um GLB.
+     *
+     * `data:` continua **fora**: as base64 dos relatórios são desenhadas pelo
+     * DomPDF no servidor e nunca passam por uma política de browser, portanto
+     * permiti-las só abriria caminho a conteúdo injectado.
      */
-    public function test_img_src_does_not_allow_data_uris(): void
+    public function test_img_src_allows_only_the_origin_and_blobs(): void
     {
         $policy = $this->policyOn();
 
         preg_match('/img-src ([^;]+)/', $policy, $m);
-        $this->assertSame("'self'", trim($m[1]));
+        $this->assertSame("'self' blob:", trim($m[1]));
+        $this->assertStringNotContainsString('data:', $m[1]);
     }
 
     // ── O nonce ──────────────────────────────────────────────────────────────
