@@ -7,16 +7,18 @@
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;">
         <form method="POST" action="{{ route('users.update', $user) }}" class="space-y-4">
             @csrf @method('PUT')
+
+            <x-form-errors />
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
                     <label class="field-label">Nome completo <span style="color:var(--destructive)">*</span></label>
                     <input type="text" name="name" value="{{ old('name', $user->name) }}" required autofocus>
-                    @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="name" />
                 </div>
                 <div>
                     <label class="field-label">E-mail <span style="color:var(--destructive)">*</span></label>
                     <input type="email" name="email" value="{{ old('email', $user->email) }}" required>
-                    @error('email')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="email" />
                 </div>
                 <div>
                     <label class="field-label">Telefone</label>
@@ -30,13 +32,13 @@
                         <option value="financial" @selected(old('role',$user->role)==='financial')>Financeiro</option>
                         <option value="client"    @selected(old('role',$user->role)==='client')>Cliente</option>
                     </select>
-                    @error('role')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="role" />
                 </div>
                 <div>
                     <label class="field-label">Nova senha</label>
                     <x-password-input name="password" autocomplete="new-password" />
                     <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">Deixe em branco para manter a senha atual.</p>
-                    @error('password')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="password" />
                 </div>
                 <div>
                     <label class="field-label">Confirmar nova senha</label>

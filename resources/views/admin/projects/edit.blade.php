@@ -17,12 +17,15 @@
               }"
               x-init="$nextTick(() => source = @js((string) old('source_project_id', $project->source_project_id)))">
             @csrf @method('PUT')
+
+            <x-form-errors />
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Cliente <span style="color:var(--destructive)">*</span></label>
                     <select name="client_id" required x-model="client" @change="source = ''">
-                        @foreach($clients as $c)<option value="{{ $c->id }}" {{ $project->client_id==$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach
+                        @foreach($clients as $c)<option value="{{ $c->id }}" {{ old('client_id', $project->client_id)==$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach
                     </select>
+                    <x-field-error field="client_id" />
                 </div>
                 <div>
                     <label class="field-label">Código interno</label>
@@ -41,7 +44,7 @@
                 <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">
                     A obra mostra as plantas aprovadas do projecto de origem, sem cópias.
                 </p>
-                @error('source_project_id')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                <x-field-error field="source_project_id" />
             </div>
             @else
             {{-- A ligação existe mas o projecto de origem está na reciclagem. O
@@ -55,6 +58,7 @@
             <div>
                 <label class="field-label">Nome da obra <span style="color:var(--destructive)">*</span></label>
                 <input type="text" name="name" value="{{ old('name', $project->name) }}" required>
+                <x-field-error field="name" />
             </div>
             <div>
                 <label class="field-label">Localização</label>
@@ -86,13 +90,13 @@
                         <option value="{{ $k }}" {{ old('type', $project->type)===$k?'selected':'' }}>{{ $v }}</option>
                         @endforeach
                     </select>
-                    @error('type')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="type" />
                 </div>
                 <div>
                     <label class="field-label">Status</label>
                     <select name="status">
                         @foreach(\App\Models\Project::STATUSES as $k => $v)
-                        <option value="{{ $k }}" {{ $project->status===$k?'selected':'' }}>{{ $v }}</option>
+                        <option value="{{ $k }}" {{ old('status', $project->status)===$k?'selected':'' }}>{{ $v }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -100,19 +104,19 @@
                     <label class="field-label">Gestor</label>
                     <select name="manager_id">
                         <option value="">Nenhum</option>
-                        @foreach($managers as $m)<option value="{{ $m->id }}" {{ $project->manager_id==$m->id?'selected':'' }}>{{ $m->name }}</option>@endforeach
+                        @foreach($managers as $m)<option value="{{ $m->id }}" {{ old('manager_id', $project->manager_id)==$m->id?'selected':'' }}>{{ $m->name }}</option>@endforeach
                     </select>
                 </div>
                 @if(\App\Models\Project::progressIsManual())
                 <div>
                     <label class="field-label">Progresso (%)</label>
                     <input type="number" name="progress" min="0" max="100" value="{{ old('progress', $project->progress) }}">
-                    @error('progress')<p style="font-size:0.75rem;color:var(--danger);margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="progress" />
                 </div>
                 @endif
             </div>
             <div class="flex items-center gap-2">
-                <input type="checkbox" name="show_financials" value="1" id="sf" {{ $project->show_financials?'checked':'' }} style="width:auto;">
+                <input type="checkbox" name="show_financials" value="1" id="sf" {{ old_checked('show_financials', (bool) $project->show_financials)?'checked':'' }} style="width:auto;">
                 <label for="sf" style="font-size:0.875rem;color:var(--foreground)">Exibir financeiro para o cliente</label>
             </div>
             <div>

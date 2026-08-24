@@ -7,11 +7,13 @@
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;">
         <form method="POST" action="{{ route('admin.clients.store') }}" class="space-y-4">
             @csrf
+
+            <x-form-errors />
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Nome <span style="color:var(--destructive)">*</span></label>
                     <input type="text" name="name" value="{{ old('name') }}" required>
-                    @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="name" />
                 </div>
                 <div>
                     <label class="field-label">Documento (CPF/CNPJ)</label>
@@ -20,7 +22,7 @@
                 <div>
                     <label class="field-label">E-mail</label>
                     <input type="email" name="email" value="{{ old('email') }}">
-                    @error('email')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="email" />
                 </div>
                 <div>
                     <label class="field-label">Telefone</label>
@@ -39,7 +41,7 @@
                     <input type="text" name="country" value="{{ old('country', 'Brasil') }}">
                 </div>
                 <div class="flex items-center gap-2 pt-6">
-                    <input type="checkbox" name="active" value="1" id="active" checked style="width:auto;">
+                    <input type="checkbox" name="active" value="1" id="active" {{ old_checked('active', true) ? 'checked' : '' }} style="width:auto;">
                     <label for="active" style="font-size:0.875rem;color:var(--foreground)">Cliente ativo</label>
                 </div>
             </div>

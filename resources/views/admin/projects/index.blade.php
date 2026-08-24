@@ -130,6 +130,8 @@
         <form method="POST" action="{{ route('admin.projects.store') }}" enctype="multipart/form-data" class="space-y-4">
             @csrf
             <input type="hidden" name="_form" value="nova_obra">
+
+            <x-form-errors form="nova_obra" />
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Cliente <span style="color:var(--destructive)">*</span></label>
@@ -137,7 +139,7 @@
                         <option value="">Selecione…</option>
                         @foreach($clients as $c)<option value="{{ $c->id }}" {{ old('client_id')==$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach
                     </select>
-                    @error('client_id')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="client_id" form="nova_obra" />
                 </div>
                 <div>
                     <label class="field-label">Código interno</label>
@@ -147,7 +149,7 @@
             <div>
                 <label class="field-label">Nome da obra <span style="color:var(--destructive)">*</span></label>
                 <input type="text" name="name" value="{{ old('name') }}" required id="obra-nome">
-                @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                <x-field-error field="name" form="nova_obra" />
             </div>
             <div>
                 <label class="field-label">Localização</label>
@@ -179,7 +181,7 @@
                         <option value="{{ $k }}" {{ old('type','construcao')===$k?'selected':'' }}>{{ $v }}</option>
                         @endforeach
                     </select>
-                    @error('type')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="type" form="nova_obra" />
                 </div>
                 <div>
                     <label class="field-label">Status</label>
@@ -198,7 +200,7 @@
                 </div>
             </div>
             <div style="display:flex;align-items:center;gap:0.5rem;">
-                <input type="checkbox" name="show_financials" value="1" id="sf_modal" {{ old('show_financials','1')?'checked':'' }} style="width:1rem;height:1rem;border-radius:0.25rem;">
+                <input type="checkbox" name="show_financials" value="1" id="sf_modal" {{ old_checked('show_financials', true)?'checked':'' }} style="width:1rem;height:1rem;border-radius:0.25rem;">
                 <label for="sf_modal" style="font-size:0.875rem;color:var(--foreground);cursor:pointer;">Exibir financeiro para o cliente</label>
             </div>
             <div>

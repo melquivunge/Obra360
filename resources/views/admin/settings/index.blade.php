@@ -12,22 +12,26 @@
         <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data" class="space-y-5">
             @csrf @method('PUT')
 
+            <x-form-errors />
+
             <fieldset>
                 <legend style="font-size:0.875rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:0.75rem;border-bottom:1px solid var(--border);width:100%;margin-bottom:1rem;">Empresa</legend>
                 <div class="space-y-4">
                     <div>
                         <label class="field-label">Nome da empresa <span style="color:var(--destructive)">*</span></label>
                         <input type="text" name="company_name" value="{{ old('company_name', $settings['company_name']) }}" required>
-                        @error('company_name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                        <x-field-error field="company_name" />
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="field-label">E-mail de contacto</label>
                             <input type="email" name="company_email" value="{{ old('company_email', $settings['company_email']) }}">
+                            <x-field-error field="company_email" />
                         </div>
                         <div>
                             <label class="field-label">Telefone</label>
                             <input type="text" name="company_phone" value="{{ old('company_phone', $settings['company_phone']) }}">
+                            <x-field-error field="company_phone" />
                         </div>
                     </div>
                     <div>
@@ -39,6 +43,7 @@
                         @endif
                         <input type="file" name="logo" accept="image/*" style="padding:0.375rem;">
                         <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">PNG ou SVG recomendado, máx. 4 MB</p>
+                        <x-field-error field="logo" />
                     </div>
                 </div>
             </fieldset>
@@ -53,7 +58,7 @@
                         </div>
                         <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0.5rem;flex-shrink:0;margin-left:1rem;">
                             <input type="hidden" name="show_client_financials" value="0">
-                            <input type="checkbox" name="show_client_financials" value="1" {{ $settings['show_client_financials'] === '1' ? 'checked' : '' }} style="width:auto;accent-color:var(--primary);">
+                            <input type="checkbox" name="show_client_financials" value="1" {{ old_checked('show_client_financials', $settings['show_client_financials'] === '1') ? 'checked' : '' }} style="width:auto;accent-color:var(--primary);">
                             <span style="font-size:0.75rem;color:var(--muted-foreground);">Ativado</span>
                         </label>
                     </div>
@@ -64,7 +69,7 @@
                         </div>
                         <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0.5rem;flex-shrink:0;margin-left:1rem;">
                             <input type="hidden" name="allow_comments" value="0">
-                            <input type="checkbox" name="allow_comments" value="1" {{ $settings['allow_comments'] === '1' ? 'checked' : '' }} style="width:auto;accent-color:var(--primary);">
+                            <input type="checkbox" name="allow_comments" value="1" {{ old_checked('allow_comments', $settings['allow_comments'] === '1') ? 'checked' : '' }} style="width:auto;accent-color:var(--primary);">
                             <span style="font-size:0.75rem;color:var(--muted-foreground);">Ativado</span>
                         </label>
                     </div>
@@ -77,15 +82,15 @@
                     <label class="field-label">Moeda</label>
                     <select name="currency" style="max-width:12rem;">
                         @foreach(['BRL'=>'R$ — Real Brasileiro','USD'=>'$ — Dólar Americano','EUR'=>'€ — Euro','GBP'=>'£ — Libra Esterlina','AOA'=>'Kz — Kwanza Angolano','MZN'=>'MT — Metical Moçambicano'] as $code=>$label)
-                        <option value="{{ $code }}" {{ ($settings['currency']??'BRL')===$code?'selected':'' }}>{{ $label }}</option>
+                        <option value="{{ $code }}" {{ old('currency', $settings['currency'] ?? 'BRL')===$code?'selected':'' }}>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div style="margin-top:1rem;">
                     <label class="field-label">Progresso da obra</label>
                     <select name="progress_mode" style="max-width:20rem;">
-                        <option value="derivado" {{ ($settings['progress_mode'] ?? 'derivado') === 'derivado' ? 'selected' : '' }}>Derivado das fases (média)</option>
-                        <option value="manual" {{ ($settings['progress_mode'] ?? 'derivado') === 'manual' ? 'selected' : '' }}>Manual (definido na obra)</option>
+                        <option value="derivado" {{ old('progress_mode', $settings['progress_mode'] ?? 'derivado') === 'derivado' ? 'selected' : '' }}>Derivado das fases (média)</option>
+                        <option value="manual" {{ old('progress_mode', $settings['progress_mode'] ?? 'derivado') === 'manual' ? 'selected' : '' }}>Manual (definido na obra)</option>
                     </select>
                     <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.375rem;">No modo derivado a percentagem é a média das fases e não pode ser editada na obra.</p>
                 </div>
@@ -102,7 +107,7 @@
                         <p style="font-size:0.875rem;font-weight:500;">{{ $notification['label'] }}</p>
                         <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0.5rem;flex-shrink:0;margin-left:1rem;">
                             <input type="hidden" name="notify_{{ $type }}" value="0">
-                            <input type="checkbox" name="notify_{{ $type }}" value="1" {{ $notification['enabled'] ? 'checked' : '' }} style="width:auto;accent-color:var(--primary);">
+                            <input type="checkbox" name="notify_{{ $type }}" value="1" {{ old_checked('notify_'.$type, (bool) $notification['enabled']) ? 'checked' : '' }} style="width:auto;accent-color:var(--primary);">
                             <span style="font-size:0.75rem;color:var(--muted-foreground);">Ativado</span>
                         </label>
                     </div>

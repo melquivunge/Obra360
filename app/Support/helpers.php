@@ -33,3 +33,22 @@ if (! function_exists('money')) {
         return currency_symbol($code).' '.number_format((float) $amount, 2, ',', '.');
     }
 }
+
+if (! function_exists('old_checked')) {
+    /**
+     * Whether a checkbox should come back checked after a failed submission.
+     *
+     * `old('x', $default)` não serve para caixas: uma caixa desmarcada não é
+     * submetida, e o valor por omissão voltava a marcá-la — a pessoa desmarcava,
+     * o formulário falhava noutro campo e a escolha dela desaparecia. Enquanto
+     * houver input antigo manda o input antigo; sem ele manda o valor guardado.
+     */
+    function old_checked(string $key, bool $default = false): bool
+    {
+        if (! session()->hasOldInput()) {
+            return $default;
+        }
+
+        return (bool) old($key);
+    }
+}

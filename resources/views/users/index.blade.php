@@ -102,16 +102,18 @@
             @csrf
             <input type="hidden" name="_form" value="create_user">
 
+            <x-form-errors form="create_user" />
+
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
                     <label class="field-label">Nome completo <span style="color:var(--destructive)">*</span></label>
                     <input type="text" name="name" value="{{ old('name') }}" required>
-                    @error('name')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="name" form="create_user" />
                 </div>
                 <div>
                     <label class="field-label">E-mail <span style="color:var(--destructive)">*</span></label>
                     <input type="email" name="email" value="{{ old('email') }}" required>
-                    @error('email')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="email" form="create_user" />
                 </div>
                 <div>
                     <label class="field-label">Telefone</label>
@@ -126,12 +128,12 @@
                         <option value="financial" @selected(old('role')==='financial')>Financeiro</option>
                         <option value="client"    @selected(old('role')==='client')>Cliente</option>
                     </select>
-                    @error('role')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="role" form="create_user" />
                 </div>
                 <div>
                     <label class="field-label">Senha <span style="color:var(--destructive)">*</span></label>
                     <x-password-input name="password" required autocomplete="new-password" />
-                    @error('password')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+                    <x-field-error field="password" form="create_user" />
                 </div>
                 <div>
                     <label class="field-label">Confirmar senha <span style="color:var(--destructive)">*</span></label>
