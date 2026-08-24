@@ -124,7 +124,7 @@
                     <select name="role" required>
                         <option value="">Selecione…</option>
                         <option value="admin"     @selected(old('role')==='admin')>Administrador</option>
-                        <option value="manager"   @selected(old('role')==='manager')>Gestor da Obra</option>
+                        <option value="manager"   @selected(old('role')==='manager')>Gestor</option>
                         <option value="financial" @selected(old('role')==='financial')>Financeiro</option>
                         <option value="client"    @selected(old('role')==='client')>Cliente</option>
                     </select>

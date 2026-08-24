@@ -71,7 +71,7 @@
 
     {{-- Header --}}
     <div>
-        <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obras</a>
+        <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obras e Projectos</a>
         <div class="flex flex-wrap items-start justify-between gap-3 mt-2">
             <div class="flex items-start gap-4">
                 {{-- Capa da obra ao lado do título. Sem capa própria — ou com o ficheiro em
@@ -553,7 +553,7 @@
                 <a href="{{ route('admin.projects.show', $project->sourceProject) }}" style="font-size:0.8125rem;color:var(--primary);">{{ $project->sourceProject->name }} ↗</a>
             </div>
             <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:1rem;">
-                Versões aprovadas pelo cliente no projecto de origem. Não são plantas desta obra: vivem lá e são geridas lá.
+                Versões aprovadas pelo cliente no projecto de origem. Não são plantas dest{{ $project->isSiteWork() ? 'a obra' : 'e projecto' }}: vivem lá e são geridas lá.
             </p>
             <div class="space-y-2">
                 @foreach($inheritedPlans as $inherited)
@@ -688,7 +688,7 @@
         @if($inheritedPlans->isEmpty())
         <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma planta registada.</p>
         @else
-        <p style="color:var(--muted-foreground);font-size:0.875rem;">Esta obra não tem plantas próprias.</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;">Est{{ $project->isSiteWork() ? 'a obra' : 'e projecto' }} não tem plantas próprias.</p>
         @endif
         @endforelse
     </div>
@@ -947,7 +947,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
       <x-form-errors form="nova_cobranca" />
 
       <div class="grid gap-3 sm:grid-cols-2">
-        <div class="sm:col-span-2"><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required placeholder="Ex: Parcela 1, Sinal de obra…"><x-field-error field="title" form="nova_cobranca" /></div>
+        <div class="sm:col-span-2"><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required placeholder="Ex: Parcela 1, Sinal d{{ $project->nounWithArticle() }}…"><x-field-error field="title" form="nova_cobranca" /></div>
         <div><label class="field-label">Valor ({{ currency_symbol() }}) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" value="{{ old('amount') }}" required><x-field-error field="amount" form="nova_cobranca" /></div>
         <div><label class="field-label">Vencimento</label><input type="date" name="due_date" value="{{ old('due_date') }}"><x-field-error field="due_date" form="nova_cobranca" /></div>
         <div>

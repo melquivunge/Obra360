@@ -54,7 +54,7 @@
                     <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--surface);border:1px solid var(--border);">
                         <div>
                             <p style="font-size:0.875rem;font-weight:500;">Exibir financeiro ao cliente</p>
-                            <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.125rem;">Mostra orçamento e despesas no portal do cliente (por padrão). Pode ser sobrescrito por obra.</p>
+                            <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.125rem;">Mostra orçamento e despesas no portal do cliente (por padrão). Pode ser sobrescrito em cada obra ou projecto.</p>
                         </div>
                         <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0.5rem;flex-shrink:0;margin-left:1rem;">
                             <input type="hidden" name="show_client_financials" value="0">
@@ -87,19 +87,19 @@
                     </select>
                 </div>
                 <div style="margin-top:1rem;">
-                    <label class="field-label">Progresso da obra</label>
+                    <label class="field-label">Progresso da obra ou projecto</label>
                     <select name="progress_mode" style="max-width:20rem;">
                         <option value="derivado" {{ old('progress_mode', $settings['progress_mode'] ?? 'derivado') === 'derivado' ? 'selected' : '' }}>Derivado das fases (média)</option>
-                        <option value="manual" {{ old('progress_mode', $settings['progress_mode'] ?? 'derivado') === 'manual' ? 'selected' : '' }}>Manual (definido na obra)</option>
+                        <option value="manual" {{ old('progress_mode', $settings['progress_mode'] ?? 'derivado') === 'manual' ? 'selected' : '' }}>Manual (definido em cada obra ou projecto)</option>
                     </select>
-                    <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.375rem;">No modo derivado a percentagem é a média das fases e não pode ser editada na obra.</p>
+                    <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.375rem;">No modo derivado a percentagem é a média das fases e não pode ser editada na obra ou no projecto.</p>
                 </div>
             </fieldset>
 
             <fieldset>
                 <legend style="font-size:0.875rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:0.75rem;border-bottom:1px solid var(--border);width:100%;margin-bottom:1rem;">Notificações</legend>
                 <p style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.75rem;">
-                    Escolha que acontecimentos notificam o cliente. Desativar um tipo silencia-o sem afetar o histórico da obra.
+                    Escolha que acontecimentos notificam o cliente. Desativar um tipo silencia-o sem afetar o histórico da obra ou do projecto.
                 </p>
                 <div class="space-y-2">
                     @foreach($settings['notifications'] as $type => $notification)

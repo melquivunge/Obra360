@@ -111,7 +111,7 @@ class ReportController extends Controller
 
     private function filename(Project $project, string $type): string
     {
-        $slug = Str::slug($project->name) ?: 'obra-'.$project->id;
+        $slug = Str::slug($project->name) ?: $project->noun().'-'.$project->id;
 
         return "relatorio-{$type}-{$slug}-".now()->format('Y-m-d').'.pdf';
     }

@@ -2,10 +2,10 @@
 <div class="p-6 md:p-8 max-w-3xl">
     <div class="mb-6 flex items-start justify-between">
         <div>
-            <a href="{{ route('admin.projects.show', $project) }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obra</a>
-            <h1 style="font-size:1.5rem;font-weight:700;margin-top:0.5rem;">Editar obra</h1>
+            <a href="{{ route('admin.projects.show', $project) }}" style="font-size:0.875rem;color:var(--muted-foreground)">← {{ $project->isSiteWork() ? 'Obra' : 'Projecto' }}</a>
+            <h1 style="font-size:1.5rem;font-weight:700;margin-top:0.5rem;">Editar {{ $project->noun() }}</h1>
         </div>
-        <a href="{{ route('admin.projects.show', $project) }}" class="btn-secondary">Ver obra</a>
+        <a href="{{ route('admin.projects.show', $project) }}" class="btn-secondary">Ver {{ $project->noun() }}</a>
     </div>
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;">
         {{-- OBRA-01: ver o comentário do formulário de criação. --}}
@@ -42,7 +42,7 @@
                     </template>
                 </select>
                 <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">
-                    A obra mostra as plantas aprovadas do projecto de origem, sem cópias.
+                    {{ ucfirst($project->nounWithArticle()) }} mostra as plantas aprovadas do projecto de origem, sem cópias.
                 </p>
                 <x-field-error field="source_project_id" />
             </div>
@@ -52,11 +52,11 @@
                  apagaria a ligação ao guardar qualquer outra alteração, e o que
                  se quer é o contrário — restaurar o projecto devolve tudo. --}}
             <p style="font-size:0.75rem;color:var(--muted-foreground);">
-                O projecto de origem desta obra foi removido. A ligação fica guardada e volta a valer se ele for restaurado.
+                O projecto de origem dest{{ $project->isSiteWork() ? 'a obra' : 'e projecto' }} foi removido. A ligação fica guardada e volta a valer se ele for restaurado.
             </p>
             @endunless
             <div>
-                <label class="field-label">Nome da obra <span style="color:var(--destructive)">*</span></label>
+                <label class="field-label">Nome d{{ $project->nounWithArticle() }} <span style="color:var(--destructive)">*</span></label>
                 <input type="text" name="name" value="{{ old('name', $project->name) }}" required>
                 <x-field-error field="name" />
             </div>
