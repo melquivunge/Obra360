@@ -40,6 +40,7 @@ class ProjectController extends Controller
         $photos = $project->photos()->limit(self::SHOW_PHOTO_LIMIT)->get();
         $canViewFinancials = $this->canViewFinancials($project);
         $allowComments = Setting::get('allow_comments', '1') === '1';
+        $allowUploads = Setting::get('allow_client_uploads', '1') === '1';
         $expenses = $canViewFinancials ? $project->expenses()->get() : collect();
         $documents = $project->documents()->where('visibility', 'cliente')->get();
         $payments = $canViewFinancials ? $project->payments()->get() : collect();
@@ -61,7 +62,7 @@ class ProjectController extends Controller
         $sourceProject = $project->sourceProject()->where('client_id', $clientId)->first();
         $derivedProjects = $project->derivedProjects()->where('client_id', $clientId)->get();
 
-        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials', 'allowComments', 'plans', 'sourceProject', 'derivedProjects'));
+        return view('client.projects.show', compact('project', 'photos', 'expenses', 'documents', 'payments', 'totalSpent', 'canViewFinancials', 'allowComments', 'allowUploads', 'plans', 'sourceProject', 'derivedProjects'));
     }
 
     public function messages(Request $request, Project $project)

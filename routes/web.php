@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\PlanController as ClientPlanController;
 use App\Http\Controllers\Client\ProjectController as ClientProjectController;
+use App\Http\Controllers\Client\UploadController as ClientUploadController;
 use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\Portal\PushSubscriptionController;
 use App\Http\Controllers\ProfileController;
@@ -220,6 +221,15 @@ Route::middleware(['auth', 'role:client'])->prefix('portal')->name('portal.')->g
     Route::post('/obras/{project}/plantas/{plan}/versoes/{version}/comentarios', [ClientPlanController::class, 'storeComment'])
         ->middleware('throttle:20,1')
         ->name('projects.plans.versions.comments.store');
+
+    // ADV-03: envios do cliente. Tecto mais apertado do que o das mensagens —
+    // são ficheiros, não texto, e o cliente é o papel menos confiável.
+    Route::post('/obras/{project}/fotos', [ClientUploadController::class, 'storePhotos'])
+        ->middleware('throttle:10,1')
+        ->name('projects.uploads.photos');
+    Route::post('/obras/{project}/documentos', [ClientUploadController::class, 'storeDocument'])
+        ->middleware('throttle:10,1')
+        ->name('projects.uploads.document');
     Route::post('/mensagens/marcar-lidas', function () {
         session(['messages_last_viewed_at' => now()->timestamp]);
 

@@ -15,6 +15,11 @@ class ProjectUpdate extends Model
         'despesa' => 'Despesa registrada',
         'fase' => 'Mudança de fase',
         'documento' => 'Documento adicionado',
+        // ADV-03: o envio partiu do cliente. Tipo próprio porque o histórico é
+        // lido por ele: «Documento adicionado» daria a entender que foi a
+        // equipa a enviar, e a diferença importa quando se procura quem mandou
+        // o quê.
+        'envio_cliente' => 'Enviado pelo cliente',
         'planta' => 'Planta enviada',
         // PORT-05: a aprovação é um facto distinto do envio, e o histórico do
         // cliente mostra a etiqueta do tipo — reutilizar 'planta' daria a uma

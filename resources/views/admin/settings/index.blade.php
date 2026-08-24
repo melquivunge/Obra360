@@ -73,6 +73,17 @@
                             <span style="font-size:0.75rem;color:var(--muted-foreground);">Ativado</span>
                         </label>
                     </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--surface);border:1px solid var(--border);">
+                        <div>
+                            <p style="font-size:0.875rem;font-weight:500;">Permitir envio de arquivos pelo cliente</p>
+                            <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.125rem;">O cliente pode enviar fotos e documentos pelo portal. O que ele envia fica marcado com o nome dele.</p>
+                        </div>
+                        <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0.5rem;flex-shrink:0;margin-left:1rem;">
+                            <input type="hidden" name="allow_client_uploads" value="0">
+                            <input type="checkbox" name="allow_client_uploads" value="1" {{ old_checked('allow_client_uploads', $settings['allow_client_uploads'] === '1') ? 'checked' : '' }} style="width:auto;accent-color:var(--primary);">
+                            <span style="font-size:0.75rem;color:var(--muted-foreground);">Ativado</span>
+                        </label>
+                    </div>
                 </div>
             </fieldset>
 

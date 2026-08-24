@@ -18,6 +18,7 @@ class SettingController extends Controller
             'company_email' => Setting::get('company_email', ''),
             'company_phone' => Setting::get('company_phone', ''),
             'allow_comments' => Setting::get('allow_comments', '1'),
+            'allow_client_uploads' => Setting::get('allow_client_uploads', '1'),
             'show_client_financials' => Setting::get('show_client_financials', '1'),
             'currency' => Setting::get('currency', 'BRL'),
             'progress_mode' => Setting::get('progress_mode', 'derivado'),
@@ -48,6 +49,7 @@ class SettingController extends Controller
         Setting::set('company_email', $request->company_email ?? '');
         Setting::set('company_phone', $request->company_phone ?? '');
         Setting::set('allow_comments', $request->boolean('allow_comments') ? '1' : '0');
+        Setting::set('allow_client_uploads', $request->boolean('allow_client_uploads') ? '1' : '0');
         Setting::set('show_client_financials', $request->boolean('show_client_financials') ? '1' : '0');
         Setting::set('currency', $request->currency ?? 'BRL');
         if ($request->filled('progress_mode')) {
