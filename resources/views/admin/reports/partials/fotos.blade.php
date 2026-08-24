@@ -1,7 +1,7 @@
 @php $limit = \App\Http\Controllers\Admin\ReportController::photoLimit(); @endphp
 
 @if($photos->isEmpty())
-    <p class="rep-empty">Sem fotos registadas.</p>
+    <p class="rep-empty">Sem fotos registradas.</p>
 @else
     <table class="rep-table">
         <thead><tr><th>Data</th><th>Título</th><th>Fase</th></tr></thead>

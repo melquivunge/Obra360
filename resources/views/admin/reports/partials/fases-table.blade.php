@@ -1,5 +1,5 @@
 @if($phases->isEmpty())
-    <p class="rep-empty">Sem fases registadas.</p>
+    <p class="rep-empty">Sem fases registradas.</p>
 @else
     <table class="rep-table">
         <thead>

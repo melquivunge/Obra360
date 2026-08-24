@@ -93,7 +93,7 @@ class ClientLayoutComposer
                     ->map(fn (Message $msg) => [
                         'id' => $msg->id,
                         'body' => (string) $msg->body,
-                        'author' => $msg->user?->name ?? 'Equipa',
+                        'author' => $msg->user?->name ?? 'Equipe',
                         'project_id' => $msg->project?->id,
                         'project_name' => $msg->project?->name ?? '—',
                         'created_at' => $msg->created_at?->timestamp,

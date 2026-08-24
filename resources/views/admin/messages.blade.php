@@ -8,7 +8,7 @@
         {{-- PAINEL: Lista de obras --}}
         <div id="proj-list" style="width:100%;max-width:280px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;">
             <div style="padding:0.875rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0;">
-                <p style="font-weight:700;font-size:0.9375rem;">Obras e Projectos</p>
+                <p style="font-weight:700;font-size:0.9375rem;">Obras e Projetos</p>
             </div>
             @forelse($projects as $project)
             @php $last = $project->messages->first(); @endphp
@@ -27,7 +27,7 @@
                 </p>
             </button>
             @empty
-            <p style="padding:1.5rem;font-size:0.875rem;color:var(--muted-foreground);">Nenhuma obra ou projecto cadastrado.</p>
+            <p style="padding:1.5rem;font-size:0.875rem;color:var(--muted-foreground);">Nenhuma obra ou projeto cadastrado.</p>
             @endforelse
         </div>
 
@@ -38,7 +38,7 @@
             <div id="chat-placeholder" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted-foreground);">
                 <div style="text-align:center;">
                     <svg style="width:3rem;height:3rem;margin:0 auto 0.75rem;opacity:0.4;" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/></svg>
-                    <p style="font-size:0.875rem;">Selecione uma obra ou projecto para ver as mensagens</p>
+                    <p style="font-size:0.875rem;">Selecione uma obra ou projeto para ver as mensagens</p>
                 </div>
             </div>
 

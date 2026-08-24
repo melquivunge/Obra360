@@ -71,7 +71,7 @@
 
     {{-- Header --}}
     <div>
-        <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obras e Projectos</a>
+        <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obras e Projetos</a>
         <div class="flex flex-wrap items-start justify-between gap-3 mt-2">
             <div class="flex items-start gap-4">
                 {{-- Capa da obra ao lado do título. Sem capa própria — ou com o ficheiro em
@@ -92,7 +92,7 @@
             @can('manage-projects')
             <div class="flex gap-2">
                 <a href="{{ route('admin.projects.edit', $project) }}" class="btn-secondary">Editar</a>
-                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projecto' }}?')">
+                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" onsubmit="return confirm('Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projeto' }}?')">
                     @csrf @method('DELETE')
                     <button type="submit" class="btn-danger">Excluir</button>
                 </form>
@@ -150,7 +150,7 @@
                 <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground);margin-bottom:0.5rem;">Continuidade</p>
                 @if($project->sourceProject)
                 <p style="font-size:0.875rem;">
-                    Nasceu do projecto
+                    Nasceu do projeto
                     @if($canOpen($project->sourceProject))
                     <a href="{{ route('admin.projects.show', $project->sourceProject) }}" style="color:var(--primary);font-weight:600;">{{ $project->sourceProject->name }}</a>
                     @else
@@ -160,7 +160,7 @@
                 </p>
                 @elseif($project->hasMissingSource())
                 <p style="font-size:0.875rem;color:var(--muted-foreground)">
-                    O projecto de origem foi removido. A ligação fica guardada e volta a valer se ele for restaurado.
+                    O projeto de origem foi removido. O vínculo fica salvo e volta a valer se ele for restaurado.
                 </p>
                 @endif
                 @foreach($project->derivedProjects as $derived)
@@ -549,11 +549,11 @@
         @if($inheritedPlans->isNotEmpty())
         <div style="background-color:var(--card);border:1px solid var(--border);border-left:3px solid oklch(0.6 0.18 220);border-radius:0.75rem;padding:1.25rem;">
             <div class="flex flex-wrap items-baseline justify-between gap-2" style="margin-bottom:0.25rem;">
-                <h4 style="font-weight:600;">Plantas do projecto de origem</h4>
+                <h4 style="font-weight:600;">Plantas do projeto de origem</h4>
                 <a href="{{ route('admin.projects.show', $project->sourceProject) }}" style="font-size:0.8125rem;color:var(--primary);">{{ $project->sourceProject->name }} ↗</a>
             </div>
             <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:1rem;">
-                Versões aprovadas pelo cliente no projecto de origem. Não são plantas dest{{ $project->isSiteWork() ? 'a obra' : 'e projecto' }}: vivem lá e são geridas lá.
+                Versões aprovadas pelo cliente no projeto de origem. Não são plantas dest{{ $project->isSiteWork() ? 'a obra' : 'e projeto' }}: vivem lá e são gerenciadas lá.
             </p>
             <div class="space-y-2">
                 @foreach($inheritedPlans as $inherited)
@@ -571,7 +571,7 @@
                         @if($approvedVersion->isExternal())
                             <a href="{{ $approvedVersion->external_url }}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Abrir endereço ↗</a>
                         @else
-                            <a href="{{ route('admin.projects.plans.versions.download', [$project->sourceProject, $inherited, $approvedVersion]) }}" style="color:var(--primary);">Descarregar</a>
+                            <a href="{{ route('admin.projects.plans.versions.download', [$project->sourceProject, $inherited, $approvedVersion]) }}" style="color:var(--primary);">Baixar</a>
                         @endif
                     </span>
                 </div>
@@ -597,12 +597,12 @@
                     </div>
                     <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;">
                         @if($current)
-                            Versão corrente {{ $current->label() }} ·
+                            Versão atual {{ $current->label() }} ·
                             @if($current->isExternal()) endereço externo @else {{ strtoupper($current->format) }}{{ $current->humanSize() ? ' · '.$current->humanSize() : '' }} @endif
                             · {{ $current->created_at->format('d/m/Y') }}
                             @if($current->wasSentToClient()) · enviada ao cliente a {{ $current->sent_to_client_at->format('d/m/Y') }} @endif
                         @else
-                            Sem versões. Carregue a primeira.
+                            Sem versões. Envie a primeira.
                         @endif
                     </p>
                     @if($plan->notes)<p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;white-space:pre-wrap;">{{ $plan->notes }}</p>@endif
@@ -627,7 +627,7 @@
                     <button type="button" @click="editing=!editing" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;" title="Editar planta">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
                     </button>
-                    <form method="POST" action="{{ route('admin.projects.plans.destroy', [$project, $plan]) }}" onsubmit="return confirm('Remover a planta «{{ $plan->name }}»? O histórico de versões é mantido.')">
+                    <form method="POST" action="{{ route('admin.projects.plans.destroy', [$project, $plan]) }}" onsubmit="return confirm('Remover a planta &quot;{{ $plan->name }}&quot;? O histórico de versões é mantido.')">
                         @csrf @method('DELETE')
                         <button type="submit" style="padding:0.375rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" title="Remover planta" onmouseover="this.style.color='var(--destructive)'" onmouseout="this.style.color='var(--muted-foreground)'">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
@@ -648,7 +648,7 @@
                     @if($version->isSuperseded())
                         <span class="badge badge-pausada">Substituída</span>
                     @else
-                        <span class="badge badge-em_andamento">Corrente</span>
+                        <span class="badge badge-em_andamento">Atual</span>
                     @endif
                     <span style="color:var(--muted-foreground)" class="min-w-0 truncate">
                         {{ $version->isExternal() ? 'Endereço externo' : ($version->original_name ?: strtoupper($version->format)) }}
@@ -661,7 +661,7 @@
                         @if($version->isExternal())
                             <a href="{{ $version->external_url }}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Abrir endereço ↗</a>
                         @else
-                            <a href="{{ route('admin.projects.plans.versions.download', [$project, $plan, $version]) }}" style="color:var(--primary);">Descarregar</a>
+                            <a href="{{ route('admin.projects.plans.versions.download', [$project, $plan, $version]) }}" style="color:var(--primary);">Baixar</a>
                         @endif
                     </span>
                 </div>
@@ -680,15 +680,15 @@
                     <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline', $plan->discipline)===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="discipline" :form="$planForm" /></div>
                 </div>
                 <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;">{{ old('notes', $plan->notes) }}</textarea><x-field-error field="notes" :form="$planForm" /></div>
-                <div class="flex gap-2"><button type="submit" class="btn-primary">Guardar</button><button type="button" @click="editing=false" class="btn-secondary">Cancelar</button></div>
+                <div class="flex gap-2"><button type="submit" class="btn-primary">Salvar</button><button type="button" @click="editing=false" class="btn-secondary">Cancelar</button></div>
             </form>
             @endif
         </div>
         @empty
         @if($inheritedPlans->isEmpty())
-        <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma planta registada.</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma planta cadastrada.</p>
         @else
-        <p style="color:var(--muted-foreground);font-size:0.875rem;">Est{{ $project->isSiteWork() ? 'a obra' : 'e projecto' }} não tem plantas próprias.</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;">Est{{ $project->isSiteWork() ? 'a obra' : 'e projeto' }} não tem plantas próprias.</p>
         @endif
         @endforelse
     </div>
@@ -850,7 +850,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <div><label class="field-label">Nome da fase <span style="color:var(--destructive)">*</span></label><input type="text" name="name" value="{{ old('name') }}" required placeholder="Ex: Fundação, Estrutura, Revestimento..."><x-field-error field="name" form="nova_fase" /></div>
         <div><label class="field-label">Status da fase</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="status" form="nova_fase" /></div>
         <div>
-          <label class="field-label">% Concluída <span class="field-tip" data-tip="Percentagem de conclusão desta fase. 0 = não iniciada, 100 = concluída.">?</span></label>
+          <label class="field-label">% Concluída <span class="field-tip" data-tip="Porcentagem de conclusão desta fase. 0 = não iniciada, 100 = concluída.">?</span></label>
           <input type="number" name="percentage" min="0" max="100" value="{{ old('percentage', 0) }}" placeholder="0">
           <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">0 = não iniciada &nbsp;·&nbsp; 100 = concluída</span>
           <x-field-error field="percentage" form="nova_fase" />
@@ -923,7 +923,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
         <div><label class="field-label">Tipo</label><select name="type">@foreach(\App\Models\Document::TYPES as $k=>$v)<option value="{{ $k }}" {{ old('type')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="type" form="novo_documento" /></div>
       </div>
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label class="field-label">Visibilidade</label><select name="visibility"><option value="interno" {{ old('visibility')==='interno'?'selected':'' }}>Interno (só equipa)</option><option value="cliente" {{ old('visibility')==='cliente'?'selected':'' }}>Cliente (visível no portal)</option></select><x-field-error field="visibility" form="novo_documento" /></div>
+        <div><label class="field-label">Visibilidade</label><select name="visibility"><option value="interno" {{ old('visibility')==='interno'?'selected':'' }}>Interno (só equipe)</option><option value="cliente" {{ old('visibility')==='cliente'?'selected':'' }}>Cliente (visível no portal)</option></select><x-field-error field="visibility" form="novo_documento" /></div>
         <div><label class="field-label">Notas</label><input type="text" name="notes" value="{{ old('notes') }}"><x-field-error field="notes" form="novo_documento" /></div>
       </div>
       <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar documento</button><button type="button" onclick="closeModal('modal-documento')" class="btn-secondary">Cancelar</button></div>
@@ -1015,7 +1015,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
       <div>
         <label class="field-label">Nome da planta <span style="color:var(--destructive)">*</span></label>
         <input type="text" name="name" value="{{ old('name') }}" required maxlength="200" placeholder="Ex: Planta baixa — piso 0">
-        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">O desenho, não o ficheiro. As revisões entram depois como versões desta mesma planta.</span>
+        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">O desenho, não o arquivo. As revisões entram depois como versões desta mesma planta.</span>
         <x-field-error field="name" form="nova_planta" />
       </div>
       <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="discipline" form="nova_planta" /></div>
@@ -1043,27 +1043,27 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.que
       <x-form-errors :form="$versionForm" />
 
       <div>
-        <label class="field-label">Ficheiro</label>
+        <label class="field-label">Arquivo</label>
         <input type="file" name="file" style="padding:0.375rem;" accept=".pdf,.jpg,.jpeg,.png,.webp,.dwg,.dxf,.skp,.rvt,.ifc,.glb,.gltf,.zip">
         {{-- LIM-01: o limite é dito antes de alguém gastar dez minutos a enviar
              um Revit de 120 MB para ver o envio falhar no fim. --}}
         <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.375rem;">
-          Formatos aceites: {{ strtoupper(implode(', ', \App\Models\PlanVersion::FORMATS)) }}.
+          Formatos aceitos: {{ strtoupper(implode(', ', \App\Models\PlanVersion::FORMATS)) }}.
         </span>
         <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">
-          <strong>Limite deste servidor: {{ \App\Models\PlanVersion::maxUploadLabel() }} por ficheiro.</strong>
-          Um desenho maior do que isto não chega a ser recebido — nesse caso deixe o ficheiro em branco e use o endereço externo abaixo.
+          <strong>Limite deste servidor: {{ \App\Models\PlanVersion::maxUploadLabel() }} por arquivo.</strong>
+          Um desenho maior do que isto não chega a ser recebido — nesse caso deixe o arquivo em branco e use o endereço externo abaixo.
         </span>
         <x-field-error field="file" :form="$versionForm" />
       </div>
       <div>
-        <label class="field-label">Endereço externo (em alternativa ao ficheiro)</label>
+        <label class="field-label">Endereço externo (em alternativa ao arquivo)</label>
         <input type="url" name="external_url" value="{{ old('external_url') }}" maxlength="2048" placeholder="https://drive.google.com/…">
-        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">Google Drive, WeTransfer, OneDrive. A versão fica registada na mesma, com o histórico completo — só o ficheiro é que vive fora daqui.</span>
+        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">Google Drive, WeTransfer, OneDrive. A versão fica registrada do mesmo jeito, com o histórico completo — só o arquivo é que vive fora daqui.</span>
         <x-field-error field="external_url" :form="$versionForm" />
       </div>
       <div><label class="field-label">Nota de alterações</label><textarea name="change_note" rows="2" style="resize:vertical;" maxlength="1000" placeholder="O que mudou em relação à versão anterior">{{ old('change_note') }}</textarea><x-field-error field="change_note" :form="$versionForm" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Carregar versão</button><button type="button" onclick="closeModal('modal-versao')" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar versão</button><button type="button" onclick="closeModal('modal-versao')" class="btn-secondary">Cancelar</button></div>
     </form>
   </div>
 </div>
@@ -1146,7 +1146,7 @@ function editarDespesa(despesa) {
     form.action = despesaUpdateUrl(despesa.id);
     document.getElementById('despesa-method').disabled = false;
     document.getElementById('despesa-form').value = 'despesa_editar_' + despesa.id;
-    document.getElementById('despesa-submit').textContent = 'Guardar alterações';
+    document.getElementById('despesa-submit').textContent = 'Salvar alterações';
     document.getElementById('titulo-despesa').textContent = 'Editar despesa';
 
     preencherDespesa(despesa);

@@ -49,7 +49,7 @@ class GeneratePhotoThumbnails extends Command
 
         $bar->finish();
         $this->newLine(2);
-        $this->info("Miniaturas geradas: {$done}. Ignoradas (vídeo ou ficheiro ilegível): {$skipped}.");
+        $this->info("Miniaturas geradas: {$done}. Ignoradas (vídeo ou arquivo ilegível): {$skipped}.");
 
         return self::SUCCESS;
     }

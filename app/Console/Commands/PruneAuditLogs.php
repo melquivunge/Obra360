@@ -38,9 +38,9 @@ class PruneAuditLogs extends Command
 
     protected $signature = 'obra360:audit:prune
         {--days= : Dias de histórico a manter (por omissão 365)}
-        {--commit : Apagar mesmo; sem esta opção é apenas um ensaio}';
+        {--commit : Excluir de verdade; sem esta opção é apenas uma simulação}';
 
-    protected $description = 'Apaga registos de auditoria mais antigos do que o prazo de retenção (por omissão 365 dias).';
+    protected $description = 'Exclui registros de auditoria mais antigos do que o prazo de retenção (padrão de 365 dias).';
 
     public function handle(): int
     {
@@ -58,17 +58,17 @@ class PruneAuditLogs extends Command
 
         $total = AuditLog::query()->where('created_at', '<', $cutoff)->count();
 
-        $this->line("Prazo de retenção: {$days} dia(s) — alvo: registos anteriores a {$cutoff->toDateTimeString()}.");
+        $this->line("Prazo de retenção: {$days} dia(s) — alvo: registros anteriores a {$cutoff->toDateTimeString()}.");
 
         if ($total === 0) {
-            $this->info('Nada a fazer — não há registos fora do prazo.');
+            $this->info('Nada a fazer — não há registros fora do prazo.');
 
             return self::SUCCESS;
         }
 
         if (! $this->option('commit')) {
-            $this->warn("Ensaio: {$total} registo(s) seriam apagados.");
-            $this->comment('Volte a correr com --commit para apagar.');
+            $this->warn("Simulação: {$total} registro(s) seriam excluídos.");
+            $this->comment('Execute novamente com --commit para excluir.');
 
             return self::SUCCESS;
         }
@@ -89,7 +89,7 @@ class PruneAuditLogs extends Command
             $deleted += AuditLog::query()->whereKey($ids)->delete();
         } while ($ids->count() === self::CHUNK);
 
-        $this->info("Registos de auditoria apagados: {$deleted}.");
+        $this->info("Registros de auditoria excluídos: {$deleted}.");
 
         return self::SUCCESS;
     }

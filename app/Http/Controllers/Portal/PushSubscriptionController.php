@@ -19,7 +19,7 @@ class PushSubscriptionController extends Controller
 
         // Enforce max 10 push subscriptions per user to prevent queue amplification
         if (PushSubscription::where('user_id', auth()->id())->count() >= 10) {
-            return response()->json(['error' => 'Limite de subscrições atingido.'], 429);
+            return response()->json(['error' => 'Limite de inscrições atingido.'], 429);
         }
 
         PushSubscription::updateOrCreate(

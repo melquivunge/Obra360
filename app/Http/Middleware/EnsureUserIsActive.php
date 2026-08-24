@@ -18,7 +18,7 @@ class EnsureUserIsActive
             $request->session()->regenerateToken();
 
             return redirect()->route('login')
-                ->withErrors(['email' => 'A sua conta está desativada.']);
+                ->withErrors(['email' => 'Sua conta está desativada.']);
         }
 
         return $next($request);

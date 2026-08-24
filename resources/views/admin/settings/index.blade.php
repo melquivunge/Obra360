@@ -24,7 +24,7 @@
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>
-                            <label class="field-label">E-mail de contacto</label>
+                            <label class="field-label">E-mail de contato</label>
                             <input type="email" name="company_email" value="{{ old('company_email', $settings['company_email']) }}">
                             <x-field-error field="company_email" />
                         </div>
@@ -35,7 +35,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="field-label">Logótipo</label>
+                        <label class="field-label">Logotipo</label>
                         @if($settings['logo_url'])
                         <div style="margin-bottom:0.5rem;">
                             <img src="{{ asset('storage/'.$settings['logo_url']) }}" alt="Logo" style="height:48px;object-fit:contain;border-radius:0.375rem;">
@@ -54,7 +54,7 @@
                     <div class="flex items-center justify-between p-3 rounded-lg" style="background-color:var(--surface);border:1px solid var(--border);">
                         <div>
                             <p style="font-size:0.875rem;font-weight:500;">Exibir financeiro ao cliente</p>
-                            <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.125rem;">Mostra orçamento e despesas no portal do cliente (por padrão). Pode ser sobrescrito em cada obra ou projecto.</p>
+                            <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.125rem;">Mostra orçamento e despesas no portal do cliente (por padrão). Pode ser sobrescrito em cada obra ou projeto.</p>
                         </div>
                         <label style="display:inline-flex;align-items:center;cursor:pointer;gap:0.5rem;flex-shrink:0;margin-left:1rem;">
                             <input type="hidden" name="show_client_financials" value="0">
@@ -87,19 +87,19 @@
                     </select>
                 </div>
                 <div style="margin-top:1rem;">
-                    <label class="field-label">Progresso da obra ou projecto</label>
+                    <label class="field-label">Progresso da obra ou projeto</label>
                     <select name="progress_mode" style="max-width:20rem;">
                         <option value="derivado" {{ old('progress_mode', $settings['progress_mode'] ?? 'derivado') === 'derivado' ? 'selected' : '' }}>Derivado das fases (média)</option>
-                        <option value="manual" {{ old('progress_mode', $settings['progress_mode'] ?? 'derivado') === 'manual' ? 'selected' : '' }}>Manual (definido em cada obra ou projecto)</option>
+                        <option value="manual" {{ old('progress_mode', $settings['progress_mode'] ?? 'derivado') === 'manual' ? 'selected' : '' }}>Manual (definido em cada obra ou projeto)</option>
                     </select>
-                    <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.375rem;">No modo derivado a percentagem é a média das fases e não pode ser editada na obra ou no projecto.</p>
+                    <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.375rem;">No modo derivado a porcentagem é a média das fases e não pode ser editada na obra ou no projeto.</p>
                 </div>
             </fieldset>
 
             <fieldset>
                 <legend style="font-size:0.875rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:0.75rem;border-bottom:1px solid var(--border);width:100%;margin-bottom:1rem;">Notificações</legend>
                 <p style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.75rem;">
-                    Escolha que acontecimentos notificam o cliente. Desativar um tipo silencia-o sem afetar o histórico da obra ou do projecto.
+                    Escolha que acontecimentos notificam o cliente. Desativar um tipo silencia-o sem afetar o histórico da obra ou do projeto.
                 </p>
                 <div class="space-y-2">
                     @foreach($settings['notifications'] as $type => $notification)

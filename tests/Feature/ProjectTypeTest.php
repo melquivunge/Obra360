@@ -68,9 +68,9 @@ class ProjectTypeTest extends TestCase
         $project = Project::factory()->architecture()->create();
 
         $this->assertFalse($project->isSiteWork());
-        $this->assertSame('Projecto de arquitectura', $project->typeLabel());
-        $this->assertSame('projecto', $project->noun());
-        $this->assertSame('o projecto', $project->nounWithArticle());
+        $this->assertSame('Projeto de arquitetura', $project->typeLabel());
+        $this->assertSame('projeto', $project->noun());
+        $this->assertSame('o projeto', $project->nounWithArticle());
     }
 
     // ── TIPO-03: escolhido na criação, alterado na edição ────
@@ -177,7 +177,7 @@ class ProjectTypeTest extends TestCase
         $this->actingAs(User::factory()->admin()->create())
             ->get(route('admin.projects.index'))
             ->assertOk()
-            ->assertSee('Projecto de arquitectura');
+            ->assertSee('Projeto de arquitetura');
     }
 
     public function test_the_type_shows_on_the_admin_project_page(): void
@@ -197,7 +197,7 @@ class ProjectTypeTest extends TestCase
         $this->actingAs($this->clientUserFor($project))
             ->get(route('portal.projects.show', $project))
             ->assertOk()
-            ->assertSee('Projecto de arquitectura');
+            ->assertSee('Projeto de arquitetura');
     }
 
     public function test_the_type_shows_on_the_client_portal_dashboard_cards(): void
@@ -219,7 +219,7 @@ class ProjectTypeTest extends TestCase
         $this->actingAs($this->clientUserFor($project))
             ->get(route('portal.dashboard'))
             ->assertOk()
-            ->assertSee('Meus Projectos')
+            ->assertSee('Meus Projetos')
             ->assertDontSee('Minhas Obras');
     }
 
@@ -230,7 +230,7 @@ class ProjectTypeTest extends TestCase
         $this->actingAs($this->clientUserFor($project))
             ->get(route('portal.dashboard'))
             ->assertOk()
-            ->assertSee('Meus Projectos')
+            ->assertSee('Meus Projetos')
             ->assertDontSee('Minhas Obras');
     }
 
@@ -242,7 +242,7 @@ class ProjectTypeTest extends TestCase
             ->get(route('portal.dashboard'))
             ->assertOk()
             ->assertSee('Minhas Obras')
-            ->assertDontSee('Meus Projectos');
+            ->assertDontSee('Meus Projetos');
     }
 
     /**
@@ -262,7 +262,7 @@ class ProjectTypeTest extends TestCase
         $this->actingAs($this->clientUserFor($project))
             ->get(route('portal.dashboard'))
             ->assertOk()
-            ->assertSee('Ir para mensagens do projecto')
+            ->assertSee('Ir para mensagens do projeto')
             ->assertDontSee('Ir para mensagens da obra');
     }
 
@@ -275,7 +275,7 @@ class ProjectTypeTest extends TestCase
         $this->actingAs($this->clientUserFor($design))
             ->get(route('portal.dashboard'))
             ->assertOk()
-            ->assertSee('Minhas Obras e Projectos');
+            ->assertSee('Minhas Obras e Projetos');
     }
 
     public function test_the_messages_page_of_a_design_project_does_not_say_obra(): void
@@ -285,7 +285,7 @@ class ProjectTypeTest extends TestCase
         $this->actingAs($this->clientUserFor($project))
             ->get(route('portal.projects.messages', $project))
             ->assertOk()
-            ->assertSee('Voltar para o projecto')
+            ->assertSee('Voltar para o projeto')
             ->assertDontSee('Voltar para a obra');
     }
 
@@ -300,7 +300,7 @@ class ProjectTypeTest extends TestCase
 
         $this->assertDatabaseHas('project_updates', [
             'project_id' => Project::firstOrFail()->id,
-            'title' => 'Projecto criado',
+            'title' => 'Projeto criado',
             'type' => 'status',
         ]);
     }

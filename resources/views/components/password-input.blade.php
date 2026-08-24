@@ -9,8 +9,8 @@
         <x-password-input id="password" name="password" required autocomplete="current-password" />
 --}}
 @props([
-    'showLabel' => 'Mostrar palavra-passe',
-    'hideLabel' => 'Ocultar palavra-passe',
+    'showLabel' => 'Mostrar senha',
+    'hideLabel' => 'Ocultar senha',
 ])
 
 <div x-data="{ mostrar: false }" style="position:relative;display:block;width:100%;">
@@ -36,7 +36,7 @@
         onfocus="this.style.opacity='1';this.style.color='var(--primary)';"
         onblur="this.style.opacity='0.75';this.style.color='var(--muted-foreground)';"
     >
-        {{-- Olho: palavra-passe oculta --}}
+        {{-- Olho: senha oculta --}}
         <svg x-show="!mostrar" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"
              fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
              style="width:1.125rem;height:1.125rem;display:block;">
@@ -44,7 +44,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
         </svg>
 
-        {{-- Olho riscado: palavra-passe visível --}}
+        {{-- Olho riscado: senha visível --}}
         <svg x-show="mostrar" x-cloak aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"
              fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
              style="width:1.125rem;height:1.125rem;display:block;">

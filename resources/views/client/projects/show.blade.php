@@ -109,16 +109,16 @@
             <div style="background-color:oklch(0.6 0.18 220 / 0.08);border:1px solid oklch(0.6 0.18 220 / 0.28);border-radius:0.875rem;padding:1.125rem 1.25rem;margin-bottom:1rem;">
                 @if($sourceProject)
                 <p style="font-size:0.9375rem;">
-                    {{ $project->isSiteWork() ? 'Esta obra nasceu do projecto' : 'Este projecto nasceu de' }}
+                    {{ $project->isSiteWork() ? 'Esta obra nasceu do projeto' : 'Este projeto nasceu de' }}
                     <a href="{{ route('portal.projects.show', $sourceProject) }}" style="color:var(--color-primary);font-weight:600;text-decoration:none;">{{ $sourceProject->name }}</a>.
                 </p>
                 <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-top:0.25rem;">
-                    As plantas que aprovou continuam lá, na página desse projecto.
+                    As plantas que você aprovou continuam lá, na página desse projeto.
                 </p>
                 @endif
                 @foreach($derivedProjects as $derived)
                 <p style="font-size:0.9375rem;{{ $sourceProject || ! $loop->first ? 'margin-top:0.75rem;' : '' }}">
-                    {{ $derived->isSiteWork() ? 'Deu origem à obra' : 'Deu origem ao projecto' }}
+                    {{ $derived->isSiteWork() ? 'Deu origem à obra' : 'Deu origem ao projeto' }}
                     <a href="{{ route('portal.projects.show', $derived) }}" style="color:var(--color-primary);font-weight:600;text-decoration:none;">{{ $derived->name }}</a>.
                 </p>
                 @endforeach
@@ -443,7 +443,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
                             </svg>
-                            Download
+                            Baixar
                         </a>
                     </div>
                     @endforeach
@@ -458,7 +458,7 @@
             <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
                 <h2 style="font-size:1rem;font-weight:700;margin-bottom:0.35rem;">Plantas e desenhos</h2>
                 <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-bottom:1.25rem;">
-                    Estão aqui as versões que lhe foram enviadas. Aprove a versão corrente quando ela estiver conforme.
+                    Estão aqui as versões que foram enviadas para você. Aprove a versão atual quando ela estiver conforme.
                 </p>
 
                 @if(session('success'))
@@ -503,7 +503,7 @@
                                 @endif
                                 @if($current->approved_at)
                                 <p style="font-size:0.75rem;color:oklch(0.65 0.16 145);margin-top:0.35rem;">
-                                    Aprovada por {{ $current->approver?->name ?? 'si' }} a {{ $current->approved_at->format('d/m/Y \à\s H:i') }}.
+                                    Aprovada por {{ $current->approver?->name ?? 'você' }} em {{ $current->approved_at->format('d/m/Y \à\s H:i') }}.
                                 </p>
                                 @elseif($current->isSuperseded())
                                 {{-- Diz porque não há botão de aprovar, sem
@@ -512,7 +512,7 @@
                                      cópia que tem, e não o que está em cima da
                                      mesa do estúdio. --}}
                                 <p style="font-size:0.75rem;color:var(--color-muted-foreground);margin-top:0.35rem;">
-                                    Esta já não é a versão corrente da planta e por isso não pode ser aprovada.
+                                    Esta não é mais a versão atual da planta e por isso não pode ser aprovada.
                                 </p>
                                 @endif
                             </div>
@@ -524,7 +524,7 @@
                                 @if(! $current->isSuperseded() && ! $current->approved_at)
                                 <form method="POST" action="{{ route('portal.projects.plans.versions.approve', [$project, $plan, $current]) }}"
                                       x-data="{ sent: false }" @submit="sent = true"
-                                      onsubmit="return confirm('Aprovar a versão {{ $current->label() }} da planta «{{ $plan->name }}»? A aprovação fica registada e não é reversível.')">
+                                      onsubmit="return confirm('Aprovar a versão {{ $current->label() }} da planta &quot;{{ $plan->name }}&quot;? A aprovação fica registrada e não é reversível.')">
                                     @csrf
                                     {{-- O `disabled` no envio evita o segundo pedido do duplo clique;
                                          o servidor não confia nele — a aprovação é idempotente lá. --}}
@@ -534,7 +534,7 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                                         </svg>
-                                        <span x-text="sent ? 'A aprovar…' : 'Aprovar versão'">Aprovar versão</span>
+                                        <span x-text="sent ? 'Aprovando…' : 'Aprovar versão'">Aprovar versão</span>
                                     </button>
                                 </form>
                                 @endif
@@ -580,7 +580,7 @@
             <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;overflow:hidden;"
                  x-data="chatClient({{ $project->id }})" x-init="init()">
                 <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--color-border);">
-                    <p style="font-size:0.9375rem;font-weight:700;">Conversa com a equipa</p>
+                    <p style="font-size:0.9375rem;font-weight:700;">Conversa com a equipe</p>
                     <p style="font-size:0.75rem;color:var(--color-muted-foreground);margin-top:0.125rem;">Mensagens em tempo real</p>
                 </div>
 
@@ -607,7 +607,7 @@
                     <textarea x-model="newMsg"
                               @keydown.enter.prevent="!$event.shiftKey && send()"
                               rows="2" maxlength="1000"
-                              placeholder="Escreva uma mensagem para a equipa… (Enter envia, Shift+Enter quebra linha)"
+                              placeholder="Escreva uma mensagem para a equipe… (Enter envia, Shift+Enter quebra linha)"
                               style="flex:1;resize:none;background-color:var(--color-surface);border:1px solid var(--color-border);border-radius:0.5rem;padding:0.5rem 0.75rem;font-size:0.875rem;color:var(--color-foreground);outline:none;transition:border-color 0.15s;max-height:100px;overflow-y:auto;"
                               @focus="$el.style.borderColor='var(--color-primary)'"
                               @blur="$el.style.borderColor='var(--color-border)'"></textarea>

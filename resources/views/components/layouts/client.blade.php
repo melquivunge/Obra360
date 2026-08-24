@@ -298,11 +298,11 @@
                 <div id="notif-dropdown"
                      style="display:none;position:absolute;top:calc(100% + 0.5rem);right:0;width:320px;background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.75rem;box-shadow:0 8px 30px rgb(0 0 0 / 0.4);z-index:100;overflow:hidden;">
                     <div style="padding:0.875rem 1rem;border-bottom:1px solid var(--color-border);">
-                        <p style="font-size:0.8125rem;font-weight:600;color:var(--color-foreground);margin:0;">Actualizações recentes</p>
+                        <p style="font-size:0.8125rem;font-weight:600;color:var(--color-foreground);margin:0;">Atualizações recentes</p>
                     </div>
                     @if($recentUpdates->isEmpty())
                         <div style="padding:1.25rem 1rem;text-align:center;">
-                            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin:0;">Sem actualizações recentes</p>
+                            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin:0;">Sem atualizações recentes</p>
                         </div>
                     @else
                         <div style="position:relative;">

@@ -50,7 +50,7 @@
                 <input type="checkbox" name="active" value="1" id="user_active"
                        @checked(old('active', $user->active))
                        style="width:1rem;height:1rem;border-radius:0.25rem;cursor:pointer;">
-                <label for="user_active" style="font-size:0.875rem;color:var(--foreground);cursor:pointer;">Utilizador ativo</label>
+                <label for="user_active" style="font-size:0.875rem;color:var(--foreground);cursor:pointer;">Usuário ativo</label>
             </div>
             <div class="flex gap-2 pt-2">
                 <button type="submit" class="btn-primary">Salvar alterações</button>

@@ -22,7 +22,7 @@ class ProjectUpdate extends Model
         'planta_aprovada' => 'Planta aprovada',
         // OBRA-01: a obra passou a continuar um projecto nosso. Tipo
         // próprio para o histórico do cliente não lhe chamar «geral».
-        'origem' => 'Ligação ao projecto de origem',
+        'origem' => 'Vínculo ao projeto de origem',
         'status' => 'Mudança de status',
     ];
 

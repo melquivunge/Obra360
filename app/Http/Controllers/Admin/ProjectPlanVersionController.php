@@ -37,7 +37,7 @@ class ProjectPlanVersionController extends Controller
         }
 
         $data = $request->validate($this->rules(), $this->messages(), [
-            'file' => 'ficheiro',
+            'file' => 'arquivo',
             'external_url' => 'endereço externo',
             'change_note' => 'nota de alterações',
         ]);
@@ -77,7 +77,7 @@ class ProjectPlanVersionController extends Controller
             return PlanVersion::create($attributes);
         });
 
-        return back()->with('success', "Versão {$version->label()} carregada.");
+        return back()->with('success', "Versão {$version->label()} adicionada.");
     }
 
     /**
@@ -93,7 +93,7 @@ class ProjectPlanVersionController extends Controller
 
         if ($version->isSuperseded()) {
             return back()->withErrors([
-                'version' => 'Só a versão corrente pode ser enviada ao cliente.',
+                'version' => 'Só a versão atual pode ser enviada ao cliente.',
             ]);
         }
 
@@ -187,10 +187,10 @@ class ProjectPlanVersionController extends Controller
         $formats = strtoupper(implode(', ', PlanVersion::FORMATS));
 
         return [
-            'file.required_without' => 'Escolha um ficheiro ou indique um endereço externo para esta versão.',
-            'external_url.required_without' => 'Escolha um ficheiro ou indique um endereço externo para esta versão.',
-            'external_url.prohibits' => 'Uma versão guarda o ficheiro ou o endereço externo, não os dois.',
-            'file.extensions' => "Formato não aceite. São aceites: {$formats}.",
+            'file.required_without' => 'Escolha um arquivo ou informe um endereço externo para esta versão.',
+            'external_url.required_without' => 'Escolha um arquivo ou informe um endereço externo para esta versão.',
+            'external_url.prohibits' => 'Uma versão salva o arquivo ou o endereço externo, não os dois.',
+            'file.extensions' => "Formato não aceito. São aceitos: {$formats}.",
             'file.max' => PlanVersion::overLimitMessage(),
         ];
     }
