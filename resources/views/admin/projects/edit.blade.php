@@ -8,12 +8,19 @@
         <a href="{{ route('admin.projects.show', $project) }}" class="btn-secondary">Ver obra</a>
     </div>
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;">
-        <form method="POST" action="{{ route('admin.projects.update', $project) }}" enctype="multipart/form-data" class="space-y-4">
+        {{-- OBRA-01: ver o comentário do formulário de criação. --}}
+        <form method="POST" action="{{ route('admin.projects.update', $project) }}" enctype="multipart/form-data" class="space-y-4"
+              x-data="{
+                  client: @js((string) old('client_id', $project->client_id)),
+                  source: '',
+                  sources: @js($sourceProjects),
+              }"
+              x-init="$nextTick(() => source = @js((string) old('source_project_id', $project->source_project_id)))">
             @csrf @method('PUT')
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Cliente <span style="color:var(--destructive)">*</span></label>
-                    <select name="client_id" required>
+                    <select name="client_id" required x-model="client" @change="source = ''">
                         @foreach($clients as $c)<option value="{{ $c->id }}" {{ $project->client_id==$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach
                     </select>
                 </div>
@@ -22,6 +29,29 @@
                     <input type="text" name="code" value="{{ old('code', $project->code) }}">
                 </div>
             </div>
+            @unless($project->hasMissingSource())
+            <div x-show="(sources[client] ?? []).length" x-cloak>
+                <label class="field-label">Projecto de origem</label>
+                <select name="source_project_id" x-model="source">
+                    <option value="">Nenhum</option>
+                    <template x-for="source_option in (sources[client] ?? [])" :key="source_option.id">
+                        <option :value="source_option.id" x-text="source_option.label"></option>
+                    </template>
+                </select>
+                <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">
+                    A obra mostra as plantas aprovadas do projecto de origem, sem cópias.
+                </p>
+                @error('source_project_id')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
+            </div>
+            @else
+            {{-- A ligação existe mas o projecto de origem está na reciclagem. O
+                 campo não é desenhado de todo: um select sem a opção certa
+                 apagaria a ligação ao guardar qualquer outra alteração, e o que
+                 se quer é o contrário — restaurar o projecto devolve tudo. --}}
+            <p style="font-size:0.75rem;color:var(--muted-foreground);">
+                O projecto de origem desta obra foi removido. A ligação fica guardada e volta a valer se ele for restaurado.
+            </p>
+            @endunless
             <div>
                 <label class="field-label">Nome da obra <span style="color:var(--destructive)">*</span></label>
                 <input type="text" name="name" value="{{ old('name', $project->name) }}" required>

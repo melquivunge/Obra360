@@ -102,6 +102,28 @@
 
         {{-- Tab: Resumo --}}
         <div x-show="tab === 'resumo'" style="display:none;">
+            {{-- OBRA-04: a continuidade entre o projecto e a obra. É o que o
+                 cliente quer saber ao abrir a obra que contratou a seguir ao
+                 projecto: que é a mesma casa, o mesmo trabalho, o mesmo fio. --}}
+            @if($sourceProject || $derivedProjects->isNotEmpty())
+            <div style="background-color:oklch(0.6 0.18 220 / 0.08);border:1px solid oklch(0.6 0.18 220 / 0.28);border-radius:0.875rem;padding:1.125rem 1.25rem;margin-bottom:1rem;">
+                @if($sourceProject)
+                <p style="font-size:0.9375rem;">
+                    {{ $project->isSiteWork() ? 'Esta obra nasceu do projecto' : 'Este projecto nasceu de' }}
+                    <a href="{{ route('portal.projects.show', $sourceProject) }}" style="color:var(--color-primary);font-weight:600;text-decoration:none;">{{ $sourceProject->name }}</a>.
+                </p>
+                <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-top:0.25rem;">
+                    As plantas que aprovou continuam lá, na página desse projecto.
+                </p>
+                @endif
+                @foreach($derivedProjects as $derived)
+                <p style="font-size:0.9375rem;{{ $sourceProject || ! $loop->first ? 'margin-top:0.75rem;' : '' }}">
+                    {{ $derived->isSiteWork() ? 'Deu origem à obra' : 'Deu origem ao projecto' }}
+                    <a href="{{ route('portal.projects.show', $derived) }}" style="color:var(--color-primary);font-weight:600;text-decoration:none;">{{ $derived->name }}</a>.
+                </p>
+                @endforeach
+            </div>
+            @endif
             <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
                 @if($project->description)
                 <div style="margin-bottom:1.5rem;">

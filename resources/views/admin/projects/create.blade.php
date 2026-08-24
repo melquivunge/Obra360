@@ -5,12 +5,26 @@
         <h1 style="font-size:1.5rem;font-weight:700;margin-top:0.5rem;">Nova obra</h1>
     </div>
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;">
-        <form method="POST" action="{{ route('admin.projects.store') }}" enctype="multipart/form-data" class="space-y-4">
+        {{--
+            OBRA-01: o campo da origem depende do cliente escolhido, e os dois
+            vivem no mesmo formulário. O mapa cliente → projectos viaja com a
+            página e o Alpine mostra só o ramo do cliente escolhido: sem pedido
+            extra, sem rota nova, e o formulário continua a ser um formulário
+            normal. Mudar de cliente limpa a origem, para nunca sobrar a escolha
+            do cliente anterior — e o servidor recusa-a de qualquer forma.
+        --}}
+        <form method="POST" action="{{ route('admin.projects.store') }}" enctype="multipart/form-data" class="space-y-4"
+              x-data="{
+                  client: @js(old('client_id', '')),
+                  source: '',
+                  sources: @js($sourceProjects),
+              }"
+              x-init="$nextTick(() => source = @js(old('source_project_id', '')))">
             @csrf
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Cliente <span style="color:var(--destructive)">*</span></label>
-                    <select name="client_id" required>
+                    <select name="client_id" required x-model="client" @change="source = ''">
                         <option value="">Selecione…</option>
                         @foreach($clients as $c)<option value="{{ $c->id }}" {{ old('client_id')==$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach
                     </select>
@@ -20,6 +34,20 @@
                     <label class="field-label">Código interno</label>
                     <input type="text" name="code" value="{{ old('code') }}">
                 </div>
+            </div>
+            <div x-show="(sources[client] ?? []).length" x-cloak>
+                <label class="field-label">Projecto de origem</label>
+                <select name="source_project_id" x-model="source">
+                    <option value="">Nenhum</option>
+                    <template x-for="source_option in (sources[client] ?? [])" :key="source_option.id">
+                        <option :value="source_option.id" x-text="source_option.label"></option>
+                    </template>
+                </select>
+                <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.25rem;">
+                    Este cliente já tem projectos connosco. Ligue a obra ao que lhe deu origem: as plantas aprovadas
+                    desse projecto passam a aparecer aqui, sem cópias — se forem corrigidas lá, a obra vê logo a versão certa.
+                </p>
+                @error('source_project_id')<p style="color:var(--destructive);font-size:0.75rem;margin-top:0.25rem;">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="field-label">Nome da obra <span style="color:var(--destructive)">*</span></label>

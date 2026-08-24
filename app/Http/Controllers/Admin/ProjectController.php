@@ -9,9 +9,12 @@ use App\Models\Project;
 use App\Models\ProjectUpdate;
 use App\Models\User;
 use App\Traits\AuthorizesProjectAccess;
+use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 
 class ProjectController extends Controller
 {
@@ -44,8 +47,9 @@ class ProjectController extends Controller
     {
         $clients = Client::orderBy('name')->get();
         $managers = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_MANAGER])->orderBy('name')->get();
+        $sourceProjects = $this->sourceProjectOptions();
 
-        return view('admin.projects.create', compact('clients', 'managers'));
+        return view('admin.projects.create', compact('clients', 'managers', 'sourceProjects'));
     }
 
     public function store(Request $request)
@@ -61,11 +65,15 @@ class ProjectController extends Controller
             'budget' => 'nullable|numeric|min:0',
             'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
             'type' => 'required|in:'.implode(',', array_keys(Project::TYPES)),
+            // OBRA-01: a origem é opcional, mas o servidor é quem decide se ela
+            // é aceitável — a interface só mostra o que faz sentido, e o que a
+            // interface mostra nunca é uma garantia.
+            'source_project_id' => ['nullable', 'integer', $this->sourceExistsRule(), $this->sourceProjectRule($request)],
             'manager_id' => 'nullable|exists:users,id',
             'show_financials' => 'boolean',
             'notes' => 'nullable|string|max:2000',
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-        ]);
+        ], $this->messages());
         $data['show_financials'] = $request->boolean('show_financials', true);
         $data['progress'] = 0;
         if (auth()->user()->isManager()) {
@@ -82,6 +90,8 @@ class ProjectController extends Controller
         // arquitectura não pode ler «Obra criada».
         ProjectUpdate::log($project->id, $project->isSiteWork() ? 'Obra criada' : 'Projecto criado', 'status');
 
+        $this->logSourceLink($project);
+
         return redirect()->route('admin.projects.show', $project)
             ->with('success', $project->isSiteWork() ? 'Obra criada com sucesso.' : 'Projecto criado com sucesso.');
     }
@@ -96,13 +106,20 @@ class ProjectController extends Controller
             // As versões vêm juntas: o separador das plantas mostra o histórico
             // inteiro, e sem isto seriam duas consultas por planta.
             'plans.versions.uploader',
+            // OBRA-01/OBRA-03: a continuidade nos dois sentidos. A origem
+            // respeita o SoftDeletes e vem nula se estiver na reciclagem.
+            'sourceProject', 'derivedProjects',
         ]);
         $phases = $project->phases;
         $totalSpent = $project->totalSpent();
         $payments = $project->payments;
         $photos = $this->filteredPhotos($request, $project);
+        // OBRA-02: as plantas aprovadas da origem, lidas onde vivem. Nada é
+        // copiado nem guardado em cache: uma correcção no projecto aparece aqui
+        // no pedido seguinte.
+        $inheritedPlans = $project->inheritedApprovedPlans();
 
-        return view('admin.projects.show', compact('project', 'phases', 'totalSpent', 'payments', 'photos'));
+        return view('admin.projects.show', compact('project', 'phases', 'totalSpent', 'payments', 'photos', 'inheritedPlans'));
     }
 
     public function edit(Project $project)
@@ -111,8 +128,10 @@ class ProjectController extends Controller
 
         $clients = Client::orderBy('name')->get();
         $managers = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_MANAGER])->orderBy('name')->get();
+        // O próprio projecto fora da lista: a origem de si próprio não existe.
+        $sourceProjects = $this->sourceProjectOptions($project);
 
-        return view('admin.projects.edit', compact('project', 'clients', 'managers'));
+        return view('admin.projects.edit', compact('project', 'clients', 'managers', 'sourceProjects'));
     }
 
     public function update(Request $request, Project $project)
@@ -130,11 +149,14 @@ class ProjectController extends Controller
             'budget' => 'nullable|numeric|min:0',
             'status' => 'required|in:'.implode(',', array_keys(Project::STATUSES)),
             'type' => 'required|in:'.implode(',', array_keys(Project::TYPES)),
+            // OBRA-01: a mesma regra da criação, mais a que só existe aqui —
+            // uma obra não pode ligar-se a si própria nem fechar um ciclo.
+            'source_project_id' => ['nullable', 'integer', $this->sourceExistsRule(), $this->sourceProjectRule($request, $project)],
             'manager_id' => 'nullable|exists:users,id',
             'show_financials' => 'boolean',
             'notes' => 'nullable|string|max:2000',
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-        ]);
+        ], $this->messages());
         $data['show_financials'] = $request->boolean('show_financials');
 
         // FASE-04: o progresso só é editável quando as definições o põem em manual;
@@ -150,6 +172,7 @@ class ProjectController extends Controller
         }
 
         $oldStatus = $project->status;
+        $oldSourceId = $project->source_project_id;
 
         if ($request->hasFile('cover_image')) {
             if ($project->cover_image_path) {
@@ -163,6 +186,10 @@ class ProjectController extends Controller
 
         if ($data['status'] !== $oldStatus) {
             ProjectUpdate::log($project->id, 'Status alterado para: '.Project::STATUSES[$data['status']], 'status');
+        }
+
+        if ((int) $project->source_project_id !== (int) $oldSourceId) {
+            $this->logSourceLink($project);
         }
 
         return redirect()->route('admin.projects.show', $project)
@@ -194,6 +221,122 @@ class ProjectController extends Controller
         ProjectUpdate::log($project->id, $request->title, 'geral', $request->description);
 
         return back()->with('success', 'Atualização registrada.');
+    }
+
+    /**
+     * OBRA-01: os projectos que podem ser origem de uma obra, agrupados pelo
+     * cliente a que pertencem.
+     *
+     * É assim que se resolve a dependência entre os dois campos do formulário:
+     * o cliente escolhe-se primeiro e a lista de origens tem de o seguir. Uma
+     * rota nova que devolvesse JSON a cada mudança de cliente seria mais uma
+     * rota, mais um pedido e mais uma autorização a acertar; aqui o mapa inteiro
+     * viaja com o formulário e o Alpine mostra só o ramo do cliente escolhido.
+     * São os projectos de arquitectura e de design da casa — algumas dezenas no
+     * pior dos casos — e nenhum deles leva dados sensíveis, só nome e tipo.
+     *
+     * A lista não é reduzida às obras do gestor de propósito: o caso que motivou
+     * tudo isto é precisamente o desenho ser de um e a construção de outro.
+     *
+     * @return array<int, array<int, array{id: int, label: string}>>
+     */
+    private function sourceProjectOptions(?Project $exclude = null): array
+    {
+        return Project::query()
+            ->whereIn('type', Project::SOURCE_TYPES)
+            ->when($exclude?->exists, fn ($query) => $query->whereKeyNot($exclude->getKey()))
+            ->orderBy('name')
+            ->get(['id', 'client_id', 'name', 'type'])
+            ->groupBy('client_id')
+            ->map(fn ($projects) => $projects->map(fn (Project $source): array => [
+                'id' => (int) $source->id,
+                'label' => $source->name.' — '.$source->typeLabel(),
+            ])->values()->all())
+            ->all();
+    }
+
+    /**
+     * O projecto de origem tem de existir e de estar vivo. `exists` sozinho não
+     * conhece o SoftDeletes: aceitaria um projecto na reciclagem e a obra
+     * nasceria já com uma ligação que não mostra nada a ninguém.
+     */
+    private function sourceExistsRule(): Exists
+    {
+        return Rule::exists('projects', 'id')->whereNull('deleted_at');
+    }
+
+    /**
+     * OBRA-01, do lado do servidor. A interface só oferece origens do cliente
+     * escolhido, mas um pedido não passa pela interface: as quatro recusas são
+     * verificadas aqui, e a ordem importa — a primeira que se aplica é a que dá
+     * a mensagem, e «é a própria obra» explica melhor do que «não é um projecto
+     * de arquitectura».
+     */
+    private function sourceProjectRule(Request $request, ?Project $project = null): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($request, $project): void {
+            $candidate = Project::find($value);
+
+            if ($candidate === null) {
+                // A regra `exists` já recusou; não há nada a acrescentar.
+                return;
+            }
+
+            if ($project !== null && (int) $candidate->id === (int) $project->id) {
+                $fail('Uma obra não pode ser a origem de si própria.');
+
+                return;
+            }
+
+            if (! $candidate->canBeSource()) {
+                $fail('A origem tem de ser um projecto de arquitectura ou de design de interiores.');
+
+                return;
+            }
+
+            if ((int) $candidate->client_id !== (int) $request->input('client_id')) {
+                $fail('A origem tem de ser um projecto do mesmo cliente.');
+
+                return;
+            }
+
+            if ($project !== null && $project->wouldCycleThroughSource((int) $candidate->id)) {
+                $fail('Esta ligação criaria um ciclo entre projectos.');
+            }
+        };
+    }
+
+    /**
+     * A ligação é um facto da obra e entra no histórico como os outros. O
+     * histórico é visível ao cliente — é ele, aliás, quem mais ganha em ler que
+     * a obra continua o projecto que já conhece (OBRA-04).
+     */
+    private function logSourceLink(Project $project): void
+    {
+        $source = $project->sourceProject()->first();
+
+        if ($source === null) {
+            return;
+        }
+
+        ProjectUpdate::log(
+            $project->id,
+            "Ligada ao projecto de origem: {$source->name}",
+            'origem',
+        );
+    }
+
+    /**
+     * As mensagens de validação que não vale a pena deixar em inglês.
+     *
+     * @return array<string, string>
+     */
+    private function messages(): array
+    {
+        return [
+            'source_project_id.exists' => 'O projecto de origem escolhido já não existe.',
+            'source_project_id.integer' => 'Escolha um projecto de origem válido.',
+        ];
     }
 
     /**
