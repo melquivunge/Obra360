@@ -23,6 +23,12 @@ use Throwable;
  */
 class ClientLayoutComposer
 {
+    /** Mensagens por ler mostradas no menu (o contador conta todas, à parte). */
+    private const UNREAD_PREVIEW_LIMIT = 6;
+
+    /** Atualizações recentes mostradas no menu. */
+    private const RECENT_UPDATES_LIMIT = 5;
+
     public function compose(View $view): void
     {
         if (! auth()->check()) {
@@ -77,7 +83,7 @@ class ClientLayoutComposer
             ? Carbon::createFromTimestamp(session('messages_last_viewed_at'))
             : now()->subDays(30);
 
-        // Separate cache keys so display messages (take 6) and the badge count stay independent.
+        // Separate cache keys so display messages (the preview cap) and the badge count stay independent.
         // Both keyed to a 30-second bucket so stale data is bounded to 30 s.
         $bucket = (int) (now()->timestamp / 30);
 
@@ -88,7 +94,7 @@ class ClientLayoutComposer
                     ->where('created_at', '>', $lastViewed)
                     ->with(['project:id,name', 'user:id,name'])
                     ->latest()
-                    ->take(6)
+                    ->take(self::UNREAD_PREVIEW_LIMIT)
                     ->get()
                     ->map(fn (Message $msg) => [
                         'id' => $msg->id,
@@ -125,7 +131,7 @@ class ClientLayoutComposer
             ? $this->cachedArray("client_updates_{$clientId}", 60, function () use ($clientId) {
                 return ProjectUpdate::whereHas('project', fn ($q) => $q->where('client_id', $clientId))
                     ->latest()
-                    ->take(5)
+                    ->take(self::RECENT_UPDATES_LIMIT)
                     ->get()
                     ->map(fn (ProjectUpdate $update) => [
                         'id' => $update->id,

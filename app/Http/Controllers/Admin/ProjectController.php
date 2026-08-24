@@ -4,14 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Message;
 use App\Models\Photo;
 use App\Models\Project;
 use App\Models\ProjectUpdate;
 use App\Models\User;
 use App\Traits\AuthorizesProjectAccess;
 use Closure;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
@@ -19,6 +22,22 @@ use Illuminate\Validation\Rules\Exists;
 class ProjectController extends Controller
 {
     use AuthorizesProjectAccess;
+
+    /**
+     * Tectos da página da obra (um separador, uma página).
+     *
+     * A área interna alinha-se pelo critério que o portal do cliente já
+     * seguia: nada é carregado sem limite. O que fica de fora não desaparece —
+     * cada separador pagina no próprio pedido, com o seu parâmetro de página,
+     * e o gestor chega ao histórico antigo sem sair da página.
+     */
+    public const MESSAGES_PER_PAGE = 100;
+
+    /** Fotos por página na galeria — a grelha é o que mais pesa a renderizar. */
+    public const PHOTOS_PER_PAGE = 60;
+
+    /** Registos por página nos separadores em tabela ou em lista. */
+    public const RECORDS_PER_PAGE = 50;
 
     public function index(Request $request)
     {
@@ -100,9 +119,13 @@ class ProjectController extends Controller
     {
         $this->authorizeProjectAccess($project);
 
+        // As relações que ficam aqui são as que não crescem com o tempo: o
+        // cliente, o gestor, as fases (o plano da obra, não o seu histórico) e
+        // a ligação de origem. Tudo o que se acumula — despesas, cobranças,
+        // documentos, histórico, mensagens, fotos — passou a ser paginado
+        // abaixo, uma consulta por separador.
         $project->load([
-            'client', 'manager', 'phases', 'expenses', 'documents', 'updates.user',
-            'messages.user', 'payments',
+            'client', 'manager', 'phases',
             // As versões vêm juntas: o separador das plantas mostra o histórico
             // inteiro, e sem isto seriam duas consultas por planta.
             'plans.versions.uploader',
@@ -112,14 +135,71 @@ class ProjectController extends Controller
         ]);
         $phases = $project->phases;
         $totalSpent = $project->totalSpent();
-        $payments = $project->payments;
+        // Os totais das cobranças são somados em SQL: com a lista paginada, um
+        // total tirado da página visível estaria errado a partir da segunda.
+        $totalPaid = $project->totalPaid();
+        $totalPending = $project->totalPending();
+        $expenses = $this->paginateTab($project->expenses(), 'despesas');
+        $payments = $this->paginateTab($project->payments(), 'pagamentos');
+        $documents = $this->paginateTab($project->documents(), 'documentos');
+        $updates = $this->paginateTab($project->updates()->with('user'), 'historico');
+        $messages = $this->conversationPage($project);
         $photos = $this->filteredPhotos($request, $project);
         // OBRA-02: as plantas aprovadas da origem, lidas onde vivem. Nada é
         // copiado nem guardado em cache: uma correcção no projecto aparece aqui
         // no pedido seguinte.
         $inheritedPlans = $project->inheritedApprovedPlans();
 
-        return view('admin.projects.show', compact('project', 'phases', 'totalSpent', 'payments', 'photos', 'inheritedPlans'));
+        return view('admin.projects.show', compact(
+            'project', 'phases', 'totalSpent', 'totalPaid', 'totalPending',
+            'expenses', 'payments', 'documents', 'updates', 'messages',
+            'photos', 'inheritedPlans',
+        ));
+    }
+
+    /**
+     * Pagina um separador da página da obra.
+     *
+     * Cada separador tem o seu parâmetro de página para que dois separadores
+     * abertos no mesmo URL não se atropelem, e o `tab` viaja com os links —
+     * sem ele o Alpine reabria a página no separador «geral» e a segunda
+     * página caía num sítio onde ninguém a pediu.
+     *
+     * @param  HasMany<covariant Model, Project>  $relation
+     * @return LengthAwarePaginator<int, Model>
+     */
+    private function paginateTab(HasMany $relation, string $tab): LengthAwarePaginator
+    {
+        return $relation
+            ->paginate(self::RECORDS_PER_PAGE, ['*'], $tab.'_pagina')
+            ->withQueryString()
+            ->appends(['tab' => $tab]);
+    }
+
+    /**
+     * A conversa da obra — as mensagens mais recentes primeiro, do lado do
+     * servidor, mas apresentadas por ordem de leitura.
+     *
+     * O tecto é o mesmo que o portal do cliente já tinha. A página seguinte
+     * deste paginador é a das mensagens ANTERIORES: pagina-se da mais recente
+     * para a mais antiga (senão a primeira página seria a conversa de há um
+     * ano) e inverte-se apenas o que ficou nesta página.
+     *
+     * @return LengthAwarePaginator<int, Message>
+     */
+    private function conversationPage(Project $project): LengthAwarePaginator
+    {
+        // reorder() porque `messages()` ordena da mais antiga para a mais
+        // recente e sem o limpar o `latest()` daqui não teria efeito nenhum.
+        $messages = $project->messages()
+            ->reorder()
+            ->with('user')
+            ->latest()
+            ->paginate(self::MESSAGES_PER_PAGE, ['*'], 'mensagens_pagina')
+            ->withQueryString()
+            ->appends(['tab' => 'mensagens']);
+
+        return $messages->setCollection($messages->getCollection()->reverse()->values());
     }
 
     public function edit(Project $project)
@@ -342,7 +422,7 @@ class ProjectController extends Controller
     /**
      * Gallery filtering by phase, date range and order (FOTO-04).
      *
-     * @return Collection<int, Photo>
+     * @return LengthAwarePaginator<int, Photo>
      */
     private function filteredPhotos(Request $request, Project $project)
     {
@@ -363,6 +443,10 @@ class ProjectController extends Controller
         return $query
             ->orderBy('taken_at', $request->input('photo_order') === 'antigas' ? 'asc' : 'desc')
             ->orderBy('id', $request->input('photo_order') === 'antigas' ? 'asc' : 'desc')
-            ->get();
+            // Os filtros viajam com os links da paginação: mudar de página não
+            // pode desfazer o filtro que trouxe o gestor até aqui.
+            ->paginate(self::PHOTOS_PER_PAGE, ['*'], 'fotos_pagina')
+            ->withQueryString()
+            ->appends(['tab' => 'fotos']);
     }
 }

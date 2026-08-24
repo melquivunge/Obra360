@@ -10,6 +10,12 @@ use App\Models\ProjectUpdate;
 
 class DashboardController extends Controller
 {
+    /** Obras recentes no painel. */
+    private const RECENT_PROJECTS_LIMIT = 5;
+
+    /** Atualizações recentes no painel. */
+    private const RECENT_UPDATES_LIMIT = 8;
+
     public function index()
     {
         $isManager = auth()->user()->isManager();
@@ -59,13 +65,13 @@ class DashboardController extends Controller
 
         $recentProjects = (clone $statsQuery)->with('client')
             ->latest()
-            ->limit(5)
+            ->limit(self::RECENT_PROJECTS_LIMIT)
             ->get();
 
         $recentUpdates = ProjectUpdate::with('project')
             ->whereHas('project', fn ($query) => $this->scopeProjectsForDashboard($query))
             ->latest()
-            ->limit(8)
+            ->limit(self::RECENT_UPDATES_LIMIT)
             ->get();
 
         return view('admin.dashboard', compact(

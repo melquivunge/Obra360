@@ -11,6 +11,12 @@ use Illuminate\Http\Request;
 
 class MessageController extends Controller
 {
+    /** Obras por página na lista de conversas. */
+    public const PROJECTS_PER_PAGE = 20;
+
+    /** Mensagens carregadas de uma vez numa conversa. */
+    public const CONVERSATION_MESSAGE_LIMIT = 200;
+
     public function index()
     {
         $query = Project::query();
@@ -19,10 +25,37 @@ class MessageController extends Controller
             $query->where('manager_id', auth()->id());
         }
 
-        $projects = $query->with(['messages' => function ($q) {
-            $q->latest()->limit(1);
-        }, 'messages.user'])->latest()->get()
-            ->sortByDesc(fn ($p) => $p->messages->first()?->created_at);
+        // A data da última mensagem passa a vir da própria consulta, numa
+        // subconsulta correlacionada. Antes carregavam-se todas as obras
+        // visíveis para as ordenar em PHP com `sortByDesc()`: o custo crescia
+        // com o número de obras, em memória e em tempo, e não havia tecto.
+        //
+        // O `reorder()` é obrigatório: `messages()` traz um ORDER BY que não
+        // pertence a uma agregação e o MySQL em ONLY_FULL_GROUP_BY recusa-o —
+        // a mesma armadilha documentada em `Plan::nextVersionNumber()`.
+        $lastMessageAt = Message::query()
+            ->reorder()
+            ->selectRaw('MAX(messages.created_at)')
+            ->whereColumn('messages.project_id', 'projects.id');
+
+        $projects = $query
+            ->select('projects.*')
+            ->addSelect(['last_message_at' => $lastMessageAt])
+            // O mesmo `reorder()`, por outro motivo: `messages()` ordena da mais
+            // antiga para a mais recente, e sem o limpar o `latest()` daqui era
+            // ignorado — a lista mostrava e ordenava pela PRIMEIRA mensagem da
+            // obra, não pela última.
+            ->with([
+                'messages' => fn ($q) => $q->reorder()->latest()->limit(1),
+                'messages.user',
+            ])
+            // Uma obra sem mensagens tem `last_message_at` nulo e cai para o
+            // fim, tal como caía na ordenação em PHP. O desempate por data de
+            // criação preserva a ordem que o `latest()` anterior já dava.
+            ->orderByDesc('last_message_at')
+            ->orderByDesc('projects.created_at')
+            ->orderByDesc('projects.id')
+            ->paginate(self::PROJECTS_PER_PAGE);
 
         return view('admin.messages', compact('projects'));
     }
@@ -34,7 +67,7 @@ class MessageController extends Controller
         $messages = $project->messages()
             ->with('user')
             ->latest()
-            ->limit(200)
+            ->limit(self::CONVERSATION_MESSAGE_LIMIT)
             ->get()
             ->sortBy('created_at')
             ->values();

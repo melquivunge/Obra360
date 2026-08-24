@@ -17,6 +17,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProjectController extends Controller
 {
+    /** Mensagens carregadas na página do projecto — tecto contra OOM em obras antigas. */
+    public const SHOW_MESSAGE_LIMIT = 100;
+
+    /** Fotos carregadas na página do projecto. */
+    public const SHOW_PHOTO_LIMIT = 200;
+
+    /** Mensagens carregadas de uma vez no ecrã da conversa. */
+    public const CONVERSATION_MESSAGE_LIMIT = 200;
+
     public function show(Project $project)
     {
         // Gate: client can only see their own projects
@@ -25,9 +34,10 @@ class ProjectController extends Controller
 
         $project->load(['client', 'phases', 'updates.user']);
         // Load messages with a hard limit to prevent OOM on large projects
-        $messages = $project->messages()->with('user')->latest()->limit(100)->get()->reverse()->values();
+        $messages = $project->messages()->reorder()->with('user')->latest()
+            ->limit(self::SHOW_MESSAGE_LIMIT)->get()->reverse()->values();
         $project->setRelation('messages', $messages);
-        $photos = $project->photos()->latest()->limit(200)->get();
+        $photos = $project->photos()->limit(self::SHOW_PHOTO_LIMIT)->get();
         $canViewFinancials = $this->canViewFinancials($project);
         $allowComments = Setting::get('allow_comments', '1') === '1';
         $expenses = $canViewFinancials ? $project->expenses()->get() : collect();
@@ -61,8 +71,9 @@ class ProjectController extends Controller
 
         $messages = $project->messages()
             ->with('user')
+            ->reorder()
             ->oldest()
-            ->limit(200)
+            ->limit(self::CONVERSATION_MESSAGE_LIMIT)
             ->get()
             ->map(fn ($m) => [
                 'id' => $m->id,

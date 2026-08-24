@@ -320,6 +320,22 @@ class Project extends Model
         return (float) $this->expenses()->sum('amount');
     }
 
+    /**
+     * Total já recebido. Somado em SQL de propósito: a lista de cobranças da
+     * página da obra é paginada, e um total tirado da página visível seria um
+     * número errado assim que existisse uma segunda página.
+     */
+    public function totalPaid(): float
+    {
+        return (float) $this->payments()->reorder()->where('status', 'paid')->sum('amount');
+    }
+
+    /** Total ainda por receber — pelo mesmo motivo, somado em SQL. */
+    public function totalPending(): float
+    {
+        return (float) $this->payments()->reorder()->where('status', 'pending')->sum('amount');
+    }
+
     public function remainingBalance(): float
     {
         return (float) ($this->budget ?? 0) - $this->totalSpent();
