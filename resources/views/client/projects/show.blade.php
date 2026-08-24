@@ -171,6 +171,25 @@
 
         {{-- Tab: Galeria --}}
         <div x-show="tab === 'galeria'" style="display:none;">
+            @if($allowUploads)
+            <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;margin-bottom:1rem;">
+                <h2 style="font-size:1rem;font-weight:700;margin-bottom:0.35rem;">Enviar fotos</h2>
+                <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-bottom:1rem;">
+                    Uma infiltração, uma dúvida, o estado de um acabamento. Até 10 fotos de cada vez, com o seu nome.
+                </p>
+                <form method="POST" action="{{ route('portal.projects.uploads.photos', $project) }}" enctype="multipart/form-data" class="space-y-3">
+                    @csrf
+                    <input type="hidden" name="_form" value="envio_fotos">
+                    <x-form-errors form="envio_fotos" />
+                    <input type="file" name="photos[]" multiple required accept="image/jpeg,image/png,image/webp" style="width:100%;">
+                    <x-field-error field="photos" form="envio_fotos" />
+                    <x-field-error field="photos.0" form="envio_fotos" />
+                    <input type="text" name="caption" maxlength="500" placeholder="O que estamos vendo? (opcional)" value="{{ old('caption') }}" style="width:100%;">
+                    <button type="submit" class="btn-primary">Enviar fotos</button>
+                </form>
+            </div>
+            @endif
+
             <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
                 <h2 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">Galeria de fotos</h2>
                 @if($photos->isEmpty())
@@ -419,6 +438,28 @@
 
         {{-- Tab: Documentos --}}
         <div x-show="tab === 'documentos'" style="display:none;">
+            @if($allowUploads)
+            {{-- ADV-03: o cliente manda o contrato assinado ou a licença aqui,
+                 em vez de por WhatsApp — que é o hábito que este portal existe
+                 para substituir. --}}
+            <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;margin-bottom:1rem;">
+                <h2 style="font-size:1rem;font-weight:700;margin-bottom:0.35rem;">Enviar um documento</h2>
+                <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-bottom:1rem;">
+                    Fica visível para você e para a equipe, com o seu nome. Até {{ round(\App\Models\PlanVersion::maxUploadKilobytes() / 1024) }} MB.
+                </p>
+                <form method="POST" action="{{ route('portal.projects.uploads.document', $project) }}" enctype="multipart/form-data" class="space-y-3">
+                    @csrf
+                    <input type="hidden" name="_form" value="envio_documento">
+                    <x-form-errors form="envio_documento" />
+                    <input type="text" name="name" maxlength="200" required placeholder="Nome do documento" value="{{ old('name') }}" style="width:100%;">
+                    <x-field-error field="name" form="envio_documento" />
+                    <input type="file" name="file" required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" style="width:100%;">
+                    <x-field-error field="file" form="envio_documento" />
+                    <button type="submit" class="btn-primary">Enviar documento</button>
+                </form>
+            </div>
+            @endif
+
             <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
                 <h2 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">Documentos disponíveis</h2>
                 @if($documents->isEmpty())
