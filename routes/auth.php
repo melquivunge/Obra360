@@ -19,7 +19,11 @@ Route::middleware('guest')->group(function () {
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
+    // O broker já trava pedidos repetidos para o MESMO endereço (60 s), o que
+    // não impede varrer mil endereços a partir de um IP. O tecto por IP é o
+    // mesmo do login: cinco tentativas por minuto.
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])

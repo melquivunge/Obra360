@@ -9,7 +9,7 @@ return [
     |
     | Ver docs/production-readiness.md ("Content Security Policy") para a
     | política completa, a razão de cada directiva permissiva e o procedimento
-    | de passagem de relato a imposição.
+    | de calibração sem deixar de a impor.
     |
     */
 
@@ -22,12 +22,12 @@ return [
 
         // Modo de relato: o browser comunica as violações e não bloqueia nada.
         //
-        // O valor por omissão depende do ambiente de propósito. Em local e nos
-        // testes a política é imposta, para que uma violação nova apareça onde
-        // é barata de corrigir. Em produção começa em relato, para que o
-        // primeiro deploy não possa partir nada; passa a imposição pondo
-        // CSP_REPORT_ONLY=false no .env depois de observar os relatórios.
-        'report_only' => env('CSP_REPORT_ONLY', env('APP_ENV') === 'production'),
+        // A omissão é impor, em todos os ambientes. Produção começou em relato
+        // para o primeiro deploy não poder partir nada, mas uma política que
+        // não bloqueia não é uma protecção — é uma descrição —, e um valor por
+        // omissão que só se aperta por intervenção manual fica por apertar.
+        // Para voltar a relato temporariamente: CSP_REPORT_ONLY=true no .env.
+        'report_only' => filter_var(env('CSP_REPORT_ONLY', false), FILTER_VALIDATE_BOOLEAN),
 
         // Destino dos relatórios de violação. Vazio remove a directiva
         // `report-uri` — o browser passa a escrever só na consola dele, o que

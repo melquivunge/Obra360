@@ -253,6 +253,12 @@ class ProjectController extends Controller
 
         if (auth()->user()->isManager()) {
             $data['manager_id'] = auth()->id();
+            // PROJ-05: o gestor edita a obra que é dele, mas não a transfere
+            // para outro cliente — isso mudaria quem a vê no portal, e o âmbito
+            // do gestor é a obra, não a carteira. O valor pedido é descartado em
+            // silêncio, como já acontecia com `manager_id`; a vista deixou de
+            // oferecer o campo para não prometer o que o servidor não faz.
+            $data['client_id'] = $project->client_id;
         }
 
         $oldStatus = $project->status;
@@ -377,7 +383,7 @@ class ProjectController extends Controller
                 return;
             }
 
-            if ((int) $candidate->client_id !== (int) $request->input('client_id')) {
+            if ((int) $candidate->client_id !== $this->effectiveClientId($request, $project)) {
                 $fail('A origem deve ser um projeto do mesmo cliente.');
 
                 return;
@@ -387,6 +393,24 @@ class ProjectController extends Controller
                 $fail('Este vínculo criaria um ciclo entre projetos.');
             }
         };
+    }
+
+    /**
+     * O cliente com que o pedido vai mesmo ficar.
+     *
+     * Num `update` feito por um gestor o `client_id` que vier no pedido é
+     * descartado e a obra fica no cliente que já tinha. A regra da origem tem de
+     * comparar com esse cliente, e não com o que o formulário enviou — senão um
+     * pedido forjado com o `client_id` de outro cliente passava a validação e
+     * deixava a obra ligada a um projecto que não é do dono dela.
+     */
+    private function effectiveClientId(Request $request, ?Project $project): int
+    {
+        if ($project !== null && auth()->user()->isManager()) {
+            return (int) $project->client_id;
+        }
+
+        return (int) $request->input('client_id');
     }
 
     /**
