@@ -48,7 +48,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'E-mail ou senha incorretos.',
+                'email' => __('E-mail ou senha incorretos.'),
             ]);
         }
 
@@ -59,7 +59,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'Sua conta está inativa. Entre em contato com o administrador.',
+                'email' => __('Sua conta está inativa. Entre em contato com o administrador.'),
             ]);
         }
 

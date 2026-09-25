@@ -35,7 +35,7 @@ class ProjectBudgetItemController extends Controller
 
         BudgetItem::create($data);
 
-        return back()->with('success', 'Linha do orçamento adicionada.');
+        return back()->with('success', __('Linha do orçamento adicionada.'));
     }
 
     public function update(Request $request, Project $project, BudgetItem $item)
@@ -51,7 +51,7 @@ class ProjectBudgetItemController extends Controller
 
         $item->update($data);
 
-        return back()->with('success', 'Linha do orçamento atualizada.');
+        return back()->with('success', __('Linha do orçamento atualizada.'));
     }
 
     public function destroy(Project $project, BudgetItem $item)
@@ -61,6 +61,6 @@ class ProjectBudgetItemController extends Controller
 
         $item->delete();
 
-        return back()->with('success', 'Linha do orçamento removida.');
+        return back()->with('success', __('Linha do orçamento removida.'));
     }
 }

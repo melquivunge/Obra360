@@ -46,7 +46,7 @@ class ProjectPhotoController extends Controller
 
         ProjectUpdate::log($project->id, 'Fotos adicionadas', 'foto');
 
-        return back()->with('success', 'Fotos enviadas com sucesso.');
+        return back()->with('success', __('Fotos enviadas com sucesso.'));
     }
 
     public function destroy(Project $project, Photo $photo)
@@ -59,7 +59,7 @@ class ProjectPhotoController extends Controller
         }
         $photo->delete();
 
-        return back()->with('success', 'Foto removida.');
+        return back()->with('success', __('Foto removida.'));
     }
 
     public function cover(Project $project)

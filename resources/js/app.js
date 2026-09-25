@@ -169,7 +169,7 @@ document.addEventListener('click', function (event) {
         const value = copier.getAttribute('data-copy');
         navigator.clipboard
             ?.writeText(value)
-            .then(() => window.alert('Copiado!'))
+            .then(() => window.alert(document.querySelector('meta[name=copy-success]')?.content || 'Copied!'))
             .catch(() => {});
     }
 });

@@ -3,8 +3,8 @@
 
     {{-- Header --}}
     <div>
-        <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">Dashboard</h1>
-        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Visão geral do portfólio de obras e projetos · {{ now()->format('d/m/Y') }}</p>
+        <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">{{ __('Dashboard') }}</h1>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ __('Visão geral do portfólio de obras e projetos ·') }} {{ now()->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') }}</p>
     </div>
 
     {{-- KPI Cards --}}
@@ -25,7 +25,7 @@
         @endphp
         @foreach($cards as $card)
         <div style="background-color:{{ $card['accent'] ? 'oklch(0.74 0.135 78 / 0.08)' : 'var(--card)' }};border:1px solid {{ $card['accent'] ? 'oklch(0.74 0.135 78 / 0.35)' : 'var(--border)' }};border-radius:0.75rem;padding:1rem;{{ $card['accent'] ? 'box-shadow:var(--shadow-gold);' : '' }}">
-            <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted-foreground);">{{ $card['label'] }}</p>
+            <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted-foreground);">{{ __($card['label']) }}</p>
             <p style="font-size:1.5rem;font-weight:700;margin-top:0.5rem;color:{{ $card['accent'] ? 'var(--primary)' : 'var(--foreground)' }}">{{ $card['value'] }}</p>
         </div>
         @endforeach
@@ -36,8 +36,8 @@
     <div class="grid gap-6 lg:grid-cols-2">
         @if($lateProjects->isNotEmpty())
         <div style="background-color:var(--card);border:1px solid oklch(0.6 0.18 40 / 0.4);border-radius:0.75rem;padding:1.25rem;">
-            <h2 style="font-size:1rem;font-weight:700;color:oklch(0.7 0.16 40);">Em atraso ({{ $lateCount }})</h2>
-            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">Previsão de término já passou e o trabalho não está concluído.</p>
+            <h2 style="font-size:1rem;font-weight:700;color:oklch(0.7 0.16 40);">{{ __('Em atraso (') }}{{ $lateCount }})</h2>
+            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">{{ __('Previsão de término já passou e o trabalho não está concluído.') }}</p>
             <div class="space-y-2">
                 @foreach($lateProjects as $late)
                 <a href="{{ route('admin.projects.show', $late) }}" class="flex items-center justify-between"
@@ -47,8 +47,8 @@
                         <span style="display:block;font-size:0.75rem;color:var(--muted-foreground);">{{ $late->client?->name ?? '—' }}</span>
                     </span>
                     <span style="font-size:0.75rem;color:oklch(0.7 0.16 40);white-space:nowrap;">
-                        {{ $late->expected_end_date?->format('d/m/Y') }}
-                        · {{ (int) $late->expected_end_date?->diffInDays(now()) }} dias
+                        {{ $late->expected_end_date?->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') }}
+                        · {{ (int) $late->expected_end_date?->diffInDays(now()) }} {{ __('dias') }}
                     </span>
                 </a>
                 @endforeach
@@ -58,8 +58,8 @@
 
         @if($nearCompletionProjects->isNotEmpty())
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
-            <h2 style="font-size:1rem;font-weight:700;">Perto da conclusão ({{ $nearCompletionCount }})</h2>
-            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">Em andamento com 80% ou mais de progresso.</p>
+            <h2 style="font-size:1rem;font-weight:700;">{{ __('Perto da conclusão (') }}{{ $nearCompletionCount }})</h2>
+            <p style="font-size:0.75rem;color:var(--muted-foreground);margin:0.25rem 0 0.75rem;">{{ __('Em andamento com 80% ou mais de progresso.') }}</p>
             <div class="space-y-2">
                 @foreach($nearCompletionProjects as $near)
                 <a href="{{ route('admin.projects.show', $near) }}" class="flex items-center justify-between"
@@ -83,8 +83,8 @@
         {{-- Recent projects --}}
         <div class="lg:col-span-2" style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
             <div class="flex items-center justify-between mb-4">
-                <h2 style="font-size:1rem;font-weight:700;">Obras e projetos recentes</h2>
-                <a href="{{ route('admin.projects.index') }}" style="font-size:0.8rem;color:var(--primary);">Ver todos →</a>
+                <h2 style="font-size:1rem;font-weight:700;">{{ __('Obras e projetos recentes') }}</h2>
+                <a href="{{ route('admin.projects.index') }}" style="font-size:0.8rem;color:var(--primary);">{{ __('Ver todos →') }}</a>
             </div>
             <div class="space-y-2">
                 @forelse($recentProjects as $project)
@@ -96,19 +96,19 @@
                         <p style="font-size:0.75rem;color:var(--muted-foreground)" class="truncate">{{ $project->client?->name }} · {{ $project->location ?: '—' }}</p>
                     </div>
                     <div class="flex items-center gap-3 ml-3 shrink-0">
-                        <span class="badge badge-{{ $project->status }}">{{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}</span>
+                        <span class="badge badge-{{ $project->status }}">{{ __(\App\Models\Project::STATUSES[$project->status] ?? $project->status) }}</span>
                         <span style="font-size:0.875rem;font-weight:600;color:var(--primary)">{{ $project->progress }}%</span>
                     </div>
                 </a>
                 @empty
-                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">Nenhuma obra ou projeto cadastrado.</p>
+                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">{{ __('Nenhuma obra ou projeto cadastrado.') }}</p>
                 @endforelse
             </div>
         </div>
 
         {{-- Recent updates --}}
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
-            <h2 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Atualizações recentes</h2>
+            <h2 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">{{ __('Atualizações recentes') }}</h2>
             <div class="space-y-3">
                 @forelse($recentUpdates as $update)
                 <div class="flex gap-3">
@@ -124,11 +124,11 @@
                     </div>
                     <div class="min-w-0 flex-1">
                         <p class="truncate" style="font-size:0.8125rem;">{{ $update->title }}</p>
-                        <p class="truncate" style="font-size:0.75rem;color:var(--muted-foreground)">{{ $update->project?->name }} · {{ $update->happened_at?->format('d/m/Y') }}</p>
+                        <p class="truncate" style="font-size:0.75rem;color:var(--muted-foreground)">{{ $update->project?->name }} · {{ $update->happened_at?->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') }}</p>
                     </div>
                 </div>
                 @empty
-                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">Sem atualizações.</p>
+                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;padding:2rem 0;">{{ __('Sem atualizações.') }}</p>
                 @endforelse
             </div>
         </div>

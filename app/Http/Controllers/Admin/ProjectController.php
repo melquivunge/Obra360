@@ -113,7 +113,7 @@ class ProjectController extends Controller
         $this->logSourceLink($project);
 
         return redirect()->route('admin.projects.show', $project)
-            ->with('success', $project->isSiteWork() ? 'Obra criada com sucesso.' : 'Projeto criado com sucesso.');
+            ->with('success', $project->isSiteWork() ? __('Obra criada com sucesso.') : __('Projeto criado com sucesso.'));
     }
 
     public function show(Request $request, Project $project)
@@ -276,7 +276,7 @@ class ProjectController extends Controller
         }
 
         return redirect()->route('admin.projects.show', $project)
-            ->with('success', $project->isSiteWork() ? 'Obra atualizada.' : 'Projeto atualizado.');
+            ->with('success', $project->isSiteWork() ? __('Obra atualizada.') : __('Projeto atualizado.'));
     }
 
     public function destroy(Project $project)
@@ -288,7 +288,7 @@ class ProjectController extends Controller
         $project->delete();
 
         return redirect()->route('admin.projects.index')
-            ->with('success', $wasSiteWork ? 'Obra removida.' : 'Projeto removido.');
+            ->with('success', $wasSiteWork ? __('Obra removida.') : __('Projeto removido.'));
     }
 
     // ── Manual Updates ────────────────────────────────────────
@@ -303,7 +303,7 @@ class ProjectController extends Controller
         ]);
         ProjectUpdate::log($project->id, $request->title, 'geral', $request->description);
 
-        return back()->with('success', 'Atualização registrada.');
+        return back()->with('success', __('Atualização registrada.'));
     }
 
     /**
@@ -366,25 +366,25 @@ class ProjectController extends Controller
             }
 
             if ($project !== null && (int) $candidate->id === (int) $project->id) {
-                $fail('Uma obra não pode ser a origem de si mesma.');
+                $fail(__('Uma obra não pode ser a origem de si mesma.'));
 
                 return;
             }
 
             if (! $candidate->canBeSource()) {
-                $fail('A origem deve ser um projeto de arquitetura ou de design de interiores.');
+                $fail(__('A origem deve ser um projeto de arquitetura ou de design de interiores.'));
 
                 return;
             }
 
             if ((int) $candidate->client_id !== (int) $request->input('client_id')) {
-                $fail('A origem deve ser um projeto do mesmo cliente.');
+                $fail(__('A origem deve ser um projeto do mesmo cliente.'));
 
                 return;
             }
 
             if ($project !== null && $project->wouldCycleThroughSource((int) $candidate->id)) {
-                $fail('Este vínculo criaria um ciclo entre projetos.');
+                $fail(__('Este vínculo criaria um ciclo entre projetos.'));
             }
         };
     }
@@ -417,8 +417,8 @@ class ProjectController extends Controller
     private function messages(): array
     {
         return [
-            'source_project_id.exists' => 'O projeto de origem escolhido não existe mais.',
-            'source_project_id.integer' => 'Escolha um projeto de origem válido.',
+            'source_project_id.exists' => __('O projeto de origem escolhido não existe mais.'),
+            'source_project_id.integer' => __('Escolha um projeto de origem válido.'),
         ];
     }
 

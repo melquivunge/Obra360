@@ -9,8 +9,8 @@
         <x-password-input id="password" name="password" required autocomplete="current-password" />
 --}}
 @props([
-    'showLabel' => 'Mostrar senha',
-    'hideLabel' => 'Ocultar senha',
+    'showLabel' => __('Mostrar senha'),
+    'hideLabel' => __('Ocultar senha'),
 ])
 
 <div x-data="{ mostrar: false }" style="position:relative;display:block;width:100%;">

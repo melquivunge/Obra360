@@ -42,7 +42,7 @@ class ProjectDocumentController extends Controller
             ProjectUpdate::log($project->id, 'Documento liberado: '.$doc->name, 'documento');
         }
 
-        return back()->with('success', 'Documento enviado.');
+        return back()->with('success', __('Documento enviado.'));
     }
 
     public function destroy(Project $project, Document $document)
@@ -53,7 +53,7 @@ class ProjectDocumentController extends Controller
         Storage::disk('local')->delete($document->path);
         $document->delete();
 
-        return back()->with('success', 'Documento removido.');
+        return back()->with('success', __('Documento removido.'));
     }
 
     public function download(Project $project, Document $document)

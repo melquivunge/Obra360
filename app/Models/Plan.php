@@ -90,12 +90,12 @@ class Plan extends Model
 
     public function statusLabel(): string
     {
-        return self::STATUSES[$this->status] ?? $this->status;
+        return __(self::STATUSES[$this->status] ?? $this->status);
     }
 
     public function disciplineLabel(): string
     {
-        return self::DISCIPLINES[$this->discipline] ?? $this->discipline;
+        return __(self::DISCIPLINES[$this->discipline] ?? $this->discipline);
     }
 
     /**

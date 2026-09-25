@@ -7,14 +7,14 @@
             <span class="text-3xl font-bold text-slate-800 mt-1">Obra360</span>
         </div>
 
-        <h2 class="text-lg font-semibold text-slate-800 text-center mt-4">Verifique seu e-mail</h2>
+        <h2 class="text-lg font-semibold text-slate-800 text-center mt-4">{{ __('Verifique seu e-mail') }}</h2>
         <p class="mt-2 text-sm text-gray-500 text-center">
-            Obrigado por se cadastrar! Confirme seu e-mail clicando no link que enviamos. Se não recebeu, podemos enviar outro.
+            {{ __('Obrigado por se cadastrar! Confirme seu e-mail clicando no link que enviamos. Se não recebeu, podemos enviar outro.') }}
         </p>
 
         @if (session('status') == 'verification-link-sent')
             <div class="mt-4 text-sm text-green-700 bg-green-50 border border-green-200 px-4 py-3 rounded-lg">
-                Um novo link de verificação foi enviado para o seu e-mail.
+                {{ __('Um novo link de verificação foi enviado para o seu e-mail.') }}
             </div>
         @endif
 
@@ -23,7 +23,7 @@
                 @csrf
 
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-                    Reenviar e-mail de verificação
+                    {{ __('Reenviar e-mail de verificação') }}
                 </button>
             </form>
 
@@ -31,7 +31,7 @@
                 @csrf
 
                 <button type="submit" class="text-sm text-blue-600 hover:text-blue-800">
-                    Sair
+                    {{ __('Sair') }}
                 </button>
             </form>
         </div>

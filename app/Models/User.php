@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'email', 'password', 'role', 'phone', 'active', 'client_id'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
@@ -38,6 +39,11 @@ class User extends Authenticatable
             'password' => 'hashed',
             'active' => 'boolean',
         ];
+    }
+
+    public function preferredLocale(): string
+    {
+        return in_array($this->locale, ['pt_BR', 'en'], true) ? $this->locale : 'pt_BR';
     }
 
     public function isAdmin(): bool

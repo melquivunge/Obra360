@@ -43,14 +43,14 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Este campo é obrigatório.',
-            'email.required' => 'Este campo é obrigatório.',
-            'email.email' => 'Insira um e-mail válido.',
-            'email.unique' => 'Este e-mail já está em uso.',
-            'role.required' => 'Este campo é obrigatório.',
-            'role.in' => 'Perfil inválido selecionado.',
-            'password.min' => 'A senha deve ter no mínimo 8 caracteres.',
-            'password.confirmed' => 'As senhas não coincidem.',
+            'name.required' => __('Este campo é obrigatório.'),
+            'email.required' => __('Este campo é obrigatório.'),
+            'email.email' => __('Insira um e-mail válido.'),
+            'email.unique' => __('Este e-mail já está em uso.'),
+            'role.required' => __('Este campo é obrigatório.'),
+            'role.in' => __('Perfil inválido selecionado.'),
+            'password.min' => __('A senha deve ter no mínimo 8 caracteres.'),
+            'password.confirmed' => __('As senhas não coincidem.'),
         ];
     }
 }

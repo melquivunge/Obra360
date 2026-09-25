@@ -337,7 +337,7 @@ class Project extends Model
 
     public function typeLabel(): string
     {
-        return self::TYPES[$this->type] ?? $this->type;
+        return __(self::TYPES[$this->type] ?? $this->type);
     }
 
     /** Verdadeiro para construção e remodelação; falso para os serviços de projecto. */
@@ -353,7 +353,7 @@ class Project extends Model
      */
     public function noun(): string
     {
-        return $this->isSiteWork() ? 'obra' : 'projeto';
+        return $this->isSiteWork() ? __('obra') : __('projeto');
     }
 
     /**
@@ -364,9 +364,9 @@ class Project extends Model
     public static function collectionLabel(bool $hasSiteWork, bool $hasDesignWork): string
     {
         return match (true) {
-            $hasSiteWork && $hasDesignWork => 'Minhas Obras e Projetos',
-            $hasDesignWork => 'Meus Projetos',
-            default => 'Minhas Obras',
+            $hasSiteWork && $hasDesignWork => __('Minhas Obras e Projetos'),
+            $hasDesignWork => __('Meus Projetos'),
+            default => __('Minhas Obras'),
         };
     }
 
@@ -376,7 +376,7 @@ class Project extends Model
      */
     public function nounWithArticle(): string
     {
-        return ($this->isSiteWork() ? 'a ' : 'o ').$this->noun();
+        return (app()->getLocale() === 'en' ? 'the ' : ($this->isSiteWork() ? 'a ' : 'o ')).$this->noun();
     }
 
     /**

@@ -37,7 +37,7 @@ class ProjectExpenseController extends Controller
         Expense::create($data);
         ProjectUpdate::log($project->id, 'Despesa: '.$data['description'].' — '.money($data['amount']), 'despesa');
 
-        return back()->with('success', 'Despesa registrada.');
+        return back()->with('success', __('Despesa registrada.'));
     }
 
     public function update(Request $request, Project $project, Expense $expense)
@@ -64,7 +64,7 @@ class ProjectExpenseController extends Controller
 
         $expense->update($data);
 
-        return back()->with('success', 'Despesa atualizada.');
+        return back()->with('success', __('Despesa atualizada.'));
     }
 
     public function destroy(Project $project, Expense $expense)
@@ -78,6 +78,6 @@ class ProjectExpenseController extends Controller
 
         $expense->delete();
 
-        return back()->with('success', 'Despesa removida.');
+        return back()->with('success', __('Despesa removida.'));
     }
 }

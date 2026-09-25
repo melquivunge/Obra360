@@ -10,7 +10,7 @@
     quando existe um modelo na página (ver resources/js/app.js). Enquanto não
     chega, o que se vê é a mensagem de fundo — não uma caixa vazia.
 --}}
-@props(['src', 'label' => 'Modelo 3D'])
+@props(['src', 'label' => __('Modelo 3D')])
 
 <div style="margin-top:0.75rem;width:100%;">
     <model-viewer
@@ -21,10 +21,10 @@
         shadow-intensity="1"
         style="width:100%;height:22rem;background-color:var(--surface, #1a1a1a);border:1px solid var(--border, #333);border-radius:0.5rem;">
         <p style="padding:1rem;font-size:0.8125rem;color:var(--muted-foreground);">
-            Carregando o modelo 3D… Se não aparecer, o seu navegador pode não suportar WebGL — o arquivo continua disponível para baixar.
+            {{ __('Carregando o modelo 3D… Se não aparecer, o seu navegador pode não suportar WebGL — o arquivo continua disponível para baixar.') }}
         </p>
     </model-viewer>
     <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.375rem;">
-        Arraste para girar, use a roda do mouse para aproximar.
+        {{ __('Arraste para girar, use a roda do mouse para aproximar.') }}
     </p>
 </div>

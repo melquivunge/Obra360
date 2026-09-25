@@ -9,7 +9,7 @@
             <span class="text-3xl font-bold text-slate-800 mt-1">Obra360</span>
         </div>
 
-        <h2 class="text-lg font-semibold text-slate-800 text-center mt-4">Redefinir senha</h2>
+        <h2 class="text-lg font-semibold text-slate-800 text-center mt-4">{{ __('Redefinir senha') }}</h2>
 
         {{-- Error messages --}}
         @if ($errors->any())
@@ -78,7 +78,7 @@
             {{-- Submit button --}}
             <div class="mt-6">
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-                    Redefinir senha
+                    {{ __('Redefinir senha') }}
                 </button>
             </div>
         </form>

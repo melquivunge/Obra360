@@ -46,11 +46,11 @@ class AuditLog extends Model
 
     public function subjectLabel(): string
     {
-        return self::LABELS[$this->auditable_type] ?? class_basename($this->auditable_type);
+        return __(self::LABELS[$this->auditable_type] ?? class_basename($this->auditable_type));
     }
 
     public function actionLabel(): string
     {
-        return self::ACTIONS[$this->action] ?? $this->action;
+        return __(self::ACTIONS[$this->action] ?? $this->action);
     }
 }

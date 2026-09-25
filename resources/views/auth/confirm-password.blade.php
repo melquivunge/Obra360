@@ -9,9 +9,9 @@
             <span class="text-3xl font-bold text-slate-800 mt-1">Obra360</span>
         </div>
 
-        <h2 class="text-lg font-semibold text-slate-800 text-center mt-4">Confirme sua senha</h2>
+        <h2 class="text-lg font-semibold text-slate-800 text-center mt-4">{{ __('Confirme sua senha') }}</h2>
         <p class="text-sm text-gray-500 text-center mt-1">
-            Esta é uma área segura. Por favor, confirme sua senha antes de continuar.
+            {{ __('Esta é uma área segura. Por favor, confirme sua senha antes de continuar.') }}
         </p>
 
         {{-- Error messages --}}
@@ -45,7 +45,7 @@
             {{-- Submit button --}}
             <div class="mt-6">
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-                    Confirmar
+                    {{ __('Confirmar') }}
                 </button>
             </div>
         </form>

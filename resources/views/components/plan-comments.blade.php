@@ -12,22 +12,22 @@
     @forelse($version->comments as $comment)
         <div style="display:flex;gap:0.5rem;padding:0.375rem 0;">
             <span style="font-size:0.75rem;font-weight:600;white-space:nowrap;color:{{ $comment->isFromClient() ? 'var(--primary)' : 'var(--muted-foreground)' }};">
-                {{ $comment->authorName() }}{{ $comment->isFromClient() ? ' (cliente)' : '' }}
+                {{ $comment->authorName() }}{{ $comment->isFromClient() ? __(' (cliente)') : '' }}
             </span>
             <span style="font-size:0.8125rem;flex:1;min-width:0;">{{ $comment->body }}</span>
-            <span style="font-size:0.6875rem;color:var(--muted-foreground);white-space:nowrap;">{{ $comment->created_at->format('d/m H:i') }}</span>
+            <span style="font-size:0.6875rem;color:var(--muted-foreground);white-space:nowrap;">{{ $comment->created_at->format(app()->getLocale() === 'en' ? 'm/d H:i' : 'd/m H:i') }}</span>
         </div>
     @empty
-        <p style="font-size:0.75rem;color:var(--muted-foreground);padding:0.25rem 0;">Sem comentários nesta versão.</p>
+        <p style="font-size:0.75rem;color:var(--muted-foreground);padding:0.25rem 0;">{{ __('Sem comentários nesta versão.') }}</p>
     @endforelse
 
     <form method="POST" action="{{ $action }}" style="display:flex;gap:0.5rem;margin-top:0.5rem;">
         @csrf
         <input type="hidden" name="_form" value="{{ $form }}">
         <input type="text" name="body" maxlength="2000" required
-               placeholder="Comentar esta versão…"
+               placeholder="{{ __('Comentar esta versão…') }}"
                style="flex:1;min-width:0;font-size:0.8125rem;">
-        <button type="submit" class="btn-secondary" style="font-size:0.8125rem;white-space:nowrap;">Comentar</button>
+        <button type="submit" class="btn-secondary" style="font-size:0.8125rem;white-space:nowrap;">{{ __('Comentar') }}</button>
     </form>
     <x-field-error field="body" :form="$form" />
 </div>

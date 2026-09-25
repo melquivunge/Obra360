@@ -9,7 +9,7 @@
                 </svg>
             </div>
             <h1 style="font-size:1.5rem;font-weight:700;color:var(--foreground);margin:0 0 0.25rem;">Obra360</h1>
-            <p style="font-size:0.875rem;color:var(--muted-foreground);margin:0;">Acesse sua conta para continuar</p>
+            <p style="font-size:0.875rem;color:var(--muted-foreground);margin:0;">{{ __('Acesse sua conta para continuar') }}</p>
         </div>
 
         {{-- Error messages --}}
@@ -32,13 +32,13 @@
             @csrf
 
             <div>
-                <label for="email" class="field-label">E-mail</label>
+                <label for="email" class="field-label">{{ __('E-mail') }}</label>
                 <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email"
-                       placeholder="seu@email.com">
+                       placeholder="{{ __('seu@email.com') }}">
             </div>
 
             <div>
-                <label for="password" class="field-label">Senha</label>
+                <label for="password" class="field-label">{{ __('Senha') }}</label>
                 <x-password-input id="password" name="password" required autocomplete="current-password"
                                   placeholder="••••••••" />
             </div>
@@ -46,15 +46,15 @@
             <div style="display:flex;align-items:center;justify-content:space-between;">
                 <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
                     <input type="checkbox" name="remember" style="width:1rem;height:1rem;border-radius:0.25rem;">
-                    <span style="font-size:0.8125rem;color:var(--muted-foreground);">Lembrar-me</span>
+                    <span style="font-size:0.8125rem;color:var(--muted-foreground);">{{ __('Lembrar-me') }}</span>
                 </label>
                 @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" style="font-size:0.8125rem;color:var(--primary);">Esqueci a senha</a>
+                    <a href="{{ route('password.request') }}" style="font-size:0.8125rem;color:var(--primary);">{{ __('Esqueci a senha') }}</a>
                 @endif
             </div>
 
             <button type="submit" class="btn-primary" style="width:100%;justify-content:center;padding:0.625rem 1rem;font-size:0.9375rem;margin-top:0.25rem;">
-                Entrar
+                {{ __('Entrar') }}
             </button>
         </form>
     </div>

@@ -46,7 +46,7 @@ class UserController extends Controller
         }
 
         return redirect()->route('users.index')
-            ->with('success', 'Usuário criado com sucesso.');
+            ->with('success', __('Usuário criado com sucesso.'));
     }
 
     public function edit(User $user): View
@@ -85,7 +85,7 @@ class UserController extends Controller
         }
 
         return redirect()->route('users.index')
-            ->with('success', 'Usuário atualizado com sucesso.');
+            ->with('success', __('Usuário atualizado com sucesso.'));
     }
 
     public function destroy(User $user): RedirectResponse
@@ -96,7 +96,7 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('users.index')
-            ->with('success', 'Usuário excluído com sucesso.');
+            ->with('success', __('Usuário excluído com sucesso.'));
     }
 
     public function toggleActive(User $user): RedirectResponse
@@ -112,8 +112,8 @@ class UserController extends Controller
         }
 
         $message = $user->fresh()->active
-            ? 'Usuário ativado.'
-            : 'Usuário desativado.';
+            ? __('Usuário ativado.')
+            : __('Usuário desativado.');
 
         return redirect()->back()->with('success', $message);
     }
@@ -144,11 +144,11 @@ class UserController extends Controller
             ->doesntExist();
 
         if ($isSelfChange && ($wouldDeactivate || $wouldDemote)) {
-            abort(422, 'Você não pode remover seu próprio acesso de administrador.');
+            abort(422, __('Você não pode remover seu próprio acesso de administrador.'));
         }
 
         if ($isLastActiveAdmin && ($wouldDeactivate || $wouldDemote)) {
-            abort(422, 'É necessário manter pelo menos um administrador ativo.');
+            abort(422, __('É necessário manter pelo menos um administrador ativo.'));
         }
     }
 }

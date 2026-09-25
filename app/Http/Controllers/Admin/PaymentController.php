@@ -36,7 +36,7 @@ class PaymentController extends Controller
 
         $project->payments()->create($data);
 
-        return back()->with('success', 'Cobrança registrada.');
+        return back()->with('success', __('Cobrança registrada.'));
     }
 
     public function update(Request $request, Project $project, Payment $payment)
@@ -64,7 +64,7 @@ class PaymentController extends Controller
 
         $payment->update($data);
 
-        return back()->with('success', 'Cobrança atualizada.');
+        return back()->with('success', __('Cobrança atualizada.'));
     }
 
     public function markPaid(Project $project, Payment $payment)
@@ -74,7 +74,7 @@ class PaymentController extends Controller
 
         $payment->update(['status' => 'paid', 'paid_at' => now()]);
 
-        return back()->with('success', 'Cobrança marcada como paga.');
+        return back()->with('success', __('Cobrança marcada como paga.'));
     }
 
     public function destroy(Project $project, Payment $payment)
@@ -84,6 +84,6 @@ class PaymentController extends Controller
 
         $payment->delete();
 
-        return back()->with('success', 'Cobrança removida.');
+        return back()->with('success', __('Cobrança removida.'));
     }
 }

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
-    <title>{{ $title }} — {{ $project->name }}</title>
+    <title>{{ __($title) }} — {{ $project->name }}</title>
     <style>
         @page { margin: 22mm 16mm; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1c1c1c; }
@@ -27,12 +27,12 @@
 <body>
     <div class="rep-head">
         <div class="company">{{ $companyName }}</div>
-        <h1>{{ $title }}</h1>
-        <div class="sub">{{ $project->name }}@if($project->code) · {{ $project->code }}@endif · Emitido em {{ $generatedAt->format('d/m/Y H:i') }}</div>
+        <h1>{{ __($title) }}</h1>
+        <div class="sub">{{ $project->name }}@if($project->code) · {{ $project->code }}@endif {{ __('· Emitido em') }} {{ $generatedAt->format(app()->getLocale() === 'en' ? 'm/d/Y H:i' : 'd/m/Y H:i') }}</div>
     </div>
 
     @include('admin.reports.partials.'.$type)
 
-    <div class="rep-foot">{{ $companyName }} · {{ $project->name }} · {{ $generatedAt->format('d/m/Y H:i') }}</div>
+    <div class="rep-foot">{{ $companyName }} · {{ $project->name }} · {{ $generatedAt->format(app()->getLocale() === 'en' ? 'm/d/Y H:i' : 'd/m/Y H:i') }}</div>
 </body>
 </html>

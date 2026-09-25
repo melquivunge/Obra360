@@ -32,7 +32,7 @@ class ProjectPhaseController extends Controller
         ProjectPhase::create($data);
         ProjectUpdate::log($project->id, 'Nova fase: '.$data['name'], 'fase');
 
-        return back()->with('success', 'Fase adicionada.');
+        return back()->with('success', __('Fase adicionada.'));
     }
 
     /**
@@ -68,7 +68,7 @@ class ProjectPhaseController extends Controller
         // linhas «Nova fase» no mesmo minuto são ruído, não informação.
         ProjectUpdate::log($project->id, 'Etapas de entrega definidas', 'fase');
 
-        return back()->with('success', 'Etapas de entrega criadas. Ajuste as que precisar.');
+        return back()->with('success', __('Etapas de entrega criadas. Ajuste as que precisar.'));
     }
 
     public function update(Request $request, Project $project, ProjectPhase $phase)
@@ -88,7 +88,7 @@ class ProjectPhaseController extends Controller
         $phase->update($data);
         ProjectUpdate::log($project->id, 'Fase atualizada: '.$phase->name.' — '.$data['percentage'].'%', 'fase');
 
-        return back()->with('success', 'Fase atualizada.');
+        return back()->with('success', __('Fase atualizada.'));
     }
 
     public function destroy(Project $project, ProjectPhase $phase)
@@ -98,6 +98,6 @@ class ProjectPhaseController extends Controller
 
         $phase->delete();
 
-        return back()->with('success', 'Fase removida.');
+        return back()->with('success', __('Fase removida.'));
     }
 }

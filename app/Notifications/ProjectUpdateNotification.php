@@ -39,9 +39,9 @@ class ProjectUpdateNotification extends Notification implements ShouldQueue
         $company = Setting::get('company_name', 'Obra360');
 
         $mail = (new MailMessage)
-            ->subject($company.' — Atualização na obra '.($project?->name ?? ''))
-            ->greeting('Olá '.($notifiable->name ?? '').',')
-            ->line('Há uma novidade na obra **'.($project?->name ?? '').'**.')
+            ->subject($company.' — '.__('Atualização na obra :project', ['project' => $project?->name ?? '']))
+            ->greeting(__('Olá :name,', ['name' => $notifiable->name ?? '']))
+            ->line(__('Há uma novidade na obra **:project**.', ['project' => $project?->name ?? '']))
             ->line('**'.$this->update->title.'**');
 
         if ($this->update->description) {
@@ -49,7 +49,7 @@ class ProjectUpdateNotification extends Notification implements ShouldQueue
         }
 
         return $mail
-            ->action('Ver no portal', $project
+            ->action(__('Ver no portal'), $project
                 ? route('portal.projects.show', $this->update->project_id)
                 : route('portal.dashboard'))
             ->salutation('— '.$company);
@@ -70,9 +70,9 @@ class ProjectUpdateNotification extends Notification implements ShouldQueue
             ? "\n".Str::limit(strip_tags($this->update->description), 120)
             : '';
 
-        return "🏗️ *{$company}* — Atualização na obra *{$project->name}*\n\n"
+        return "🏗️ *{$company}* — ".__('Atualização na obra :project', ['project' => "*{$project->name}*"])."\n\n"
             ."*{$this->update->title}*{$description}\n\n"
-            .'Acesse o portal para ver todos os detalhes.';
+            .__('Acesse o portal para ver todos os detalhes.');
     }
 
     public function toWebPush(mixed $notifiable): array

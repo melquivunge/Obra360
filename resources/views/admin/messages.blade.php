@@ -1,6 +1,6 @@
 <x-admin-layout>
 <div class="p-4 md:p-8">
-    <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.25rem;" class="hidden md:block">Mensagens</h1>
+    <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.25rem;" class="hidden md:block">{{ __('Mensagens') }}</h1>
 
     {{-- Wrapper: mobile = painel único, desktop = dois painéis --}}
     <div id="msg-wrapper" style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;overflow:hidden;display:flex;height:calc(100vh - 8rem);">
@@ -8,7 +8,7 @@
         {{-- PAINEL: Lista de obras --}}
         <div id="proj-list" style="width:100%;max-width:280px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;">
             <div style="padding:0.875rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0;">
-                <p style="font-weight:700;font-size:0.9375rem;">Obras e Projetos</p>
+                <p style="font-weight:700;font-size:0.9375rem;">{{ __('Obras e Projetos') }}</p>
             </div>
             @forelse($projects as $project)
             @php $last = $project->messages->first(); @endphp
@@ -26,11 +26,11 @@
                     @if($last)<p style="font-size:0.7rem;color:var(--muted-foreground);white-space:nowrap;flex-shrink:0;">{{ $last->created_at->diffForHumans(null, true, 1) }}</p>@endif
                 </div>
                 <p style="font-size:0.75rem;color:var(--muted-foreground);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-top:0.125rem;">
-                    {{ $last ? ($last->user?->name.': '.Str::limit($last->body, 45)) : 'Nenhuma mensagem' }}
+                    {{ $last ? ($last->user?->name.': '.Str::limit($last->body, 45)) : __('Nenhuma mensagem') }}
                 </p>
             </button>
             @empty
-            <p style="padding:1.5rem;font-size:0.875rem;color:var(--muted-foreground);">Nenhuma obra ou projeto cadastrado.</p>
+            <p style="padding:1.5rem;font-size:0.875rem;color:var(--muted-foreground);">{{ __('Nenhuma obra ou projeto cadastrado.') }}</p>
             @endforelse
 
             {{-- A lista é paginada: as conversas mais recentes vêm primeiro e as
@@ -50,7 +50,7 @@
             <div id="chat-placeholder" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted-foreground);">
                 <div style="text-align:center;">
                     <svg style="width:3rem;height:3rem;margin:0 auto 0.75rem;opacity:0.4;" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/></svg>
-                    <p style="font-size:0.875rem;">Selecione uma obra ou projeto para ver as mensagens</p>
+                    <p style="font-size:0.875rem;">{{ __('Selecione uma obra ou projeto para ver as mensagens') }}</p>
                 </div>
             </div>
 
@@ -63,16 +63,16 @@
                     </button>
                     <div>
                         <p id="chat-project-name" style="font-weight:700;font-size:0.9375rem;"></p>
-                        <p style="font-size:0.75rem;color:var(--muted-foreground);">Conversa em tempo real</p>
+                        <p style="font-size:0.75rem;color:var(--muted-foreground);">{{ __('Conversa em tempo real') }}</p>
                     </div>
                 </div>
                 <div id="chat-messages" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;min-height:0;"></div>
                 <div style="padding:0.75rem;border-top:1px solid var(--border);flex-shrink:0;">
                     <div style="display:flex;gap:0.5rem;align-items:flex-end;">
-                        <textarea id="chat-input" rows="2" placeholder="Escreva uma mensagem…" style="flex:1;resize:none;"></textarea>
+                        <textarea id="chat-input" rows="2" placeholder="{{ __('Escreva uma mensagem…') }}" style="flex:1;resize:none;"></textarea>
                         <button id="chat-send" class="btn-primary">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>
-                            Enviar
+                            {{ __('Enviar') }}
                         </button>
                     </div>
                 </div>
@@ -134,7 +134,7 @@ function appendMsg(body, userName, isMine, time) {
     if (!isMine) {
         const name = document.createElement('p');
         name.style.cssText = 'font-size:0.75rem;font-weight:600;opacity:0.8;margin-bottom:0.125rem;';
-        name.textContent = userName || 'Usuário';
+        name.textContent = userName || @js(__('Usuário'));
         bubble.appendChild(name);
     }
     const text = document.createElement('p');
@@ -172,7 +172,7 @@ async function openConversation(projectId, projectName) {
 
     document.getElementById('chat-project-name').textContent = projectName;
     const list = document.getElementById('chat-messages');
-    list.innerHTML = '<p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;margin:auto;">Carregando…</p>';
+    list.innerHTML = '<p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;margin:auto;">' + @js(__('Carregando…')) + '</p>';
 
     if (echoChannel && window.Echo) window.Echo.leave(`project.${echoChannel}`);
 
@@ -180,7 +180,7 @@ async function openConversation(projectId, projectName) {
     const msgs = await res.json();
     list.innerHTML = '';
     if (msgs.length === 0) {
-        list.innerHTML = '<p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;margin:auto;">Nenhuma mensagem ainda.</p>';
+        list.innerHTML = '<p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;margin:auto;">' + @js(__('Nenhuma mensagem ainda.')) + '</p>';
     } else {
         msgs.forEach(m => appendMsg(m.body, m.user_name, m.is_mine, m.created_at));
     }
@@ -208,7 +208,7 @@ async function sendMessage() {
         const data = await r.json();
         if (data.ok) {
             input.value = '';
-            appendMsg(body, 'Eu', true, new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
+            appendMsg(body, @js(__('Eu')), true, new Date().toLocaleString(@js(app()->getLocale() === 'en' ? 'en-US' : 'pt-BR'), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
         }
     } finally { btn.disabled = false; }
 }

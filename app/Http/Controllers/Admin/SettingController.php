@@ -73,6 +73,6 @@ class SettingController extends Controller
             Setting::set('logo_url', $path);
         }
 
-        return back()->with('success', 'Configurações salvas.');
+        return back()->with('success', __('Configurações salvas.'));
     }
 }

@@ -63,7 +63,7 @@ class ClientController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.clients.index')->with('success', 'Cliente criado com sucesso.');
+        return redirect()->route('admin.clients.index')->with('success', __('Cliente criado com sucesso.'));
     }
 
     public function edit(Client $client)
@@ -106,14 +106,14 @@ class ClientController extends Controller
             }
         });
 
-        return redirect()->route('admin.clients.index')->with('success', 'Cliente atualizado.');
+        return redirect()->route('admin.clients.index')->with('success', __('Cliente atualizado.'));
     }
 
     public function destroy(Client $client)
     {
         $client->delete();
 
-        return redirect()->route('admin.clients.index')->with('success', 'Cliente removido.');
+        return redirect()->route('admin.clients.index')->with('success', __('Cliente removido.'));
     }
 
     public function linkUser(Request $request, Client $client)
@@ -128,7 +128,7 @@ class ClientController extends Controller
         ]);
         User::where('id', $request->user_id)->update(['client_id' => $client->id]);
 
-        return back()->with('success', 'Usuário vinculado ao cliente.');
+        return back()->with('success', __('Usuário vinculado ao cliente.'));
     }
 
     public function unlinkUser(Client $client, User $user)
@@ -137,7 +137,7 @@ class ClientController extends Controller
 
         $user->update(['client_id' => null]);
 
-        return back()->with('success', 'Vínculo removido.');
+        return back()->with('success', __('Vínculo removido.'));
     }
 
     private function invalidateClientUserSessions(Client $client): void

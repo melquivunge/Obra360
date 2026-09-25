@@ -20,11 +20,14 @@ use App\Http\Controllers\Client\PlanController as ClientPlanController;
 use App\Http\Controllers\Client\ProjectController as ClientProjectController;
 use App\Http\Controllers\Client\UploadController as ClientUploadController;
 use App\Http\Controllers\CspReportController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Portal\PushSubscriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\ExplainTruncatedUpload;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/idioma', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::get('/', function () {
     return auth()->check()

@@ -1,17 +1,17 @@
 <x-admin-layout>
 <div class="space-y-6 p-6 md:p-8">
     <div>
-        <h1 style="font-size:1.5rem;font-weight:700;">Relatórios</h1>
-        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Escolha uma obra ou projeto para ver e exportar os relatórios.</p>
+        <h1 style="font-size:1.5rem;font-weight:700;">{{ __('Relatórios') }}</h1>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ __('Escolha uma obra ou projeto para ver e exportar os relatórios.') }}</p>
     </div>
 
     <form method="GET" action="{{ route('admin.reports.index') }}" class="flex gap-3">
-        <input type="search" name="q" value="{{ request('q') }}" placeholder="Buscar obra ou projeto..." style="max-width:20rem;">
-        <button type="submit" class="btn-primary">Buscar</button>
+        <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('Buscar obra ou projeto...') }}" style="max-width:20rem;">
+        <button type="submit" class="btn-primary">{{ __('Buscar') }}</button>
     </form>
 
     @if($projects->isEmpty())
-        <p class="rep-empty" style="color:var(--muted-foreground);font-style:italic;">Nenhuma obra ou projeto encontrado.</p>
+        <p class="rep-empty" style="color:var(--muted-foreground);font-style:italic;">{{ __('Nenhuma obra ou projeto encontrado.') }}</p>
     @else
         <div class="space-y-3">
         @foreach($projects as $project)
@@ -27,7 +27,7 @@
                         @foreach($types as $key => $label)
                             <a href="{{ route('admin.reports.show', [$project, $key]) }}"
                                style="padding:0.35rem 0.7rem;border-radius:0.5rem;font-size:0.8125rem;border:1px solid var(--border);color:var(--muted-foreground);">
-                                {{ str_replace('Relatório ', '', $label) }}
+                                {{ __($label) }}
                             </a>
                         @endforeach
                     </div>

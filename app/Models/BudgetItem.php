@@ -31,6 +31,6 @@ class BudgetItem extends Model
 
     public function categoryLabel(): string
     {
-        return Expense::CATEGORIES[$this->category] ?? $this->category;
+        return __(Expense::CATEGORIES[$this->category] ?? $this->category);
     }
 }

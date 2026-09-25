@@ -18,14 +18,14 @@
         $cor = $excedeu ? 'var(--destructive)' : ($noLimite ? 'var(--warning, var(--primary))' : 'var(--muted-foreground)');
     @endphp
     <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;padding:0.625rem 0.875rem;border:1px solid var(--border);border-radius:0.5rem;background-color:var(--surface);">
-        <span style="font-size:0.8125rem;color:var(--muted-foreground);">Revisões do contrato:</span>
-        <strong style="font-size:0.8125rem;color:{{ $cor }};">{{ $usadas }} de {{ $project->revisions_included }}</strong>
+        <span style="font-size:0.8125rem;color:var(--muted-foreground);">{{ __('Revisões do contrato:') }}</span>
+        <strong style="font-size:0.8125rem;color:{{ $cor }};">{{ $usadas }} {{ __('de') }} {{ $project->revisions_included }}</strong>
         @if($excedeu)
-            <span style="font-size:0.75rem;color:var(--destructive);">{{ abs($restantes) }} além do contratado</span>
+            <span style="font-size:0.75rem;color:var(--destructive);">{{ abs($restantes) }} {{ __('além do contratado') }}</span>
         @elseif($noLimite)
-            <span style="font-size:0.75rem;color:var(--muted-foreground);">a próxima revisão passa o contratado</span>
+            <span style="font-size:0.75rem;color:var(--muted-foreground);">{{ __('a próxima revisão passa o contratado') }}</span>
         @else
-            <span style="font-size:0.75rem;color:var(--muted-foreground);">{{ $restantes }} {{ $restantes === 1 ? 'restante' : 'restantes' }}</span>
+            <span style="font-size:0.75rem;color:var(--muted-foreground);">{{ $restantes }} {{ $restantes === 1 ? __('restante') : __('restantes') }}</span>
         @endif
     </div>
 @endif
