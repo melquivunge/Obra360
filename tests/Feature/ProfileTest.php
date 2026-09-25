@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,13 +13,38 @@ class ProfileTest extends TestCase
 
     public function test_profile_page_is_displayed(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['name' => 'Maria Silva']);
 
         $response = $this
             ->actingAs($user)
             ->get('/profile');
 
-        $response->assertOk();
+        $response
+            ->assertOk()
+            ->assertSee('Maria Silva')
+            ->assertSee('language-choice', false)
+            ->assertSee(__('Idioma'));
+    }
+
+    public function test_authenticated_navbar_links_to_profile_without_language_switcher(): void
+    {
+        $admin = User::factory()->admin()->create(['name' => 'João Admin']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('João Admin')
+            ->assertSee(route('profile.edit'), false)
+            ->assertDontSee('id="language-choice"', false);
+
+        $client = User::factory()->create(['name' => 'Ana Cliente', 'role' => User::ROLE_CLIENT, 'client_id' => Client::factory()->create()->id]);
+
+        $this->actingAs($client)
+            ->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('Ana Cliente')
+            ->assertSee(route('profile.edit'), false)
+            ->assertDontSee('id="language-choice"', false);
     }
 
     public function test_profile_information_can_be_updated(): void
