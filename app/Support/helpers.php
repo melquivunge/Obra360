@@ -24,13 +24,10 @@ if (! function_exists('currency_symbol')) {
 if (! function_exists('money')) {
     /**
      * Format a value using the currency configured in system settings.
-     *
-     * ponytail: pt-BR digit grouping for every currency — the app ships one
-     * locale. Swap for NumberFormatter if a second locale is ever needed.
      */
     function money(mixed $amount, ?string $code = null): string
     {
-        return currency_symbol($code).' '.number_format((float) $amount, 2, ',', '.');
+        return currency_symbol($code).' '.number_format((float) $amount, 2, app()->getLocale() === 'en' ? '.' : ',', app()->getLocale() === 'en' ? ',' : '.');
     }
 }
 

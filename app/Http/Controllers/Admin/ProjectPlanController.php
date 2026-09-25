@@ -35,7 +35,7 @@ class ProjectPlanController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        return back()->with('success', 'Planta criada. Envie a primeira versão.');
+        return back()->with('success', __('Planta criada. Envie a primeira versão.'));
     }
 
     public function update(Request $request, Project $project, Plan $plan)
@@ -58,7 +58,7 @@ class ProjectPlanController extends Controller
         // a porta a uma planta «aprovada» que ninguém aprovou.
         $plan->update($data);
 
-        return back()->with('success', 'Planta atualizada.');
+        return back()->with('success', __('Planta atualizada.'));
     }
 
     /**
@@ -72,6 +72,6 @@ class ProjectPlanController extends Controller
 
         $plan->delete();
 
-        return back()->with('success', 'Planta removida. O histórico de versões foi mantido.');
+        return back()->with('success', __('Planta removida. O histórico de versões foi mantido.'));
     }
 }

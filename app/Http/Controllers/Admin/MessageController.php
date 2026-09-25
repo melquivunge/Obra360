@@ -75,7 +75,7 @@ class MessageController extends Controller
         return response()->json($messages->map(fn ($m) => [
             'id' => $m->id,
             'body' => $m->body,
-            'created_at' => $m->created_at->format('d/m/Y H:i'),
+            'created_at' => $m->created_at->format(app()->getLocale() === 'en' ? 'm/d/Y H:i' : 'd/m/Y H:i'),
             'user_name' => $m->user?->name ?? 'Usuário',
             'user_id' => $m->user_id,
             'is_mine' => $m->user_id === auth()->id(),

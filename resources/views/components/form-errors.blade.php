@@ -1,4 +1,4 @@
-@props(['form' => null, 'title' => 'Não foi possível salvar. Corrija o seguinte:'])
+@props(['form' => null, 'title' => __('Não foi possível salvar. Corrija o seguinte:')])
 
 {{--
     Resumo dos erros de validação de UM formulário.

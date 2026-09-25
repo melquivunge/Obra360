@@ -44,7 +44,7 @@ class ReportController extends Controller
 
         return view('admin.reports.index', [
             'projects' => $query->paginate(20)->withQueryString(),
-            'types' => self::TYPES,
+            'types' => array_map(fn (string $label) => __($label), self::TYPES),
         ]);
     }
 
@@ -82,7 +82,7 @@ class ReportController extends Controller
         $data = [
             'project' => $project,
             'type' => $type,
-            'title' => self::TYPES[$type],
+            'title' => __(self::TYPES[$type]),
             'generatedAt' => now(),
             'companyName' => Setting::get('company_name', 'Obra360'),
         ];

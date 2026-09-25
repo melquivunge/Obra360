@@ -36,10 +36,11 @@ class ClientLayoutComposer
         }
 
         $userId = auth()->id();
+        $locale = app()->getLocale();
         $clientId = auth()->user()->client_id;
 
         $firstProject = $clientId
-            ? ($this->cachedArray("client_first_project_{$clientId}", 120, function () use ($clientId) {
+            ? ($this->cachedArray("client_first_project_{$clientId}_{$locale}", 120, function () use ($clientId) {
                 $project = Project::where('client_id', $clientId)
                     ->select(['id', 'client_id', 'name', 'type'])
                     ->first();
@@ -52,6 +53,7 @@ class ClientLayoutComposer
                         'id' => $project->id,
                         'name' => $project->name,
                         'noun_with_article' => $project->nounWithArticle(),
+                        'is_site_work' => $project->isSiteWork(),
                     ]
                     : [];
             }) ?: null)
@@ -107,6 +109,7 @@ class ClientLayoutComposer
                     ->all();
             })
             : [])->map(function (array $msg) {
+                $msg['author'] = $msg['author'] === 'Equipe' ? __('Equipe') : $msg['author'];
                 $msg['href'] = $msg['project_id']
                     ? route('portal.projects.messages', $msg['project_id'])
                     : route('portal.dashboard');
@@ -157,6 +160,7 @@ class ClientLayoutComposer
                     ->all();
             })
             : [])->map(function (array $update) {
+                $update['type_label'] = __($update['type_label']);
                 $update['time_ago'] = $update['created_at']
                     ? Carbon::createFromTimestamp($update['created_at'])->diffForHumans()
                     : '';
@@ -167,14 +171,16 @@ class ClientLayoutComposer
         $msgHref = $firstProject ? route('portal.projects.messages', $firstProject['id']) : route('portal.dashboard');
         // Uma cache escrita antes desta versão não traz a palavra; «a obra» é o
         // valor de recurso, o mesmo que todos os projectos antigos têm.
-        $msgNounWithArticle = $firstProject['noun_with_article'] ?? 'a obra';
+        $msgNounWithArticle = $firstProject['noun_with_article'] ?? (app()->getLocale() === 'en' ? 'the construction project' : 'a obra');
+        $isSiteWork = $firstProject['is_site_work'] ?? ! in_array($msgNounWithArticle, ['o projeto', 'the project'], true);
+        $msgLinkLabel = $isSiteWork ? __('Ir para mensagens da obra') : __('Ir para mensagens do projeto');
         $onDash = request()->routeIs('portal.dashboard');
         $onMessages = request()->routeIs('portal.projects.messages');
         $onProfile = request()->routeIs('profile.edit');
 
         $view->with(compact(
             'firstProject', 'recentUnreadMsgs', 'unreadMessages',
-            'recentUpdates', 'msgHref', 'msgNounWithArticle', 'projectsNavLabel',
+            'recentUpdates', 'msgHref', 'msgNounWithArticle', 'msgLinkLabel', 'projectsNavLabel',
             'onDash', 'onMessages', 'onProfile'
         ));
     }

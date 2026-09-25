@@ -67,7 +67,7 @@ class UploadController extends Controller
             $request->caption
         );
 
-        return back()->with('success', 'Fotos enviadas. A equipe já consegue vê-las.');
+        return back()->with('success', __('Fotos enviadas. A equipe já consegue vê-las.'));
     }
 
     public function storeDocument(Request $request, Project $project): RedirectResponse
@@ -91,7 +91,7 @@ class UploadController extends Controller
 
         ProjectUpdate::log($project->id, 'O cliente enviou o documento: '.$document->name, 'envio_cliente');
 
-        return back()->with('success', 'Documento enviado. A equipe já consegue vê-lo.');
+        return back()->with('success', __('Documento enviado. A equipe já consegue vê-lo.'));
     }
 
     /**

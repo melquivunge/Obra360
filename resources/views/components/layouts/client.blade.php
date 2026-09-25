@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <meta name="copy-success" content="{{ __('Copiado!') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -29,7 +30,7 @@
                 </svg>
                 <span class="font-bold text-base" style="color: var(--color-primary);">{{ \App\Models\Setting::get('company_name', 'Obra360') }}</span>
             </div>
-            <button data-client-nav="close" style="color: var(--color-muted-foreground);" aria-label="Fechar menu">
+            <button data-client-nav="close" style="color: var(--color-muted-foreground);" aria-label="{{ __('Fechar menu') }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -51,7 +52,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                 </svg>
-                Mensagens
+                {{ __('Mensagens') }}
                 @if($unreadMessages > 0)
                 <span style="margin-left:auto;min-width:1.125rem;height:1.125rem;border-radius:9999px;background-color:var(--color-primary);color:var(--color-primary-foreground);font-size:0.625rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 0.2rem;line-height:1;">
                     {{ $unreadMessages > 9 ? '9+' : $unreadMessages }}
@@ -66,7 +67,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                 </svg>
-                Meu Perfil
+                {{ __('Meu Perfil') }}
             </a>
         </nav>
 
@@ -79,7 +80,7 @@
                 </div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium truncate" style="color: var(--color-foreground);">{{ auth()->user()->name }}</p>
-                    <p class="text-xs truncate" style="color: var(--color-muted-foreground);">Cliente</p>
+                    <p class="text-xs truncate" style="color: var(--color-muted-foreground);">{{ __('Cliente') }}</p>
                 </div>
             </div>
             @endauth
@@ -91,7 +92,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                     </svg>
-                    Sair
+                    {{ __('Sair') }}
                 </button>
             </form>
         </div>
@@ -126,7 +127,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                 </svg>
-                Mensagens
+                {{ __('Mensagens') }}
                 @if($unreadMessages > 0)
                 <span style="margin-left:auto;min-width:1.125rem;height:1.125rem;border-radius:9999px;background-color:var(--color-primary);color:var(--color-primary-foreground);font-size:0.625rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 0.2rem;line-height:1;">
                     {{ $unreadMessages > 9 ? '9+' : $unreadMessages }}
@@ -141,7 +142,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                 </svg>
-                Meu Perfil
+                {{ __('Meu Perfil') }}
             </a>
 
         </nav>
@@ -155,7 +156,7 @@
                 </div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium truncate" style="color: var(--color-foreground);">{{ auth()->user()->name }}</p>
-                    <p class="text-xs truncate" style="color: var(--color-muted-foreground);">Cliente</p>
+                    <p class="text-xs truncate" style="color: var(--color-muted-foreground);">{{ __('Cliente') }}</p>
                 </div>
             </div>
             @endauth
@@ -167,7 +168,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                     </svg>
-                    Sair
+                    {{ __('Sair') }}
                 </button>
             </form>
         </div>
@@ -178,14 +179,14 @@
             style="background-color: var(--color-card); border-bottom: 1px solid oklch(0.74 0.135 78 / 0.2);">
 
         <div class="flex items-center gap-3 lg:hidden">
-            <button data-client-nav="open" style="color: var(--color-muted-foreground);" aria-label="Abrir menu">
+            <button data-client-nav="open" style="color: var(--color-muted-foreground);" aria-label="{{ __('Abrir menu') }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
             </button>
             <a href="{{ route('portal.dashboard') }}" class="flex items-center gap-2 no-underline">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0" style="color: var(--color-primary);">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21" />
                 </svg>
-                <span class="font-bold text-sm" style="color: var(--color-primary);">{{ \App\Models\Setting::get('company_name', 'Obra360') }}</span>
+                <span class="hidden sm:inline font-bold text-sm" style="color: var(--color-primary);">{{ \App\Models\Setting::get('company_name', 'Obra360') }}</span>
             </a>
         </div>
 
@@ -193,12 +194,13 @@
 
         @auth
         <div class="flex items-center gap-1">
+            <x-language-switcher />
 
             {{-- Mensagens --}}
             <div id="msg-wrapper" style="position:relative;">
                 <button type="button" id="msg-btn"
                     style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;border-radius:0.5rem;color:var(--color-muted-foreground);transition:background-color 0.15s,color 0.15s;background:none;border:none;cursor:pointer;"
-                    title="Mensagens" aria-label="Mensagens"
+                    title="{{ __('Mensagens') }}" aria-label="{{ __('Mensagens') }}"
                     class="hover-surface" data-dropdown="msg">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
@@ -211,9 +213,9 @@
                 <div id="msg-dropdown"
                      style="display:none;position:absolute;top:calc(100% + 0.5rem);right:0;width:320px;background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.75rem;box-shadow:0 8px 30px rgb(0 0 0 / 0.4);z-index:100;overflow:hidden;">
                     <div style="padding:0.875rem 1rem;border-bottom:1px solid var(--color-border);display:flex;align-items:center;justify-content:space-between;">
-                        <p style="font-size:0.8125rem;font-weight:600;color:var(--color-foreground);margin:0;">Mensagens não lidas</p>
+                        <p style="font-size:0.8125rem;font-weight:600;color:var(--color-foreground);margin:0;">{{ __('Mensagens não lidas') }}</p>
                         @if($firstProject)
-                        <a href="{{ $msgHref }}" class="hover-underline" style="font-size:0.75rem;color:var(--color-primary);text-decoration:none;font-weight:500;">Ver todas</a>
+                        <a href="{{ $msgHref }}" class="hover-underline" style="font-size:0.75rem;color:var(--color-primary);text-decoration:none;font-weight:500;">{{ __('Ver todas') }}</a>
                         @endif
                     </div>
 
@@ -222,7 +224,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.5rem;height:1.5rem;color:var(--color-muted-foreground);opacity:0.4;margin:0 auto 0.5rem;display:block;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                             </svg>
-                            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin:0;">Sem mensagens não lidas</p>
+                            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin:0;">{{ __('Sem mensagens não lidas') }}</p>
                         </div>
                     @else
                         <div style="position:relative;">
@@ -252,7 +254,7 @@
                         <div style="padding:0.75rem 1rem;border-top:1px solid var(--color-border);">
                             <a href="{{ $msgHref }}" class="hover-primary-soft"
                                style="display:block;text-align:center;font-size:0.8125rem;font-weight:600;color:var(--color-primary);text-decoration:none;padding:0.5rem;border-radius:0.5rem;transition:background-color 0.15s;">
-                                Ir para mensagens d{{ $msgNounWithArticle }}
+                                {{ $msgLinkLabel }}
                             </a>
                         </div>
                     @endif
@@ -263,7 +265,7 @@
             <div id="notif-wrapper" style="position:relative;">
                 <button type="button" id="notif-btn"
                    style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;border-radius:0.5rem;color:var(--color-muted-foreground);transition:background-color 0.15s,color 0.15s;background:none;border:none;cursor:pointer;"
-                   title="Notificações" aria-label="Notificações"
+                   title="{{ __('Notificações') }}" aria-label="{{ __('Notificações') }}"
                    class="hover-surface" data-dropdown="notif">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
@@ -273,11 +275,11 @@
                 <div id="notif-dropdown"
                      style="display:none;position:absolute;top:calc(100% + 0.5rem);right:0;width:320px;background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.75rem;box-shadow:0 8px 30px rgb(0 0 0 / 0.4);z-index:100;overflow:hidden;">
                     <div style="padding:0.875rem 1rem;border-bottom:1px solid var(--color-border);">
-                        <p style="font-size:0.8125rem;font-weight:600;color:var(--color-foreground);margin:0;">Atualizações recentes</p>
+                        <p style="font-size:0.8125rem;font-weight:600;color:var(--color-foreground);margin:0;">{{ __('Atualizações recentes') }}</p>
                     </div>
                     @if($recentUpdates->isEmpty())
                         <div style="padding:1.25rem 1rem;text-align:center;">
-                            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin:0;">Sem atualizações recentes</p>
+                            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin:0;">{{ __('Sem atualizações recentes') }}</p>
                         </div>
                     @else
                         <div style="position:relative;">

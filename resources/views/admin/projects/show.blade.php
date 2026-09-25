@@ -71,19 +71,19 @@
 
     {{-- Header --}}
     <div>
-        <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">← Obras e Projetos</a>
+        <a href="{{ route('admin.projects.index') }}" style="font-size:0.875rem;color:var(--muted-foreground)">{{ __('← Obras e Projetos') }}</a>
         <div class="flex flex-wrap items-start justify-between gap-3 mt-2">
             <div class="flex items-start gap-4">
                 {{-- Capa da obra ao lado do título. Sem capa própria — ou com o ficheiro em
                      falta no disco, que faz a rota devolver 404 — entra a imagem padrão, para
                      o cabeçalho não mudar de forma consoante a obra. --}}
                 <x-project-cover :src="$project->cover_image_path ? route('admin.projects.cover', $project) : null"
-                                 alt="Capa d{{ $project->nounWithArticle() }}"
+                                 alt="{{ __($project->isSiteWork() ? 'Capa da obra' : 'Capa do projeto') }}"
                                  style="width:4.5rem;height:4.5rem;border-radius:0.75rem;object-fit:cover;border:1px solid var(--border);flex-shrink:0;" />
                 <div>
                     <div class="flex items-center gap-3">
                         <h1 style="font-size:1.5rem;font-weight:700;">{{ $project->name }}</h1>
-                        <span class="badge badge-{{ $project->status }}">{{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}</span>
+                        <span class="badge badge-{{ $project->status }}">{{ __(\App\Models\Project::STATUSES[$project->status] ?? $project->status) }}</span>
                         <x-project-type :project="$project" />
                     </div>
                     <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ $project->client?->name }} · {{ $project->location ?: '—' }}</p>
@@ -91,17 +91,17 @@
             </div>
             @can('manage-projects')
             <div class="flex gap-2">
-                <a href="{{ route('admin.projects.edit', $project) }}" class="btn-secondary">Editar</a>
-                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" data-confirm="Excluir {{ $project->isSiteWork() ? 'esta obra' : 'este projeto' }}?">
+                <a href="{{ route('admin.projects.edit', $project) }}" class="btn-secondary">{{ __('Editar') }}</a>
+                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" data-confirm="{{ __($project->isSiteWork() ? 'Excluir esta obra?' : 'Excluir este projeto?') }}">
                     @csrf @method('DELETE')
-                    <button type="submit" class="btn-danger">Excluir</button>
+                    <button type="submit" class="btn-danger">{{ __('Excluir') }}</button>
                 </form>
             </div>
             @endcan
         </div>
         <div class="mt-4">
             <div class="flex justify-between" style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:0.375rem;">
-                <span>Progresso geral</span><span>{{ $project->progress }}%</span>
+                <span>{{ __('Progresso geral') }}</span><span>{{ $project->progress }}%</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" style="width:{{ $project->progress }}%"></div></div>
         </div>
@@ -114,7 +114,7 @@
     {{-- Tabs --}}
     <div class="tab-nav">
         @foreach($tabs as $key=>$label)
-        <button type="button" class="tab-btn" :class="tab==='{{ $key }}' ? 'active' : ''" @click="select('{{ $key }}')">{{ $label }}</button>
+        <button type="button" class="tab-btn" :class="tab==='{{ $key }}' ? 'active' : ''" @click="select('{{ $key }}')">{{ __($label) }}</button>
         @endforeach
     </div>
 
@@ -127,13 +127,13 @@
                     'Tipo'=>$project->typeLabel(),
                     'Código'=>$project->code??'—',
                     'Localização'=>$project->location??'—',
-                    'Início'=>$project->start_date?\Carbon\Carbon::parse($project->start_date)->format('d/m/Y'):'—',
-                    'Previsão'=>$project->expected_end_date?\Carbon\Carbon::parse($project->expected_end_date)->format('d/m/Y'):'—',
+                    'Início'=>$project->start_date?\Carbon\Carbon::parse($project->start_date)->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y'):'—',
+                    'Previsão'=>$project->expected_end_date?\Carbon\Carbon::parse($project->expected_end_date)->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y'):'—',
                     'Gestor'=>$project->manager?->name??'—',
                 ]; @endphp
                 @foreach($infos as $label=>$val)
                 <div>
-                    <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground)">{{ $label }}</p>
+                    <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground)">{{ __($label) }}</p>
                     <p style="font-weight:600;margin-top:0.25rem;">{{ $val }}</p>
                 </div>
                 @endforeach
@@ -147,10 +147,10 @@
             @endphp
             @if($project->sourceProject || $project->hasMissingSource() || $project->derivedProjects->isNotEmpty())
             <div style="border-top:1px solid var(--border);padding-top:1rem;margin-bottom:1rem;">
-                <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground);margin-bottom:0.5rem;">Continuidade</p>
+                <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground);margin-bottom:0.5rem;">{{ __('Continuidade') }}</p>
                 @if($project->sourceProject)
                 <p style="font-size:0.875rem;">
-                    Nasceu do projeto
+                    {{ __('Nasceu do projeto') }}
                     @if($canOpen($project->sourceProject))
                     <a href="{{ route('admin.projects.show', $project->sourceProject) }}" style="color:var(--primary);font-weight:600;">{{ $project->sourceProject->name }}</a>
                     @else
@@ -160,12 +160,12 @@
                 </p>
                 @elseif($project->hasMissingSource())
                 <p style="font-size:0.875rem;color:var(--muted-foreground)">
-                    O projeto de origem foi removido. O vínculo fica salvo e volta a valer se ele for restaurado.
+                    {{ __('O projeto de origem foi removido. O vínculo fica salvo e volta a valer se ele for restaurado.') }}
                 </p>
                 @endif
                 @foreach($project->derivedProjects as $derived)
                 <p style="font-size:0.875rem;margin-top:0.25rem;">
-                    Deu origem a
+                    {{ __('Deu origem a') }}
                     @if($canOpen($derived))
                     <a href="{{ route('admin.projects.show', $derived) }}" style="color:var(--primary);font-weight:600;">{{ $derived->name }}</a>
                     @else
@@ -178,7 +178,7 @@
             @endif
             @if($project->description)
             <div style="border-top:1px solid var(--border);padding-top:1rem;">
-                <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground);margin-bottom:0.5rem;">Descrição</p>
+                <p style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground);margin-bottom:0.5rem;">{{ __('Descrição') }}</p>
                 <p style="font-size:0.875rem;white-space:pre-wrap;">{{ $project->description }}</p>
             </div>
             @endif
@@ -186,15 +186,15 @@
         <div class="grid gap-3 sm:grid-cols-3 mt-4">
             @php $spent=$totalSpent; $budget=floatval($project->budget??0); @endphp
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
-                <p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p>
+                <p style="font-size:0.75rem;color:var(--muted-foreground)">{{ __('Orçamento') }}</p>
                 <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">{{ money($budget) }}</p>
             </div>
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
-                <p style="font-size:0.75rem;color:var(--muted-foreground)">Total gasto</p>
+                <p style="font-size:0.75rem;color:var(--muted-foreground)">{{ __('Total gasto') }}</p>
                 <p style="font-size:1.25rem;font-weight:700;margin-top:0.25rem;">{{ money($spent) }}</p>
             </div>
             <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.35);border-radius:0.75rem;padding:1rem;">
-                <p style="font-size:0.75rem;color:var(--muted-foreground)">Saldo restante</p>
+                <p style="font-size:0.75rem;color:var(--muted-foreground)">{{ __('Saldo restante') }}</p>
                 <p style="font-size:1.25rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">{{ money($budget-$spent) }}</p>
             </div>
         </div>
@@ -208,14 +208,14 @@
         @if(\App\Support\PhaseTemplates::availableFor($project))
         <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:0.875rem 1rem;border:1px solid var(--border);border-radius:0.5rem;background-color:var(--surface);">
             <div>
-                <p style="font-size:0.875rem;font-weight:600;">Começar pelas etapas habituais deste tipo de trabalho</p>
+                <p style="font-size:0.875rem;font-weight:600;">{{ __('Começar pelas etapas habituais deste tipo de trabalho') }}</p>
                 <p style="font-size:0.75rem;color:var(--muted-foreground);margin-top:0.125rem;">
-                    Cria {{ count(\App\Support\PhaseTemplates::for($project->type)) }} etapas em 0%. São um ponto de partida — pode editar, reordenar ou excluir qualquer uma.
+                    {{ __('Cria') }} {{ count(\App\Support\PhaseTemplates::for($project->type)) }} {{ __('etapas em 0%. São um ponto de partida — pode editar, reordenar ou excluir qualquer uma.') }}
                 </p>
             </div>
             <form method="POST" action="{{ route('admin.projects.phases.template', $project) }}">
                 @csrf
-                <button type="submit" class="btn-secondary" style="white-space:nowrap;">Criar etapas</button>
+                <button type="submit" class="btn-secondary" style="white-space:nowrap;">{{ __('Criar etapas') }}</button>
             </form>
         </div>
         @endif
@@ -223,7 +223,7 @@
         <div class="flex justify-end">
             <button type="button" data-modal-open="modal-fase" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Nova fase
+                {{ __('Nova fase') }}
             </button>
         </div>
         @endcan
@@ -236,7 +236,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h4 style="font-weight:600;">{{ $phase->name }}</h4>
-                        <span class="badge badge-{{ $phase->status }}">{{ \App\Models\ProjectPhase::STATUSES[$phase->status] ?? $phase->status }}</span>
+                        <span class="badge badge-{{ $phase->status }}">{{ __(\App\Models\ProjectPhase::STATUSES[$phase->status] ?? $phase->status) }}</span>
                     </div>
                     @if($phase->description)<p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;">{{ $phase->description }}</p>@endif
                 </div>
@@ -245,7 +245,7 @@
                     <button type="button" @click="editing=!editing" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
                     </button>
-                    <form method="POST" action="{{ route('admin.projects.phases.destroy', [$project, $phase]) }}" data-confirm="Remover fase?">
+                    <form method="POST" action="{{ route('admin.projects.phases.destroy', [$project, $phase]) }}" data-confirm="{{ __('Remover fase?') }}">
                         @csrf @method('DELETE')
                         <button type="submit" class="hover-danger" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
@@ -255,7 +255,7 @@
                 @endcan
             </div>
             <div class="mt-3">
-                <div class="flex justify-between" style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.375rem;"><span>Progresso</span><span>{{ $phase->percentage }}%</span></div>
+                <div class="flex justify-between" style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.375rem;"><span>{{ __('Progresso') }}</span><span>{{ $phase->percentage }}%</span></div>
                 <div class="progress-bar"><div class="progress-fill" style="width:{{ $phase->percentage }}%"></div></div>
             </div>
             @can('manage-projects')
@@ -266,18 +266,18 @@
                 <x-form-errors :form="$phaseForm" />
 
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <div><label class="field-label">Nome</label><input type="text" name="name" value="{{ old('name', $phase->name) }}" required><x-field-error field="name" :form="$phaseForm" /></div>
-                    <div><label class="field-label">Status</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status', $phase->status)===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="status" :form="$phaseForm" /></div>
+                    <div><label class="field-label">{{ __('Nome') }}</label><input type="text" name="name" value="{{ old('name', $phase->name) }}" required><x-field-error field="name" :form="$phaseForm" /></div>
+                    <div><label class="field-label">{{ __('Status') }}</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status', $phase->status)===$k?'selected':'' }}>{{ __($v) }}</option>@endforeach</select><x-field-error field="status" :form="$phaseForm" /></div>
                     <div><label class="field-label">%</label><input type="number" name="percentage" min="0" max="100" value="{{ old('percentage', $phase->percentage) }}"><x-field-error field="percentage" :form="$phaseForm" /></div>
-                    <div><label class="field-label">Ordem</label><input type="number" name="sort_order" value="{{ old('sort_order', $phase->sort_order) }}"><x-field-error field="sort_order" :form="$phaseForm" /></div>
+                    <div><label class="field-label">{{ __('Ordem') }}</label><input type="number" name="sort_order" value="{{ old('sort_order', $phase->sort_order) }}"><x-field-error field="sort_order" :form="$phaseForm" /></div>
                 </div>
-                <div><label class="field-label">Descrição</label><textarea name="description" rows="2" style="resize:vertical;">{{ old('description', $phase->description) }}</textarea><x-field-error field="description" :form="$phaseForm" /></div>
-                <div class="flex gap-2"><button type="submit" class="btn-primary">Salvar</button><button type="button" @click="editing=false" class="btn-secondary">Cancelar</button></div>
+                <div><label class="field-label">{{ __('Descrição') }}</label><textarea name="description" rows="2" style="resize:vertical;">{{ old('description', $phase->description) }}</textarea><x-field-error field="description" :form="$phaseForm" /></div>
+                <div class="flex gap-2"><button type="submit" class="btn-primary">{{ __('Salvar') }}</button><button type="button" @click="editing=false" class="btn-secondary">{{ __('Cancelar') }}</button></div>
             </form>
             @endcan
         </div>
         @empty
-        <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma fase cadastrada.</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;">{{ __('Nenhuma fase cadastrada.') }}</p>
         @endforelse
     </div>
 
@@ -285,7 +285,7 @@
     <div x-show="tab==='fotos'" x-cloak class="space-y-4">
         @can('manage-projects')
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1.25rem;">
-            <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">Enviar fotos / vídeos</h3>
+            <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;">{{ __('Enviar fotos / vídeos') }}</h3>
             <form method="POST" action="{{ route('admin.projects.photos.store', $project) }}" enctype="multipart/form-data" class="space-y-3">
                 @csrf
                 <input type="hidden" name="_form" value="enviar_fotos">
@@ -293,23 +293,23 @@
                 <x-form-errors form="enviar_fotos" />
 
                 <div>
-                    <label class="field-label">Arquivos (JPG, PNG, WebP, MP4…)</label>
+                    <label class="field-label">{{ __('Arquivos (JPG, PNG, WebP, MP4…)') }}</label>
                     <input type="file" name="photos[]" multiple accept="image/*,video/*" style="padding:0.375rem;" required>
                     <x-field-error field="photos" form="enviar_fotos" />
                 </div>
                 <div class="grid gap-3 sm:grid-cols-3">
                     <div>
-                        <label class="field-label">Fase</label>
+                        <label class="field-label">{{ __('Fase') }}</label>
                         <select name="phase_id">
-                            <option value="">Sem fase</option>
+                            <option value="">{{ __('Sem fase') }}</option>
                             @foreach($phases as $ph)<option value="{{ $ph->id }}" {{ old('phase_id')==$ph->id?'selected':'' }}>{{ $ph->name }}</option>@endforeach
                         </select>
                         <x-field-error field="phase_id" form="enviar_fotos" />
                     </div>
-                    <div><label class="field-label">Legenda</label><input type="text" name="caption" value="{{ old('caption') }}"><x-field-error field="caption" form="enviar_fotos" /></div>
-                    <div><label class="field-label">Data</label><input type="date" name="taken_at" value="{{ old('taken_at', now()->toDateString()) }}"><x-field-error field="taken_at" form="enviar_fotos" /></div>
+                    <div><label class="field-label">{{ __('Legenda') }}</label><input type="text" name="caption" value="{{ old('caption') }}"><x-field-error field="caption" form="enviar_fotos" /></div>
+                    <div><label class="field-label">{{ __('Data') }}</label><input type="date" name="taken_at" value="{{ old('taken_at', now()->toDateString()) }}"><x-field-error field="taken_at" form="enviar_fotos" /></div>
                 </div>
-                <button type="submit" class="btn-primary">Enviar</button>
+                <button type="submit" class="btn-primary">{{ __('Enviar') }}</button>
             </form>
         </div>
         @endcan
@@ -317,19 +317,19 @@
         <form method="GET" action="{{ route('admin.projects.show', $project) }}" class="flex flex-wrap gap-2" style="margin-bottom:0.75rem;">
             <input type="hidden" name="tab" value="fotos">
             <select name="photo_phase" style="max-width:14rem;" data-auto-submit>
-                <option value="">Todas as fases</option>
+                <option value="">{{ __('Todas as fases') }}</option>
                 @foreach($phases as $ph)
                     <option value="{{ $ph->id }}" {{ (int) request('photo_phase') === $ph->id ? 'selected' : '' }}>{{ $ph->name }}</option>
                 @endforeach
             </select>
-            <input type="date" name="photo_from" value="{{ request('photo_from') }}" style="max-width:11rem;" data-auto-submit title="De">
-            <input type="date" name="photo_to" value="{{ request('photo_to') }}" style="max-width:11rem;" data-auto-submit title="Até">
+            <input type="date" name="photo_from" value="{{ request('photo_from') }}" style="max-width:11rem;" data-auto-submit title="{{ __('De') }}">
+            <input type="date" name="photo_to" value="{{ request('photo_to') }}" style="max-width:11rem;" data-auto-submit title="{{ __('Até') }}">
             <select name="photo_order" style="max-width:11rem;" data-auto-submit>
-                <option value="recentes" {{ request('photo_order') !== 'antigas' ? 'selected' : '' }}>Mais recentes</option>
-                <option value="antigas" {{ request('photo_order') === 'antigas' ? 'selected' : '' }}>Mais antigas</option>
+                <option value="recentes" {{ request('photo_order') !== 'antigas' ? 'selected' : '' }}>{{ __('Mais recentes') }}</option>
+                <option value="antigas" {{ request('photo_order') === 'antigas' ? 'selected' : '' }}>{{ __('Mais antigas') }}</option>
             </select>
             @if(request()->hasAny(['photo_phase','photo_from','photo_to','photo_order']))
-                <a href="{{ route('admin.projects.show', [$project, 'tab' => 'fotos']) }}" style="align-self:center;font-size:0.8125rem;color:var(--muted-foreground);">Limpar filtros</a>
+                <a href="{{ route('admin.projects.show', [$project, 'tab' => 'fotos']) }}" style="align-self:center;font-size:0.8125rem;color:var(--muted-foreground);">{{ __('Limpar filtros') }}</a>
             @endif
         </form>
 
@@ -348,7 +348,7 @@
                 @endif
                 @if($photo->caption)<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:0.5rem;font-size:0.75rem;color:#fff;">{{ $photo->caption }}</div>@endif
                 @can('manage-projects')
-                <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" data-confirm="Remover foto?" style="position:absolute;top:4px;right:4px;">
+                <form method="POST" action="{{ route('admin.projects.photos.destroy', [$project, $photo]) }}" data-confirm="{{ __('Remover foto?') }}" style="position:absolute;top:4px;right:4px;">
                     @csrf @method('DELETE')
                     <button type="submit" style="background:rgba(0,0,0,0.6);border:none;border-radius:0.25rem;color:#fff;cursor:pointer;padding:0.25rem;">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -358,7 +358,7 @@
             </div>
             @empty
             <p style="color:var(--muted-foreground);font-size:0.875rem;grid-column:1/-1;">
-                {{ request()->hasAny(['photo_phase','photo_from','photo_to']) ? 'Nenhuma foto corresponde aos filtros.' : 'Nenhuma foto enviada.' }}
+                {{ request()->hasAny(['photo_phase','photo_from','photo_to']) ? __('Nenhuma foto corresponde aos filtros.') : __('Nenhuma foto enviada.') }}
             </p>
             @endforelse
         </div>
@@ -376,25 +376,25 @@
         <div class="flex justify-end">
             <button type="button" data-despesa-nova class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Registrar despesa
+                {{ __('Registrar despesa') }}
             </button>
         </div>
         @endcan
         @php $budget=floatval($project->budget??0);$pct=$budget>0?min(100,round($totalSpent/$budget*100)):0; @endphp
         <div class="grid gap-3 sm:grid-cols-3">
-            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Orçamento</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($budget) }}</p></div>
-            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Total gasto</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($totalSpent) }}</p></div>
-            <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.3);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">Saldo</p><p style="font-size:1.125rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">{{ money($budget-$totalSpent) }}</p></div>
+            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">{{ __('Orçamento') }}</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($budget) }}</p></div>
+            <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">{{ __('Total gasto') }}</p><p style="font-size:1.125rem;font-weight:700;margin-top:0.25rem;">{{ money($totalSpent) }}</p></div>
+            <div style="background-color:oklch(0.74 0.135 78 / 0.08);border:1px solid oklch(0.74 0.135 78 / 0.3);border-radius:0.75rem;padding:1rem;"><p style="font-size:0.75rem;color:var(--muted-foreground)">{{ __('Saldo') }}</p><p style="font-size:1.125rem;font-weight:700;color:var(--primary);margin-top:0.25rem;">{{ money($budget-$totalSpent) }}</p></div>
         </div>
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;overflow:hidden;">
             <div style="overflow-x:auto;">
                 <table class="data-table">
-                    <thead style="background-color:var(--surface)"><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Fornecedor</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+                    <thead style="background-color:var(--surface)"><tr><th>{{ __('Data') }}</th><th>{{ __('Categoria') }}</th><th>{{ __('Descrição') }}</th><th>{{ __('Fornecedor') }}</th><th style="text-align:right">{{ __('Valor') }}</th><th></th></tr></thead>
                     <tbody>
                         @forelse($expenses as $exp)
                         <tr>
-                            <td style="color:var(--muted-foreground);white-space:nowrap;">{{ $exp->spent_at?->format('d/m/Y') }}</td>
-                            <td>{{ \App\Models\Expense::CATEGORIES[$exp->category]??$exp->category }}</td>
+                            <td style="color:var(--muted-foreground);white-space:nowrap;">{{ $exp->spent_at?->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') }}</td>
+                            <td>{{ __(\App\Models\Expense::CATEGORIES[$exp->category]??$exp->category) }}</td>
                             <td>{{ $exp->description }}</td>
                             <td style="color:var(--muted-foreground)">{{ $exp->supplier??'—' }}</td>
                             <td style="text-align:right;font-weight:600;">{{ money($exp->amount) }}</td>
@@ -411,13 +411,13 @@
                                     ];
                                 @endphp
                                 @can('access-financial')
-                                <button type="button" title="Editar despesa"
+                                <button type="button" title="{{ __('Editar despesa') }}"
                                         data-despesa-editar="{{ json_encode($expData) }}"
                                         class="hover-text-primary"
                                         style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>
                                 </button>
-                                <form method="POST" action="{{ route('admin.projects.expenses.destroy', [$project, $exp]) }}" data-confirm="Remover despesa?">
+                                <form method="POST" action="{{ route('admin.projects.expenses.destroy', [$project, $exp]) }}" data-confirm="{{ __('Remover despesa?') }}">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="hover-text-danger" style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
@@ -427,7 +427,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="6" style="text-align:center;color:var(--muted-foreground);padding:2rem;">Nenhuma despesa registrada.</td></tr>
+                        <tr><td colspan="6" style="text-align:center;color:var(--muted-foreground);padding:2rem;">{{ __('Nenhuma despesa registrada.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -445,18 +445,18 @@
                  paginada e somar só a página visível daria o número errado. --}}
             <div class="flex gap-3 flex-wrap">
                 <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:0.75rem 1rem;">
-                    <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">Pendente</p>
+                    <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">{{ __('Pendente') }}</p>
                     <p style="font-size:1rem;font-weight:700;color:oklch(0.6 0.18 40)">{{ money($totalPending) }}</p>
                 </div>
                 <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:0.75rem 1rem;">
-                    <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">Recebido</p>
+                    <p style="font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground)">{{ __('Recebido') }}</p>
                     <p style="font-size:1rem;font-weight:700;color:oklch(0.55 0.16 145)">{{ money($totalPaid) }}</p>
                 </div>
             </div>
             @can('access-financial')
             <button type="button" data-modal-open="modal-pagamento" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Nova cobrança
+                {{ __('Nova cobrança') }}
             </button>
             @endcan
         </div>
@@ -465,7 +465,7 @@
             <div style="overflow-x:auto;">
                 <table class="data-table">
                     <thead style="background-color:var(--surface)">
-                        <tr><th>Título</th><th>Tipo</th><th>Vencimento</th><th style="text-align:right">Valor</th><th>Status</th><th></th></tr>
+                        <tr><th>{{ __('Título') }}</th><th>{{ __('Tipo') }}</th><th>{{ __('Vencimento') }}</th><th style="text-align:right">{{ __('Valor') }}</th><th>{{ __('Status') }}</th><th></th></tr>
                     </thead>
                     <tbody>
                         @forelse($payments as $pay)
@@ -474,16 +474,16 @@
                                 <p style="font-weight:500;">{{ $pay->title }}</p>
                                 @if($pay->description)<p style="font-size:0.75rem;color:var(--muted-foreground)">{{ $pay->description }}</p>@endif
                             </td>
-                            <td>{{ \App\Models\Payment::TYPES[$pay->type] ?? $pay->type }}</td>
-                            <td style="white-space:nowrap;color:var(--muted-foreground)">{{ $pay->due_date?->format('d/m/Y') ?? '—' }}</td>
+                            <td>{{ __(\App\Models\Payment::TYPES[$pay->type] ?? $pay->type) }}</td>
+                            <td style="white-space:nowrap;color:var(--muted-foreground)">{{ $pay->due_date?->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') ?? '—' }}</td>
                             <td style="text-align:right;font-weight:600;">{{ money($pay->amount) }}</td>
                             <td>
                                 @if($pay->status === 'paid')
-                                    <span style="display:inline-flex;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.55 0.16 145 / 0.12);color:oklch(0.55 0.16 145)">Pago</span>
+                                    <span style="display:inline-flex;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.55 0.16 145 / 0.12);color:oklch(0.55 0.16 145)">{{ __('Pago') }}</span>
                                 @elseif($pay->status === 'cancelled')
-                                    <span style="display:inline-flex;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:var(--surface);color:var(--muted-foreground)">Cancelado</span>
+                                    <span style="display:inline-flex;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:var(--surface);color:var(--muted-foreground)">{{ __('Cancelado') }}</span>
                                 @else
-                                    <span style="display:inline-flex;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.6 0.18 40 / 0.12);color:oklch(0.6 0.18 40)">Pendente</span>
+                                    <span style="display:inline-flex;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.6 0.18 40 / 0.12);color:oklch(0.6 0.18 40)">{{ __('Pendente') }}</span>
                                 @endif
                             </td>
                             <td>
@@ -492,10 +492,10 @@
                                     @if($pay->isPending())
                                     <form method="POST" action="{{ route('admin.projects.payments.mark-paid', [$project, $pay]) }}">
                                         @csrf
-                                        <button type="submit" title="Marcar como pago" style="padding:0.25rem 0.5rem;border-radius:0.375rem;background:none;border:1px solid var(--border);cursor:pointer;font-size:0.7rem;color:oklch(0.55 0.16 145)">✓ Pago</button>
+                                        <button type="submit" title="{{ __('Marcar como pago') }}" style="padding:0.25rem 0.5rem;border-radius:0.375rem;background:none;border:1px solid var(--border);cursor:pointer;font-size:0.7rem;color:oklch(0.55 0.16 145)">{{ __('✓ Pago') }}</button>
                                     </form>
                                     @endif
-                                    <form method="POST" action="{{ route('admin.projects.payments.destroy', [$project, $pay]) }}" data-confirm="Remover cobrança?">
+                                    <form method="POST" action="{{ route('admin.projects.payments.destroy', [$project, $pay]) }}" data-confirm="{{ __('Remover cobrança?') }}">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="hover-text-danger" style="padding:0.25rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
@@ -506,7 +506,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="6" style="text-align:center;color:var(--muted-foreground);padding:2rem;">Nenhuma cobrança registrada.</td></tr>
+                        <tr><td colspan="6" style="text-align:center;color:var(--muted-foreground);padding:2rem;">{{ __('Nenhuma cobrança registrada.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -523,7 +523,7 @@
         <div class="flex justify-end">
             <button type="button" data-modal-open="modal-documento" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Enviar documento
+                {{ __('Enviar documento') }}
             </button>
         </div>
         @endcan
@@ -533,16 +533,16 @@
                 <svg class="w-5 h-5 shrink-0" style="color:var(--primary)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
                 <div class="min-w-0 flex-1">
                     <p class="font-medium truncate" style="font-size:0.875rem;">{{ $doc->name }}</p>
-                    <p style="font-size:0.75rem;color:var(--muted-foreground)">{{ \App\Models\Document::TYPES[$doc->type]??$doc->type }} ·
-                        <span style="color:{{ $doc->visibility==='cliente'?'var(--success)':'var(--muted-foreground)' }}">{{ $doc->visibility==='cliente'?'Visível ao cliente':'Interno' }}</span>
-                        · {{ $doc->created_at->format('d/m/Y') }}
+                    <p style="font-size:0.75rem;color:var(--muted-foreground)">{{ __(\App\Models\Document::TYPES[$doc->type]??$doc->type) }} ·
+                        <span style="color:{{ $doc->visibility==='cliente'?'var(--success)':'var(--muted-foreground)' }}">{{ $doc->visibility==='cliente'?__('Visível ao cliente'):__('Interno') }}</span>
+                        · {{ $doc->created_at->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') }}
                     </p>
                 </div>
                 <a href="{{ route('admin.projects.documents.download', [$project, $doc]) }}" target="_blank" rel="noopener" class="hover-text-primary" style="padding:0.5rem;color:var(--muted-foreground)">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                 </a>
                 @can('manage-projects')
-                <form method="POST" action="{{ route('admin.projects.documents.destroy', [$project, $doc]) }}" data-confirm="Remover documento?">
+                <form method="POST" action="{{ route('admin.projects.documents.destroy', [$project, $doc]) }}" data-confirm="{{ __('Remover documento?') }}">
                     @csrf @method('DELETE')
                     <button type="submit" class="hover-text-danger" style="padding:0.5rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
@@ -551,7 +551,7 @@
                 @endcan
             </div>
             @empty
-            <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhum documento enviado.</p>
+            <p style="color:var(--muted-foreground);font-size:0.875rem;">{{ __('Nenhum documento enviado.') }}</p>
             @endforelse
         </div>
         @if($documents->hasPages())
@@ -569,7 +569,7 @@
         <div class="flex justify-end">
             <button type="button" data-modal-open="modal-planta" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Nova planta
+                {{ __('Nova planta') }}
             </button>
         </div>
         @endif
@@ -583,11 +583,11 @@
         @if($inheritedPlans->isNotEmpty())
         <div style="background-color:var(--card);border:1px solid var(--border);border-left:3px solid oklch(0.6 0.18 220);border-radius:0.75rem;padding:1.25rem;">
             <div class="flex flex-wrap items-baseline justify-between gap-2" style="margin-bottom:0.25rem;">
-                <h4 style="font-weight:600;">Plantas do projeto de origem</h4>
+                <h4 style="font-weight:600;">{{ __('Plantas do projeto de origem') }}</h4>
                 <a href="{{ route('admin.projects.show', $project->sourceProject) }}" style="font-size:0.8125rem;color:var(--primary);">{{ $project->sourceProject->name }} ↗</a>
             </div>
             <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:1rem;">
-                Versões aprovadas pelo cliente no projeto de origem. Não são plantas dest{{ $project->isSiteWork() ? 'a obra' : 'e projeto' }}: vivem lá e são gerenciadas lá.
+                {{ __($project->isSiteWork() ? 'Versões aprovadas pelo cliente no projeto de origem. Não são plantas desta obra: vivem lá e são gerenciadas lá.' : 'Versões aprovadas pelo cliente no projeto de origem. Não são plantas deste projeto: vivem lá e são gerenciadas lá.') }}
             </p>
             <div class="space-y-2">
                 @foreach($inheritedPlans as $inherited)
@@ -595,17 +595,17 @@
                 <div class="flex flex-wrap items-center gap-3" style="font-size:0.8125rem;padding:0.625rem 0.75rem;border-radius:0.5rem;background-color:var(--surface);">
                     <span style="font-weight:600;">{{ $inherited->name }}</span>
                     <span style="font-size:0.6875rem;font-weight:500;padding:0.125rem 0.5rem;border-radius:9999px;background-color:var(--card);color:var(--muted-foreground);border:1px solid var(--border);">{{ $inherited->disciplineLabel() }}</span>
-                    <span class="badge badge-concluida">Aprovada {{ $approvedVersion->label() }}</span>
+                    <span class="badge badge-concluida">{{ __('Aprovada') }} {{ $approvedVersion->label() }}</span>
                     <span style="color:var(--muted-foreground)" class="min-w-0 truncate">
-                        {{ $approvedVersion->isExternal() ? 'Endereço externo' : ($approvedVersion->original_name ?: strtoupper($approvedVersion->format)) }}
+                        {{ $approvedVersion->isExternal() ? __('Endereço externo') : ($approvedVersion->original_name ?: strtoupper($approvedVersion->format)) }}
                         @if($approvedVersion->humanSize()) · {{ $approvedVersion->humanSize() }} @endif
                     </span>
-                    <span style="color:var(--muted-foreground)">aprovada a {{ $approvedVersion->approved_at->format('d/m/Y') }}</span>
+                    <span style="color:var(--muted-foreground)">{{ __('aprovada a') }} {{ $approvedVersion->approved_at->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') }}</span>
                     <span class="ml-auto">
                         @if($approvedVersion->isExternal())
-                            <a href="{{ $approvedVersion->external_url }}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Abrir endereço ↗</a>
+                            <a href="{{ $approvedVersion->external_url }}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">{{ __('Abrir endereço ↗') }}</a>
                         @else
-                            <a href="{{ route('admin.projects.plans.versions.download', [$project->sourceProject, $inherited, $approvedVersion]) }}" style="color:var(--primary);">Baixar</a>
+                            <a href="{{ route('admin.projects.plans.versions.download', [$project->sourceProject, $inherited, $approvedVersion]) }}" style="color:var(--primary);">{{ __('Baixar') }}</a>
                         @endif
                     </span>
                 </div>
@@ -631,12 +631,12 @@
                     </div>
                     <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;">
                         @if($current)
-                            Versão atual {{ $current->label() }} ·
-                            @if($current->isExternal()) endereço externo @else {{ strtoupper($current->format) }}{{ $current->humanSize() ? ' · '.$current->humanSize() : '' }} @endif
-                            · {{ $current->created_at->format('d/m/Y') }}
-                            @if($current->wasSentToClient()) · enviada ao cliente a {{ $current->sent_to_client_at->format('d/m/Y') }} @endif
+                            {{ __('Versão atual') }} {{ $current->label() }} ·
+                            @if($current->isExternal()) {{ __('endereço externo') }} @else {{ strtoupper($current->format) }}{{ $current->humanSize() ? ' · '.$current->humanSize() : '' }} @endif
+                            · {{ $current->created_at->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') }}
+                            @if($current->wasSentToClient()) {{ __('· enviada ao cliente a') }} {{ $current->sent_to_client_at->format(app()->getLocale() === 'en' ? 'm/d/Y' : 'd/m/Y') }} @endif
                         @else
-                            Sem versões. Envie a primeira.
+                            {{ __('Sem versões. Envie a primeira.') }}
                         @endif
                     </p>
                     @if($plan->notes)<p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;white-space:pre-wrap;">{{ $plan->notes }}</p>@endif
@@ -644,28 +644,28 @@
                 <div class="flex flex-wrap gap-2 shrink-0">
                     @if($plan->versions->count() > 1)
                     <button type="button" @click="history=!history" class="btn-secondary" style="font-size:0.8125rem;">
-                        <span x-text="history ? 'Ocultar histórico' : 'Histórico ({{ $plan->versions->count() }} versões)'"></span>
+                        <span x-text="history ? @js(__('Ocultar histórico')) : @js(__('Histórico (:count versões)', ['count' => $plan->versions->count()]))"></span>
                     </button>
                     @endif
                     @if($canManagePlans)
                     @if($current && ! $current->isSuperseded())
                     <form method="POST" action="{{ route('admin.projects.plans.versions.send', [$project, $plan, $current]) }}">
                         @csrf
-                        <button type="submit" class="btn-secondary" style="font-size:0.8125rem;">{{ $current->wasSentToClient() ? 'Reenviar ao cliente' : 'Enviar ao cliente' }}</button>
+                        <button type="submit" class="btn-secondary" style="font-size:0.8125rem;">{{ $current->wasSentToClient() ? __('Reenviar ao cliente') : __('Enviar ao cliente') }}</button>
                     </form>
                     @endif
                     <button type="button" class="btn-primary" style="font-size:0.8125rem;"
                             data-versao-planta="{{ $plan->id }}"
                             data-versao-nome="{{ $plan->name }}"
                             data-versao-numero="{{ $plan->versions->count() + 1 }}">
-                        Nova versão
+                        {{ __('Nova versão') }}
                     </button>
-                    <button type="button" @click="editing=!editing" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;" title="Editar planta">
+                    <button type="button" @click="editing=!editing" style="padding:0.375rem;border-radius:0.375rem;color:var(--muted-foreground);background:none;border:none;cursor:pointer;" title="{{ __('Editar planta') }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z"/></svg>
                     </button>
-                    <form method="POST" action="{{ route('admin.projects.plans.destroy', [$project, $plan]) }}" data-confirm="Remover a planta &quot;{{ $plan->name }}&quot;? O histórico de versões é mantido.">
+                    <form method="POST" action="{{ route('admin.projects.plans.destroy', [$project, $plan]) }}" data-confirm="{{ __('Remover a planta ":name"? O histórico de versões é mantido.', ['name' => $plan->name]) }}">
                         @csrf @method('DELETE')
-                        <button type="submit" class="hover-text-danger" style="padding:0.375rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" title="Remover planta">
+                        <button type="submit" class="hover-text-danger" style="padding:0.375rem;border-radius:0.375rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground)" title="{{ __('Remover planta') }}">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
                         </button>
                     </form>
@@ -682,22 +682,22 @@
                      class="flex flex-wrap items-center gap-3" style="font-size:0.8125rem;padding:0.5rem 0.75rem;border-radius:0.5rem;background-color:var(--surface);">
                     <span style="font-weight:600;min-width:2.5rem;">{{ $version->label() }}</span>
                     @if($version->isSuperseded())
-                        <span class="badge badge-pausada">Substituída</span>
+                        <span class="badge badge-pausada">{{ __('Substituída') }}</span>
                     @else
-                        <span class="badge badge-em_andamento">Atual</span>
+                        <span class="badge badge-em_andamento">{{ __('Atual') }}</span>
                     @endif
                     <span style="color:var(--muted-foreground)" class="min-w-0 truncate">
-                        {{ $version->isExternal() ? 'Endereço externo' : ($version->original_name ?: strtoupper($version->format)) }}
+                        {{ $version->isExternal() ? __('Endereço externo') : ($version->original_name ?: strtoupper($version->format)) }}
                         @if($version->humanSize()) · {{ $version->humanSize() }} @endif
                     </span>
-                    <span style="color:var(--muted-foreground)">{{ $version->created_at->format('d/m/Y H:i') }}</span>
+                    <span style="color:var(--muted-foreground)">{{ $version->created_at->format(app()->getLocale() === 'en' ? 'm/d/Y H:i' : 'd/m/Y H:i') }}</span>
                     @if($version->uploader)<span style="color:var(--muted-foreground)">{{ $version->uploader->name }}</span>@endif
                     @if($version->change_note)<span style="color:var(--muted-foreground)" class="w-full">{{ $version->change_note }}</span>@endif
                     <span class="ml-auto">
                         @if($version->isExternal())
-                            <a href="{{ $version->external_url }}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">Abrir endereço ↗</a>
+                            <a href="{{ $version->external_url }}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">{{ __('Abrir endereço ↗') }}</a>
                         @else
-                            <a href="{{ route('admin.projects.plans.versions.download', [$project, $plan, $version]) }}" style="color:var(--primary);">Baixar</a>
+                            <a href="{{ route('admin.projects.plans.versions.download', [$project, $plan, $version]) }}" style="color:var(--primary);">{{ __('Baixar') }}</a>
                         @endif
                     </span>
 
@@ -721,19 +721,19 @@
                 <x-form-errors :form="$planForm" />
 
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <div><label class="field-label">Nome</label><input type="text" name="name" value="{{ old('name', $plan->name) }}" maxlength="200" required><x-field-error field="name" :form="$planForm" /></div>
-                    <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline', $plan->discipline)===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="discipline" :form="$planForm" /></div>
+                    <div><label class="field-label">{{ __('Nome') }}</label><input type="text" name="name" value="{{ old('name', $plan->name) }}" maxlength="200" required><x-field-error field="name" :form="$planForm" /></div>
+                    <div><label class="field-label">{{ __('Disciplina') }}</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline', $plan->discipline)===$k?'selected':'' }}>{{ __($v) }}</option>@endforeach</select><x-field-error field="discipline" :form="$planForm" /></div>
                 </div>
-                <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;">{{ old('notes', $plan->notes) }}</textarea><x-field-error field="notes" :form="$planForm" /></div>
-                <div class="flex gap-2"><button type="submit" class="btn-primary">Salvar</button><button type="button" @click="editing=false" class="btn-secondary">Cancelar</button></div>
+                <div><label class="field-label">{{ __('Notas') }}</label><textarea name="notes" rows="2" style="resize:vertical;">{{ old('notes', $plan->notes) }}</textarea><x-field-error field="notes" :form="$planForm" /></div>
+                <div class="flex gap-2"><button type="submit" class="btn-primary">{{ __('Salvar') }}</button><button type="button" @click="editing=false" class="btn-secondary">{{ __('Cancelar') }}</button></div>
             </form>
             @endif
         </div>
         @empty
         @if($inheritedPlans->isEmpty())
-        <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma planta cadastrada.</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;">{{ __('Nenhuma planta cadastrada.') }}</p>
         @else
-        <p style="color:var(--muted-foreground);font-size:0.875rem;">Est{{ $project->isSiteWork() ? 'a obra' : 'e projeto' }} não tem plantas próprias.</p>
+        <p style="color:var(--muted-foreground);font-size:0.875rem;">{{ __($project->isSiteWork() ? 'Esta obra não tem plantas próprias.' : 'Este projeto não tem plantas próprias.') }}</p>
         @endif
         @endforelse
     </div>
@@ -745,7 +745,7 @@
         <div class="flex justify-end">
             <button type="button" data-modal-open="modal-historico" class="btn-primary">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Nova atualização
+                {{ __('Nova atualização') }}
             </button>
         </div>
         @endcan
@@ -753,14 +753,14 @@
             @forelse($updates as $upd)
             <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;padding:1rem;">
                 <div class="flex items-center justify-between" style="font-size:0.75rem;color:var(--muted-foreground);margin-bottom:0.25rem;">
-                    <span class="badge badge-planejada">{{ \App\Models\ProjectUpdate::TYPES[$upd->type]??$upd->type }}</span>
-                    <span>{{ $upd->happened_at?->format('d/m/Y H:i') }}</span>
+                    <span class="badge badge-planejada">{{ __(\App\Models\ProjectUpdate::TYPES[$upd->type]??$upd->type) }}</span>
+                    <span>{{ $upd->happened_at?->format(app()->getLocale() === 'en' ? 'm/d/Y H:i' : 'd/m/Y H:i') }}</span>
                 </div>
                 <p style="font-size:0.875rem;font-weight:500;">{{ $upd->title }}</p>
                 @if($upd->description)<p style="font-size:0.8125rem;color:var(--muted-foreground);margin-top:0.25rem;">{{ $upd->description }}</p>@endif
             </div>
             @empty
-            <p style="color:var(--muted-foreground);font-size:0.875rem;">Nenhuma atualização registrada.</p>
+            <p style="color:var(--muted-foreground);font-size:0.875rem;">{{ __('Nenhuma atualização registrada.') }}</p>
             @endforelse
         </div>
         @if($updates->hasPages())
@@ -773,19 +773,19 @@
         <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.75rem;display:flex;flex-direction:column;height:min(70vh,520px);">
             <div style="padding:1rem;border-bottom:1px solid var(--border);flex-shrink:0;">
                 <p style="font-weight:700;">{{ $project->name }}</p>
-                <p style="font-size:0.75rem;color:var(--muted-foreground)">Conversa em tempo real</p>
+                <p style="font-size:0.75rem;color:var(--muted-foreground)">{{ __('Conversa em tempo real') }}</p>
             </div>
             <div id="msg-list" style="flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;">
                 {{-- A conversa carrega as mensagens mais recentes; as anteriores
                      ficam a um clique, na «página seguinte» deste paginador. --}}
                 @if($messages->hasMorePages())
                 <div style="text-align:center;">
-                    <a href="{{ $messages->nextPageUrl() }}" style="font-size:0.8125rem;color:var(--primary);">Ver mensagens anteriores</a>
+                    <a href="{{ $messages->nextPageUrl() }}" style="font-size:0.8125rem;color:var(--primary);">{{ __('Ver mensagens anteriores') }}</a>
                 </div>
                 @endif
                 @if($messages->currentPage() > 1)
                 <div style="text-align:center;">
-                    <a href="{{ $messages->previousPageUrl() }}" style="font-size:0.8125rem;color:var(--muted-foreground);">Voltar às mensagens recentes</a>
+                    <a href="{{ $messages->previousPageUrl() }}" style="font-size:0.8125rem;color:var(--muted-foreground);">{{ __('Voltar às mensagens recentes') }}</a>
                 </div>
                 @endif
                 @forelse($messages as $msg)
@@ -794,19 +794,19 @@
                     <div style="max-width:80%;border-radius:1rem;padding:0.625rem 0.875rem;font-size:0.875rem;background:{{ $mine?'var(--primary)':'var(--surface)' }};color:{{ $mine?'var(--primary-foreground)':'var(--foreground)' }};">
                         @if(!$mine)<p style="font-size:0.75rem;font-weight:600;opacity:0.8;margin-bottom:0.125rem;">{{ $msg->user?->name }}</p>@endif
                         <p style="white-space:pre-wrap;">{{ $msg->body }}</p>
-                        <p style="font-size:0.7rem;margin-top:0.25rem;opacity:0.7;">{{ $msg->created_at->format('d/m H:i') }}</p>
+                        <p style="font-size:0.7rem;margin-top:0.25rem;opacity:0.7;">{{ $msg->created_at->format(app()->getLocale() === 'en' ? 'm/d H:i' : 'd/m H:i') }}</p>
                     </div>
                 </div>
                 @empty
-                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;margin:auto;">Nenhuma mensagem. Seja o primeiro!</p>
+                <p style="color:var(--muted-foreground);font-size:0.875rem;text-align:center;margin:auto;">{{ __('Nenhuma mensagem. Seja o primeiro!') }}</p>
                 @endforelse
             </div>
             <div style="padding:0.75rem;border-top:1px solid var(--border);">
                 <div class="flex gap-2 items-end">
-                    <textarea id="msg-input" rows="2" placeholder="Escreva uma mensagem… (Enter envia, Shift+Enter nova linha)" style="flex:1;resize:none;"></textarea>
+                    <textarea id="msg-input" rows="2" placeholder="{{ __('Escreva uma mensagem… (Enter envia, Shift+Enter nova linha)') }}" style="flex:1;resize:none;"></textarea>
                     <button id="msg-send" class="btn-primary">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>
-                        Enviar
+                        {{ __('Enviar') }}
                     </button>
                 </div>
             </div>
@@ -829,7 +829,7 @@
                 if (!isMine) {
                     const name = document.createElement('p');
                     name.style.cssText = 'font-size:0.75rem;font-weight:600;opacity:0.8;margin-bottom:0.125rem;';
-                    name.textContent = userName || 'Usuário';
+                    name.textContent = userName || @js(__('Usuário'));
                     bubble.appendChild(name);
                 }
                 const text = document.createElement('p');
@@ -855,7 +855,7 @@
                         body: JSON.stringify({body})
                     });
                     const data = await r.json();
-                    if(data.ok){ input.value=''; appendMsg(body,'Eu',true,new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})); }
+                    if(data.ok){ input.value=''; appendMsg(body,@js(__('Eu')),true,new Date().toLocaleString(@js(app()->getLocale() === 'en' ? 'en-US' : 'pt-BR'),{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})); }
                 } finally { btn.disabled=false; }
             }
 
@@ -898,7 +898,7 @@ function projectShow(id, initialTab){ return {
 <div id="modal-fase" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" style="margin:0;">Nova fase</h2>
+      <h2 class="modal-title" style="margin:0;">{{ __('Nova fase') }}</h2>
       <button type="button" data-modal-close="modal-fase" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.phases.store', $project) }}" class="space-y-4">
@@ -908,25 +908,25 @@ function projectShow(id, initialTab){ return {
       <x-form-errors form="nova_fase" />
 
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label class="field-label">Nome da fase <span style="color:var(--destructive)">*</span></label><input type="text" name="name" value="{{ old('name') }}" required placeholder="Ex: Fundação, Estrutura, Revestimento..."><x-field-error field="name" form="nova_fase" /></div>
-        <div><label class="field-label">Status da fase</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="status" form="nova_fase" /></div>
+        <div><label class="field-label">{{ __('Nome da fase') }} <span style="color:var(--destructive)">*</span></label><input type="text" name="name" value="{{ old('name') }}" required placeholder="{{ __('Ex: Fundação, Estrutura, Revestimento...') }}"><x-field-error field="name" form="nova_fase" /></div>
+        <div><label class="field-label">{{ __('Status da fase') }}</label><select name="status">@foreach(\App\Models\ProjectPhase::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status')===$k?'selected':'' }}>{{ __($v) }}</option>@endforeach</select><x-field-error field="status" form="nova_fase" /></div>
         <div>
-          <label class="field-label">% Concluída <span class="field-tip" data-tip="Porcentagem de conclusão desta fase. 0 = não iniciada, 100 = concluída.">?</span></label>
+          <label class="field-label">{{ __('% Concluída') }} <span class="field-tip" data-tip="{{ __('Porcentagem de conclusão desta fase. 0 = não iniciada, 100 = concluída.') }}">?</span></label>
           <input type="number" name="percentage" min="0" max="100" value="{{ old('percentage', 0) }}" placeholder="0">
-          <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">0 = não iniciada &nbsp;·&nbsp; 100 = concluída</span>
+          <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">{{ __('0 = não iniciada · 100 = concluída') }}</span>
           <x-field-error field="percentage" form="nova_fase" />
         </div>
         <div>
-          <label class="field-label">Ordem na lista <span class="field-tip" data-tip="Posição da fase na lista. Ex: 1 = primeira fase, 2 = segunda fase.">?</span></label>
+          <label class="field-label">{{ __('Ordem na lista') }} <span class="field-tip" data-tip="{{ __('Posição da fase na lista. Ex: 1 = primeira fase, 2 = segunda fase.') }}">?</span></label>
           <input type="number" name="sort_order" min="0" value="{{ old('sort_order', $phases->count()) }}">
-          <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">Deixe em 0 para adicionar ao fim da lista</span>
+          <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">{{ __('Deixe em 0 para adicionar ao fim da lista') }}</span>
           <x-field-error field="sort_order" form="nova_fase" />
         </div>
-        <div><label class="field-label">Data de início</label><input type="date" name="start_date" value="{{ old('start_date') }}"><x-field-error field="start_date" form="nova_fase" /></div>
-        <div><label class="field-label">Previsão de término</label><input type="date" name="expected_end_date" value="{{ old('expected_end_date') }}"><x-field-error field="expected_end_date" form="nova_fase" /></div>
+        <div><label class="field-label">{{ __('Data de início') }}</label><input type="date" name="start_date" value="{{ old('start_date') }}"><x-field-error field="start_date" form="nova_fase" /></div>
+        <div><label class="field-label">{{ __('Previsão de término') }}</label><input type="date" name="expected_end_date" value="{{ old('expected_end_date') }}"><x-field-error field="expected_end_date" form="nova_fase" /></div>
       </div>
-      <div><label class="field-label">Descrição da fase</label><textarea name="description" rows="2" style="resize:vertical;" placeholder="Descreva o que será feito nesta fase...">{{ old('description') }}</textarea><x-field-error field="description" form="nova_fase" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Adicionar fase</button><button type="button" data-modal-close="modal-fase" class="btn-secondary">Cancelar</button></div>
+      <div><label class="field-label">{{ __('Descrição da fase') }}</label><textarea name="description" rows="2" style="resize:vertical;" placeholder="{{ __('Descreva o que será feito nesta fase...') }}">{{ old('description') }}</textarea><x-field-error field="description" form="nova_fase" /></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">{{ __('Adicionar fase') }}</button><button type="button" data-modal-close="modal-fase" class="btn-secondary">{{ __('Cancelar') }}</button></div>
     </form>
   </div>
 </div>
@@ -937,7 +937,7 @@ function projectShow(id, initialTab){ return {
 <div id="modal-despesa" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box" style="max-width:40rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" id="titulo-despesa" style="margin:0;">Registrar despesa</h2>
+      <h2 class="modal-title" id="titulo-despesa" style="margin:0;">{{ __('Registrar despesa') }}</h2>
       <button type="button" data-modal-close="modal-despesa" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form id="form-despesa" method="POST" action="{{ route('admin.projects.expenses.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
@@ -950,15 +950,15 @@ function projectShow(id, initialTab){ return {
       <x-form-errors :form="$expenseForm" />
 
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label class="field-label">Categoria</label><select name="category">@foreach(\App\Models\Expense::CATEGORIES as $k=>$v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select><x-field-error field="category" :form="$expenseForm" /></div>
-        <div><label class="field-label">Data</label><input type="date" name="spent_at" value="{{ now()->toDateString() }}" required><x-field-error field="spent_at" :form="$expenseForm" /></div>
-        <div class="sm:col-span-2"><label class="field-label">Descrição <span style="color:var(--destructive)">*</span></label><input type="text" name="description" required><x-field-error field="description" :form="$expenseForm" /></div>
-        <div><label class="field-label">Valor ({{ currency_symbol() }})</label><input type="number" name="amount" step="0.01" min="0" required><x-field-error field="amount" :form="$expenseForm" /></div>
-        <div><label class="field-label">Fornecedor</label><input type="text" name="supplier"><x-field-error field="supplier" :form="$expenseForm" /></div>
-        <div><label class="field-label">Comprovante</label><input type="file" name="receipt" style="padding:0.375rem;"><x-field-error field="receipt" :form="$expenseForm" /></div>
-        <div><label class="field-label">Notas</label><input type="text" name="notes"><x-field-error field="notes" :form="$expenseForm" /></div>
+        <div><label class="field-label">{{ __('Categoria') }}</label><select name="category">@foreach(\App\Models\Expense::CATEGORIES as $k=>$v)<option value="{{ $k }}">{{ __($v) }}</option>@endforeach</select><x-field-error field="category" :form="$expenseForm" /></div>
+        <div><label class="field-label">{{ __('Data') }}</label><input type="date" name="spent_at" value="{{ now()->toDateString() }}" required><x-field-error field="spent_at" :form="$expenseForm" /></div>
+        <div class="sm:col-span-2"><label class="field-label">{{ __('Descrição') }} <span style="color:var(--destructive)">*</span></label><input type="text" name="description" required><x-field-error field="description" :form="$expenseForm" /></div>
+        <div><label class="field-label">{{ __('Valor (') }}{{ currency_symbol() }})</label><input type="number" name="amount" step="0.01" min="0" required><x-field-error field="amount" :form="$expenseForm" /></div>
+        <div><label class="field-label">{{ __('Fornecedor') }}</label><input type="text" name="supplier"><x-field-error field="supplier" :form="$expenseForm" /></div>
+        <div><label class="field-label">{{ __('Comprovante') }}</label><input type="file" name="receipt" style="padding:0.375rem;"><x-field-error field="receipt" :form="$expenseForm" /></div>
+        <div><label class="field-label">{{ __('Notas') }}</label><input type="text" name="notes"><x-field-error field="notes" :form="$expenseForm" /></div>
       </div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary" id="despesa-submit">Registrar despesa</button><button type="button" data-modal-close="modal-despesa" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary" id="despesa-submit">{{ __('Registrar despesa') }}</button><button type="button" data-modal-close="modal-despesa" class="btn-secondary">{{ __('Cancelar') }}</button></div>
     </form>
   </div>
 </div>
@@ -969,7 +969,7 @@ function projectShow(id, initialTab){ return {
 <div id="modal-documento" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" style="margin:0;">Enviar documento</h2>
+      <h2 class="modal-title" style="margin:0;">{{ __('Enviar documento') }}</h2>
       <button type="button" data-modal-close="modal-documento" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.documents.store', $project) }}" enctype="multipart/form-data" class="space-y-4">
@@ -978,16 +978,16 @@ function projectShow(id, initialTab){ return {
 
       <x-form-errors form="novo_documento" />
 
-      <div><label class="field-label">Arquivo <span style="color:var(--destructive)">*</span></label><input type="file" name="file" required style="padding:0.375rem;" accept=".pdf,.docx,.xlsx,.xls,.doc,.jpg,.jpeg,.png,.webp"><x-field-error field="file" form="novo_documento" /></div>
+      <div><label class="field-label">{{ __('Arquivo') }} <span style="color:var(--destructive)">*</span></label><input type="file" name="file" required style="padding:0.375rem;" accept=".pdf,.docx,.xlsx,.xls,.doc,.jpg,.jpeg,.png,.webp"><x-field-error field="file" form="novo_documento" /></div>
       <div class="grid gap-3 sm:grid-cols-3">
-        <div class="sm:col-span-2"><label class="field-label">Nome do documento <span style="color:var(--destructive)">*</span></label><input type="text" name="name" value="{{ old('name') }}" required><x-field-error field="name" form="novo_documento" /></div>
-        <div><label class="field-label">Tipo</label><select name="type">@foreach(\App\Models\Document::TYPES as $k=>$v)<option value="{{ $k }}" {{ old('type')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="type" form="novo_documento" /></div>
+        <div class="sm:col-span-2"><label class="field-label">{{ __('Nome do documento') }} <span style="color:var(--destructive)">*</span></label><input type="text" name="name" value="{{ old('name') }}" required><x-field-error field="name" form="novo_documento" /></div>
+        <div><label class="field-label">{{ __('Tipo') }}</label><select name="type">@foreach(\App\Models\Document::TYPES as $k=>$v)<option value="{{ $k }}" {{ old('type')===$k?'selected':'' }}>{{ __($v) }}</option>@endforeach</select><x-field-error field="type" form="novo_documento" /></div>
       </div>
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label class="field-label">Visibilidade</label><select name="visibility"><option value="interno" {{ old('visibility')==='interno'?'selected':'' }}>Interno (só equipe)</option><option value="cliente" {{ old('visibility')==='cliente'?'selected':'' }}>Cliente (visível no portal)</option></select><x-field-error field="visibility" form="novo_documento" /></div>
-        <div><label class="field-label">Notas</label><input type="text" name="notes" value="{{ old('notes') }}"><x-field-error field="notes" form="novo_documento" /></div>
+        <div><label class="field-label">{{ __('Visibilidade') }}</label><select name="visibility"><option value="interno" {{ old('visibility')==='interno'?'selected':'' }}>{{ __('Interno (só equipe)') }}</option><option value="cliente" {{ old('visibility')==='cliente'?'selected':'' }}>{{ __('Cliente (visível no portal)') }}</option></select><x-field-error field="visibility" form="novo_documento" /></div>
+        <div><label class="field-label">{{ __('Notas') }}</label><input type="text" name="notes" value="{{ old('notes') }}"><x-field-error field="notes" form="novo_documento" /></div>
       </div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar documento</button><button type="button" data-modal-close="modal-documento" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">{{ __('Enviar documento') }}</button><button type="button" data-modal-close="modal-documento" class="btn-secondary">{{ __('Cancelar') }}</button></div>
     </form>
   </div>
 </div>
@@ -998,7 +998,7 @@ function projectShow(id, initialTab){ return {
 <div id="modal-pagamento" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box" style="max-width:40rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" style="margin:0;">Nova cobrança</h2>
+      <h2 class="modal-title" style="margin:0;">{{ __('Nova cobrança') }}</h2>
       <button type="button" data-modal-close="modal-pagamento" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.payments.store', $project) }}" class="space-y-4" x-data="{ type: @js(old('type', 'pix')) }">
@@ -1008,29 +1008,29 @@ function projectShow(id, initialTab){ return {
       <x-form-errors form="nova_cobranca" />
 
       <div class="grid gap-3 sm:grid-cols-2">
-        <div class="sm:col-span-2"><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required placeholder="Ex: Parcela 1, Sinal d{{ $project->nounWithArticle() }}…"><x-field-error field="title" form="nova_cobranca" /></div>
-        <div><label class="field-label">Valor ({{ currency_symbol() }}) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" value="{{ old('amount') }}" required><x-field-error field="amount" form="nova_cobranca" /></div>
-        <div><label class="field-label">Vencimento</label><input type="date" name="due_date" value="{{ old('due_date') }}"><x-field-error field="due_date" form="nova_cobranca" /></div>
+        <div class="sm:col-span-2"><label class="field-label">{{ __('Título') }} <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required placeholder="{{ __($project->isSiteWork() ? 'Ex: Parcela 1, Sinal da obra…' : 'Ex: Parcela 1, Sinal do projeto…') }}"><x-field-error field="title" form="nova_cobranca" /></div>
+        <div><label class="field-label">{{ __('Valor (') }}{{ currency_symbol() }}) <span style="color:var(--destructive)">*</span></label><input type="number" name="amount" step="0.01" min="0.01" value="{{ old('amount') }}" required><x-field-error field="amount" form="nova_cobranca" /></div>
+        <div><label class="field-label">{{ __('Vencimento') }}</label><input type="date" name="due_date" value="{{ old('due_date') }}"><x-field-error field="due_date" form="nova_cobranca" /></div>
         <div>
-          <label class="field-label">Tipo</label>
+          <label class="field-label">{{ __('Tipo') }}</label>
           <select name="type" x-model="type">
-            @foreach(\App\Models\Payment::TYPES as $k=>$v)<option value="{{ $k }}" {{ old('type')===$k?'selected':'' }}>{{ $v }}</option>@endforeach
+            @foreach(\App\Models\Payment::TYPES as $k=>$v)<option value="{{ $k }}" {{ old('type')===$k?'selected':'' }}>{{ __($v) }}</option>@endforeach
           </select>
           <x-field-error field="type" form="nova_cobranca" />
         </div>
         <div>
-          <label class="field-label">Status</label>
+          <label class="field-label">{{ __('Status') }}</label>
           <select name="status">
-            @foreach(\App\Models\Payment::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status')===$k?'selected':'' }}>{{ $v }}</option>@endforeach
+            @foreach(\App\Models\Payment::STATUSES as $k=>$v)<option value="{{ $k }}" {{ old('status')===$k?'selected':'' }}>{{ __($v) }}</option>@endforeach
           </select>
           <x-field-error field="status" form="nova_cobranca" />
         </div>
-        <div x-show="type==='boleto'" class="sm:col-span-2"><label class="field-label">Linha digitável (boleto)</label><input type="text" name="barcode" value="{{ old('barcode') }}" placeholder="000000000 …" maxlength="60"><x-field-error field="barcode" form="nova_cobranca" /></div>
-        <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">Chave PIX</label><input type="text" name="pix_key" value="{{ old('pix_key') }}" placeholder="email, CPF, telefone ou chave aleatória" maxlength="100"><x-field-error field="pix_key" form="nova_cobranca" /></div>
-        <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">Código copia-e-cola / QR</label><textarea name="pix_qrcode" rows="2" style="resize:vertical;" placeholder="00020126…">{{ old('pix_qrcode') }}</textarea><x-field-error field="pix_qrcode" form="nova_cobranca" /></div>
-        <div class="sm:col-span-2"><label class="field-label">Descrição / observações</label><textarea name="description" rows="2" style="resize:vertical;">{{ old('description') }}</textarea><x-field-error field="description" form="nova_cobranca" /></div>
+        <div x-show="type==='boleto'" class="sm:col-span-2"><label class="field-label">{{ __('Linha digitável (boleto)') }}</label><input type="text" name="barcode" value="{{ old('barcode') }}" placeholder="000000000 …" maxlength="60"><x-field-error field="barcode" form="nova_cobranca" /></div>
+        <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">{{ __('Chave PIX') }}</label><input type="text" name="pix_key" value="{{ old('pix_key') }}" placeholder="{{ __('email, CPF, telefone ou chave aleatória') }}" maxlength="100"><x-field-error field="pix_key" form="nova_cobranca" /></div>
+        <div x-show="type==='pix'" class="sm:col-span-2"><label class="field-label">{{ __('Código copia-e-cola / QR') }}</label><textarea name="pix_qrcode" rows="2" style="resize:vertical;" placeholder="00020126…">{{ old('pix_qrcode') }}</textarea><x-field-error field="pix_qrcode" form="nova_cobranca" /></div>
+        <div class="sm:col-span-2"><label class="field-label">{{ __('Descrição / observações') }}</label><textarea name="description" rows="2" style="resize:vertical;">{{ old('description') }}</textarea><x-field-error field="description" form="nova_cobranca" /></div>
       </div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar cobrança</button><button type="button" data-modal-close="modal-pagamento" class="btn-secondary">Cancelar</button></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">{{ __('Criar cobrança') }}</button><button type="button" data-modal-close="modal-pagamento" class="btn-secondary">{{ __('Cancelar') }}</button></div>
     </form>
   </div>
 </div>
@@ -1041,7 +1041,7 @@ function projectShow(id, initialTab){ return {
 <div id="modal-historico" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" style="margin:0;">Nova atualização</h2>
+      <h2 class="modal-title" style="margin:0;">{{ __('Nova atualização') }}</h2>
       <button type="button" data-modal-close="modal-historico" class="hover-surface-bg" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.updates.store', $project) }}" class="space-y-4">
@@ -1050,9 +1050,9 @@ function projectShow(id, initialTab){ return {
 
       <x-form-errors form="nova_atualizacao" />
 
-      <div><label class="field-label">Título <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required><x-field-error field="title" form="nova_atualizacao" /></div>
-      <div><label class="field-label">Descrição</label><textarea name="description" rows="3" style="resize:vertical;">{{ old('description') }}</textarea><x-field-error field="description" form="nova_atualizacao" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Registrar</button><button type="button" data-modal-close="modal-historico" class="btn-secondary">Cancelar</button></div>
+      <div><label class="field-label">{{ __('Título') }} <span style="color:var(--destructive)">*</span></label><input type="text" name="title" value="{{ old('title') }}" required><x-field-error field="title" form="nova_atualizacao" /></div>
+      <div><label class="field-label">{{ __('Descrição') }}</label><textarea name="description" rows="3" style="resize:vertical;">{{ old('description') }}</textarea><x-field-error field="description" form="nova_atualizacao" /></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">{{ __('Registrar') }}</button><button type="button" data-modal-close="modal-historico" class="btn-secondary">{{ __('Cancelar') }}</button></div>
     </form>
   </div>
 </div>
@@ -1064,7 +1064,7 @@ function projectShow(id, initialTab){ return {
 <div id="modal-planta" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" style="margin:0;">Nova planta</h2>
+      <h2 class="modal-title" style="margin:0;">{{ __('Nova planta') }}</h2>
       <button type="button" data-modal-close="modal-planta" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <form method="POST" action="{{ route('admin.projects.plans.store', $project) }}" class="space-y-4">
@@ -1074,14 +1074,14 @@ function projectShow(id, initialTab){ return {
       <x-form-errors form="nova_planta" />
 
       <div>
-        <label class="field-label">Nome da planta <span style="color:var(--destructive)">*</span></label>
-        <input type="text" name="name" value="{{ old('name') }}" required maxlength="200" placeholder="Ex: Planta baixa — piso 0">
-        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">O desenho, não o arquivo. As revisões entram depois como versões desta mesma planta.</span>
+        <label class="field-label">{{ __('Nome da planta') }} <span style="color:var(--destructive)">*</span></label>
+        <input type="text" name="name" value="{{ old('name') }}" required maxlength="200" placeholder="{{ __('Ex: Planta baixa — piso 0') }}">
+        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">{{ __('O desenho, não o arquivo. As revisões entram depois como versões desta mesma planta.') }}</span>
         <x-field-error field="name" form="nova_planta" />
       </div>
-      <div><label class="field-label">Disciplina</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline')===$k?'selected':'' }}>{{ $v }}</option>@endforeach</select><x-field-error field="discipline" form="nova_planta" /></div>
-      <div><label class="field-label">Notas</label><textarea name="notes" rows="2" style="resize:vertical;" maxlength="1000">{{ old('notes') }}</textarea><x-field-error field="notes" form="nova_planta" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Criar planta</button><button type="button" data-modal-close="modal-planta" class="btn-secondary">Cancelar</button></div>
+      <div><label class="field-label">{{ __('Disciplina') }}</label><select name="discipline">@foreach(\App\Models\Plan::DISCIPLINES as $k=>$v)<option value="{{ $k }}" {{ old('discipline')===$k?'selected':'' }}>{{ __($v) }}</option>@endforeach</select><x-field-error field="discipline" form="nova_planta" /></div>
+      <div><label class="field-label">{{ __('Notas') }}</label><textarea name="notes" rows="2" style="resize:vertical;" maxlength="1000">{{ old('notes') }}</textarea><x-field-error field="notes" form="nova_planta" /></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">{{ __('Criar planta') }}</button><button type="button" data-modal-close="modal-planta" class="btn-secondary">{{ __('Cancelar') }}</button></div>
     </form>
   </div>
 </div>
@@ -1091,7 +1091,7 @@ function projectShow(id, initialTab){ return {
 <div id="modal-versao" class="modal-overlay" data-modal-overlay style="display:none;">
   <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-      <h2 class="modal-title" style="margin:0;">Nova versão <span id="versao-numero" style="color:var(--muted-foreground)"></span></h2>
+      <h2 class="modal-title" style="margin:0;">{{ __('Nova versão') }} <span id="versao-numero" style="color:var(--muted-foreground)"></span></h2>
       <button type="button" data-modal-close="modal-versao" style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"><svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>
     </div>
     <p style="font-size:0.8125rem;color:var(--muted-foreground);margin-bottom:1rem;" id="versao-planta"></p>
@@ -1104,27 +1104,27 @@ function projectShow(id, initialTab){ return {
       <x-form-errors :form="$versionForm" />
 
       <div>
-        <label class="field-label">Arquivo</label>
+        <label class="field-label">{{ __('Arquivo') }}</label>
         <input type="file" name="file" style="padding:0.375rem;" accept=".pdf,.jpg,.jpeg,.png,.webp,.dwg,.dxf,.skp,.rvt,.ifc,.glb,.gltf,.zip">
         {{-- LIM-01: o limite é dito antes de alguém gastar dez minutos a enviar
              um Revit de 120 MB para ver o envio falhar no fim. --}}
         <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.375rem;">
-          Formatos aceitos: {{ strtoupper(implode(', ', \App\Models\PlanVersion::FORMATS)) }}.
+          {{ __('Formatos aceitos:') }} {{ strtoupper(implode(', ', \App\Models\PlanVersion::FORMATS)) }}.
         </span>
         <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">
-          <strong>Limite deste servidor: {{ \App\Models\PlanVersion::maxUploadLabel() }} por arquivo.</strong>
-          Um desenho maior do que isto não chega a ser recebido — nesse caso deixe o arquivo em branco e use o endereço externo abaixo.
+          <strong>{{ __('Limite deste servidor:') }} {{ \App\Models\PlanVersion::maxUploadLabel() }} {{ __('por arquivo.') }}</strong>
+          {{ __('Um desenho maior do que isto não chega a ser recebido — nesse caso deixe o arquivo em branco e use o endereço externo abaixo.') }}
         </span>
         <x-field-error field="file" :form="$versionForm" />
       </div>
       <div>
-        <label class="field-label">Endereço externo (em alternativa ao arquivo)</label>
-        <input type="url" name="external_url" value="{{ old('external_url') }}" maxlength="2048" placeholder="https://drive.google.com/…">
-        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">Google Drive, WeTransfer, OneDrive. A versão fica registrada do mesmo jeito, com o histórico completo — só o arquivo é que vive fora daqui.</span>
+        <label class="field-label">{{ __('Endereço externo (em alternativa ao arquivo)') }}</label>
+        <input type="url" name="external_url" value="{{ old('external_url') }}" maxlength="2048" placeholder="{{ __('https://drive.google.com/…') }}">
+        <span style="display:block;font-size:0.7rem;color:var(--muted-foreground);margin-top:0.25rem;">{{ __('Google Drive, WeTransfer, OneDrive. A versão fica registrada do mesmo jeito, com o histórico completo — só o arquivo é que vive fora daqui.') }}</span>
         <x-field-error field="external_url" :form="$versionForm" />
       </div>
-      <div><label class="field-label">Nota de alterações</label><textarea name="change_note" rows="2" style="resize:vertical;" maxlength="1000" placeholder="O que mudou em relação à versão anterior">{{ old('change_note') }}</textarea><x-field-error field="change_note" :form="$versionForm" /></div>
-      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">Enviar versão</button><button type="button" data-modal-close="modal-versao" class="btn-secondary">Cancelar</button></div>
+      <div><label class="field-label">{{ __('Nota de alterações') }}</label><textarea name="change_note" rows="2" style="resize:vertical;" maxlength="1000" placeholder="{{ __('O que mudou em relação à versão anterior') }}">{{ old('change_note') }}</textarea><x-field-error field="change_note" :form="$versionForm" /></div>
+      <div style="display:flex;gap:0.5rem;"><button type="submit" class="btn-primary">{{ __('Enviar versão') }}</button><button type="button" data-modal-close="modal-versao" class="btn-secondary">{{ __('Cancelar') }}</button></div>
     </form>
   </div>
 </div>
@@ -1198,8 +1198,8 @@ function editarDespesa(despesa) {
     form.action = despesaUpdateUrl(despesa.id);
     document.getElementById('despesa-method').disabled = false;
     document.getElementById('despesa-form').value = 'despesa_editar_' + despesa.id;
-    document.getElementById('despesa-submit').textContent = 'Salvar alterações';
-    document.getElementById('titulo-despesa').textContent = 'Editar despesa';
+    document.getElementById('despesa-submit').textContent = @js(__('Salvar alterações'));
+    document.getElementById('titulo-despesa').textContent = @js(__('Editar despesa'));
 
     preencherDespesa(despesa);
 
@@ -1212,8 +1212,8 @@ function novaDespesa() {
     form.action = despesaStoreUrl;
     document.getElementById('despesa-method').disabled = true;
     document.getElementById('despesa-form').value = 'despesa_nova';
-    document.getElementById('despesa-submit').textContent = 'Registrar despesa';
-    document.getElementById('titulo-despesa').textContent = 'Registrar despesa';
+    document.getElementById('despesa-submit').textContent = @js(__('Registrar despesa'));
+    document.getElementById('titulo-despesa').textContent = @js(__('Registrar despesa'));
     form.spent_at.value = @json(now()->toDateString());
 
     window.obra360.openModal('modal-despesa');

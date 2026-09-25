@@ -2,12 +2,12 @@
 <div class="space-y-6 p-6 md:p-8">
     <div class="flex items-center justify-between">
         <div>
-            <h1 style="font-size:1.5rem;font-weight:700;">Usuários</h1>
-            <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">Gerencie os acessos ao sistema.</p>
+            <h1 style="font-size:1.5rem;font-weight:700;">{{ __('Usuários') }}</h1>
+            <p style="color:var(--muted-foreground);font-size:0.875rem;margin-top:0.25rem;">{{ __('Gerencie os acessos ao sistema.') }}</p>
         </div>
         <button type="button" data-modal-open="modal-create-user" class="btn-primary">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-            Novo usuário
+            {{ __('Novo usuário') }}
         </button>
     </div>
 
@@ -22,12 +22,12 @@
             <table class="data-table">
                 <thead style="background-color:var(--surface)">
                     <tr>
-                        <th>Nome</th>
-                        <th>E-mail</th>
-                        <th>Telefone</th>
-                        <th>Perfil</th>
-                        <th>Status</th>
-                        <th style="text-align:right">Ações</th>
+                        <th>{{ __('Nome') }}</th>
+                        <th>{{ __('E-mail') }}</th>
+                        <th>{{ __('Telefone') }}</th>
+                        <th>{{ __('Perfil') }}</th>
+                        <th>{{ __('Status') }}</th>
+                        <th style="text-align:right">{{ __('Ações') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -46,33 +46,33 @@
                         <td style="color:var(--muted-foreground)">{{ $user->email }}</td>
                         <td style="color:var(--muted-foreground)">{{ $user->phone ?? '—' }}</td>
                         <td>
-                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;{{ $roleBadge[1] }}">{{ $roleBadge[0] }}</span>
+                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;{{ $roleBadge[1] }}">{{ __($roleBadge[0]) }}</span>
                         </td>
                         <td>
                             @if($user->active)
-                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.6 0.18 145 / 0.15);color:oklch(0.65 0.16 145)">Ativo</span>
+                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.6 0.18 145 / 0.15);color:oklch(0.65 0.16 145)">{{ __('Ativo') }}</span>
                             @else
-                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.62 0.21 25 / 0.15);color:var(--destructive)">Inativo</span>
+                            <span style="display:inline-flex;padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.7rem;font-weight:500;background:oklch(0.62 0.21 25 / 0.15);color:var(--destructive)">{{ __('Inativo') }}</span>
                             @endif
                         </td>
                         <td style="text-align:right;">
                             <div style="display:inline-flex;align-items:center;gap:0.75rem;">
-                                <a href="{{ route('users.edit', $user) }}" class="hover-fade" style="font-size:0.875rem;color:var(--primary);">Editar</a>
+                                <a href="{{ route('users.edit', $user) }}" class="hover-fade" style="font-size:0.875rem;color:var(--primary);">{{ __('Editar') }}</a>
                                 <form method="POST" action="{{ route('users.toggle-active', $user) }}" style="display:inline;">
                                     @csrf
                                     <button type="submit" class="hover-text-foreground" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--muted-foreground);">
-                                        {{ $user->active ? 'Desativar' : 'Ativar' }}
+                                        {{ $user->active ? __('Desativar') : __('Ativar') }}
                                     </button>
                                 </form>
-                                <form method="POST" action="{{ route('users.destroy', $user) }}" style="display:inline;" data-confirm="Excluir este usuário?">
+                                <form method="POST" action="{{ route('users.destroy', $user) }}" style="display:inline;" data-confirm="{{ __('Excluir este usuário?') }}">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="hover-fade-strong" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--destructive);">Excluir</button>
+                                    <button type="submit" class="hover-fade-strong" style="font-size:0.875rem;background:none;border:none;cursor:pointer;color:var(--destructive);">{{ __('Excluir') }}</button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted-foreground);">Nenhum usuário cadastrado.</td></tr>
+                    <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted-foreground);">{{ __('Nenhum usuário cadastrado.') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -87,10 +87,10 @@
      style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;background:rgb(0 0 0 / 0.7);padding:1rem;">
     <div style="background-color:var(--card);border:1px solid var(--border);border-radius:0.875rem;width:100%;max-width:36rem;max-height:90vh;overflow-y:auto;padding:1.5rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
-            <h2 style="font-size:1.125rem;font-weight:700;margin:0;">Novo usuário</h2>
+            <h2 style="font-size:1.125rem;font-weight:700;margin:0;">{{ __('Novo usuário') }}</h2>
             <button type="button" data-modal-close="modal-create-user" class="hover-surface"
                     style="padding:0.375rem;border-radius:0.375rem;border:none;background:none;cursor:pointer;color:var(--muted-foreground);"
-                    aria-label="Fechar">
+                    aria-label="{{ __('Fechar') }}">
                 <svg style="width:1.25rem;height:1.25rem;" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -103,43 +103,43 @@
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
-                    <label class="field-label">Nome completo <span style="color:var(--destructive)">*</span></label>
+                    <label class="field-label">{{ __('Nome completo') }} <span style="color:var(--destructive)">*</span></label>
                     <input type="text" name="name" value="{{ old('name') }}" required>
                     <x-field-error field="name" form="create_user" />
                 </div>
                 <div>
-                    <label class="field-label">E-mail <span style="color:var(--destructive)">*</span></label>
+                    <label class="field-label">{{ __('E-mail') }} <span style="color:var(--destructive)">*</span></label>
                     <input type="email" name="email" value="{{ old('email') }}" required>
                     <x-field-error field="email" form="create_user" />
                 </div>
                 <div>
-                    <label class="field-label">Telefone</label>
+                    <label class="field-label">{{ __('Telefone') }}</label>
                     <input type="text" name="phone" value="{{ old('phone') }}">
                 </div>
                 <div>
-                    <label class="field-label">Perfil <span style="color:var(--destructive)">*</span></label>
+                    <label class="field-label">{{ __('Perfil') }} <span style="color:var(--destructive)">*</span></label>
                     <select name="role" required>
-                        <option value="">Selecione…</option>
-                        <option value="admin"     @selected(old('role')==='admin')>Administrador</option>
-                        <option value="manager"   @selected(old('role')==='manager')>Gestor</option>
-                        <option value="financial" @selected(old('role')==='financial')>Financeiro</option>
-                        <option value="client"    @selected(old('role')==='client')>Cliente</option>
+                        <option value="">{{ __('Selecione…') }}</option>
+                        <option value="admin"     @selected(old('role')==='admin')>{{ __('Administrador') }}</option>
+                        <option value="manager"   @selected(old('role')==='manager')>{{ __('Gestor') }}</option>
+                        <option value="financial" @selected(old('role')==='financial')>{{ __('Financeiro') }}</option>
+                        <option value="client"    @selected(old('role')==='client')>{{ __('Cliente') }}</option>
                     </select>
                     <x-field-error field="role" form="create_user" />
                 </div>
                 <div>
-                    <label class="field-label">Senha <span style="color:var(--destructive)">*</span></label>
+                    <label class="field-label">{{ __('Senha') }} <span style="color:var(--destructive)">*</span></label>
                     <x-password-input name="password" required autocomplete="new-password" />
                     <x-field-error field="password" form="create_user" />
                 </div>
                 <div>
-                    <label class="field-label">Confirmar senha <span style="color:var(--destructive)">*</span></label>
+                    <label class="field-label">{{ __('Confirmar senha') }} <span style="color:var(--destructive)">*</span></label>
                     <x-password-input name="password_confirmation" required autocomplete="new-password" />
                 </div>
             </div>
             <div style="display:flex;gap:0.5rem;padding-top:0.5rem;">
-                <button type="submit" class="btn-primary">Criar usuário</button>
-                <button type="button" data-modal-close="modal-create-user" class="btn-secondary">Cancelar</button>
+                <button type="submit" class="btn-primary">{{ __('Criar usuário') }}</button>
+                <button type="button" data-modal-close="modal-create-user" class="btn-secondary">{{ __('Cancelar') }}</button>
             </div>
         </form>
     </div>

@@ -10,11 +10,12 @@
     assets, que é precisamente uma das coisas que podem estar em falta.
 --}}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <meta name="copy-success" content="{{ __('Copiado!') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Envio demasiado grande · {{ config('app.name') }}</title>
+    <title>{{ __('Envio demasiado grande') }} · {{ config('app.name') }}</title>
     <style>
         :root { color-scheme: light dark; }
         body {
@@ -34,26 +35,26 @@
 </head>
 <body>
     <div class="card">
-        <h1>O envio era demasiado grande</h1>
+        <h1>{{ __('O envio era demasiado grande') }}</h1>
 
         <p>
-            O arquivo que você tentou enviar excede o limite deste servidor
-            (<strong>{{ \App\Models\PlanVersion::maxUploadLabel() }}</strong> por pedido) e
+            {{ __('O arquivo que você tentou enviar excede o limite deste servidor
+            (') }}<strong>{{ \App\Models\PlanVersion::maxUploadLabel() }}</strong> {{ __('por pedido) e
             foi recusado antes de chegar à aplicação. Nada foi salvo e nada se perdeu do
-            que já estava registrado.
+            que já estava registrado.') }}
         </p>
 
-        <p>Há duas saídas:</p>
+        <p>{{ __('Há duas saídas:') }}</p>
         <ul>
-            <li>Enviar um arquivo menor — um PDF exportado em vez do arquivo nativo, por exemplo.</li>
-            <li>Cadastrar a versão com um <strong>endereço externo</strong> (Google Drive, WeTransfer, OneDrive) em vez do arquivo. A planta, a numeração das versões e o histórico ficam registrados do mesmo jeito; só o arquivo é que vive fora daqui.</li>
+            <li>{{ __('Enviar um arquivo menor — um PDF exportado em vez do arquivo nativo, por exemplo.') }}</li>
+            <li>{{ __('Cadastrar a versão com um') }} <strong>{{ __('endereço externo') }}</strong> {{ __('(Google Drive, WeTransfer, OneDrive) em vez do arquivo. A planta, a numeração das versões e o histórico ficam registrados do mesmo jeito; só o arquivo é que vive fora daqui.') }}</li>
         </ul>
 
-        <p><a href="{{ url()->previous() }}">← Voltar</a></p>
+        <p><a href="{{ url()->previous() }}">{{ __('← Voltar') }}</a></p>
 
         <p class="muted">
-            O limite é uma configuração da hospedagem (<code>upload_max_filesize</code> e
-            <code>post_max_size</code>), não desta aplicação.
+            {{ __('O limite é uma configuração da hospedagem (') }}<code>{{ __('upload_max_filesize') }}</code> {{ __('e') }}
+            <code>{{ __('post_max_size') }}</code>{{ __('), não desta aplicação.') }}
         </p>
     </div>
 </body>

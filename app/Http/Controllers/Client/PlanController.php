@@ -102,7 +102,7 @@ class PlanController extends Controller
         // sempre, mas o que se aprova é o desenho que está em vigor.
         if ($version->isSuperseded()) {
             return $this->backToPlans()->withErrors([
-                'plan_version' => 'Esta versão foi substituída por uma revisão mais recente. Só a versão atual pode ser aprovada.',
+                'plan_version' => __('Esta versão foi substituída por uma revisão mais recente. Só a versão atual pode ser aprovada.'),
             ]);
         }
 
@@ -135,7 +135,7 @@ class PlanController extends Controller
         if (! $approved) {
             return $this->backToPlans()->with(
                 'success',
-                "A versão {$version->label()} da planta \"{$plan->name}\" já estava aprovada.",
+                __('A versão :version da planta ":plan" já estava aprovada.', ['version' => $version->label(), 'plan' => $plan->name]),
             );
         }
 
@@ -150,7 +150,7 @@ class PlanController extends Controller
 
         return $this->backToPlans()->with(
             'success',
-            "Versão {$version->label()} da planta «{$plan->name}» aprovada.",
+            __('Versão :version da planta «:plan» aprovada.', ['version' => $version->label(), 'plan' => $plan->name]),
         );
     }
 
@@ -182,7 +182,7 @@ class PlanController extends Controller
             'body' => $data['body'],
         ]);
 
-        return $this->backToPlans()->with('success', 'Comentário enviado.');
+        return $this->backToPlans()->with('success', __('Comentário enviado.'));
     }
 
     private function authorizeSentVersion(Project $project, Plan $plan, PlanVersion $version): void

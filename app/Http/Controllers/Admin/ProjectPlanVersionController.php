@@ -78,7 +78,7 @@ class ProjectPlanVersionController extends Controller
             return PlanVersion::create($attributes);
         });
 
-        return back()->with('success', "Versão {$version->label()} adicionada.");
+        return back()->with('success', __('Versão :version adicionada.', ['version' => $version->label()]));
     }
 
     /**
@@ -94,7 +94,7 @@ class ProjectPlanVersionController extends Controller
 
         if ($version->isSuperseded()) {
             return back()->withErrors([
-                'version' => 'Só a versão atual pode ser enviada ao cliente.',
+                'version' => __('Só a versão atual pode ser enviada ao cliente.'),
             ]);
         }
 
@@ -110,7 +110,7 @@ class ProjectPlanVersionController extends Controller
             'planta',
         );
 
-        return back()->with('success', "Versão {$version->label()} enviada ao cliente.");
+        return back()->with('success', __('Versão :version enviada ao cliente.', ['version' => $version->label()]));
     }
 
     /**
@@ -139,7 +139,7 @@ class ProjectPlanVersionController extends Controller
             'body' => $data['body'],
         ]);
 
-        return back()->with('success', 'Comentário adicionado.');
+        return back()->with('success', __('Comentário adicionado.'));
     }
 
     public function download(Project $project, Plan $plan, PlanVersion $version)
@@ -210,10 +210,10 @@ class ProjectPlanVersionController extends Controller
         $formats = strtoupper(implode(', ', PlanVersion::FORMATS));
 
         return [
-            'file.required_without' => 'Escolha um arquivo ou informe um endereço externo para esta versão.',
-            'external_url.required_without' => 'Escolha um arquivo ou informe um endereço externo para esta versão.',
-            'external_url.prohibits' => 'Uma versão salva o arquivo ou o endereço externo, não os dois.',
-            'file.extensions' => "Formato não aceito. São aceitos: {$formats}.",
+            'file.required_without' => __('Escolha um arquivo ou informe um endereço externo para esta versão.'),
+            'external_url.required_without' => __('Escolha um arquivo ou informe um endereço externo para esta versão.'),
+            'external_url.prohibits' => __('Uma versão salva o arquivo ou o endereço externo, não os dois.'),
+            'file.extensions' => __('Formato não aceito. São aceitos: :formats.', ['formats' => $formats]),
             'file.max' => PlanVersion::overLimitMessage(),
         ];
     }

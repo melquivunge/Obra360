@@ -11,9 +11,9 @@
         $heading = \App\Models\Project::collectionLabel($hasSiteWork, $hasDesignWork);
     @endphp
     <div>
-        <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">{{ $heading }}</h1>
+        <h1 style="font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;">{{ __($heading) }}</h1>
         <p style="color:var(--color-muted-foreground);font-size:0.875rem;margin-top:0.25rem;">
-            Bem-vindo, {{ auth()->user()->name }}. Acompanhe o andamento abaixo.
+            {{ __('Bem-vindo,') }} {{ auth()->user()->name }}{{ __('. Acompanhe o andamento abaixo.') }}
         </p>
     </div>
 
@@ -23,8 +23,8 @@
                  class="w-12 h-12 mx-auto mb-4" style="color:var(--color-muted-foreground);opacity:0.4;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21" />
             </svg>
-            <p style="color:var(--color-muted-foreground);font-size:0.9375rem;">Você ainda não tem obras ou projetos vinculados.</p>
-            <p style="color:var(--color-muted-foreground);font-size:0.8125rem;margin-top:0.375rem;opacity:0.7;">Entre em contato com a equipe para liberar seu acesso.</p>
+            <p style="color:var(--color-muted-foreground);font-size:0.9375rem;">{{ __('Você ainda não tem obras ou projetos vinculados.') }}</p>
+            <p style="color:var(--color-muted-foreground);font-size:0.8125rem;margin-top:0.375rem;opacity:0.7;">{{ __('Entre em contato com a equipe para liberar seu acesso.') }}</p>
         </div>
     @else
         <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -53,7 +53,7 @@
                         </div>
                         <div class="flex flex-col items-end gap-1 shrink-0">
                             <span class="badge badge-{{ $project->status }} shrink-0">
-                                {{ \App\Models\Project::STATUSES[$project->status] ?? $project->status }}
+                                {{ __(\App\Models\Project::STATUSES[$project->status] ?? $project->status) }}
                             </span>
                             <x-project-type :project="$project" />
                         </div>
@@ -62,7 +62,7 @@
                     {{-- Progress --}}
                     <div>
                         <div class="flex justify-between mb-1">
-                            <span style="font-size:0.75rem;color:var(--color-muted-foreground);">Progresso</span>
+                            <span style="font-size:0.75rem;color:var(--color-muted-foreground);">{{ __('Progresso') }}</span>
                             <span style="font-size:0.75rem;font-weight:600;color:var(--color-primary);">{{ $project->progress }}%</span>
                         </div>
                         <div class="progress-bar">
@@ -74,7 +74,7 @@
                     <div class="flex items-center justify-between mt-auto" style="padding-top:0.75rem;border-top:1px solid var(--color-border);">
                         @if($canViewFinancials && $project->show_financials && $project->budget)
                             <div>
-                                <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-foreground);">Orçamento</p>
+                                <p style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-foreground);">{{ __('Orçamento') }}</p>
                                 <p style="font-size:0.875rem;font-weight:600;margin-top:0.125rem;">{{ money($project->budget) }}</p>
                             </div>
                         @else

@@ -63,10 +63,10 @@ class ClientLayoutCacheTest extends TestCase
         $bucket = (int) (now()->timestamp / 30);
 
         return [
-            "client_first_project_{$this->client->id}",
+            "client_first_project_{$this->client->id}_pt_BR",
             "client_unread_msgs_{$this->clientUser->id}_{$bucket}",
             "client_unread_count_{$this->clientUser->id}_{$bucket}",
-            "client_updates_{$this->client->id}",
+            "client_updates_{$this->client->id}_".(Project::clientFinancialsEnabled() ? 'fin' : 'nofin'),
             "client_project_mix_{$this->client->id}",
         ];
     }
@@ -134,7 +134,7 @@ class ClientLayoutCacheTest extends TestCase
     {
         $this->actingAs($this->clientUser)->get(route('portal.dashboard'))->assertOk();
 
-        $cached = Cache::get("client_first_project_{$this->client->id}");
+        $cached = Cache::get("client_first_project_{$this->client->id}_pt_BR");
 
         $this->assertIsArray($cached);
         $this->assertSame($this->project->id, $cached['id']);
@@ -159,7 +159,7 @@ class ClientLayoutCacheTest extends TestCase
 
     public function test_a_corrupted_cache_value_is_replaced_by_fresh_data(): void
     {
-        $key = "client_first_project_{$this->client->id}";
+        $key = "client_first_project_{$this->client->id}_pt_BR";
         Cache::put($key, $this->incompleteClass(), 120);
 
         $this->actingAs($this->clientUser)->get(route('portal.dashboard'))->assertOk();
@@ -189,7 +189,7 @@ class ClientLayoutCacheTest extends TestCase
     {
         $this->actingAs($this->clientUser)->get(route('portal.dashboard'))->assertOk();
 
-        $cached = Cache::get("client_first_project_{$this->client->id}");
+        $cached = Cache::get("client_first_project_{$this->client->id}_pt_BR");
 
         $this->assertIsString($cached['noun_with_article']);
         $this->assertSame('a obra', $cached['noun_with_article']);
@@ -202,7 +202,7 @@ class ClientLayoutCacheTest extends TestCase
     public function test_a_cached_first_project_without_the_noun_still_renders(): void
     {
         Cache::put(
-            "client_first_project_{$this->client->id}",
+            "client_first_project_{$this->client->id}_pt_BR",
             ['id' => $this->project->id, 'name' => $this->project->name],
             120,
         );

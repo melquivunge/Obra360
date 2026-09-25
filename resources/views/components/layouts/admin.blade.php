@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <meta name="copy-success" content="{{ __('Copiado!') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -31,7 +32,7 @@
             </a>
             <button type="button" class="lg:hidden" style="color:var(--muted-foreground)"
                     data-sidebar-close
-                    aria-label="Fechar menu">
+                    aria-label="{{ __('Fechar menu') }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -70,7 +71,7 @@
                          stroke="currentColor" class="w-5 h-5 shrink-0" aria-hidden="true">
                         {!! $item['icon'] !!}
                     </svg>
-                    {{ $item['label'] }}
+                    {{ __($item['label']) }}
                 </a>
             @endforeach
         </nav>
@@ -85,7 +86,7 @@
                 </div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium truncate" style="color:var(--foreground)">{{ auth()->user()->name }}</p>
-                    <p class="text-xs truncate" style="color:var(--muted-foreground)">{{ ucfirst(auth()->user()->role) }}</p>
+                    <p class="text-xs truncate" style="color:var(--muted-foreground)">{{ __(['admin' => 'Administrador', 'manager' => 'Gestor', 'financial' => 'Financeiro', 'client' => 'Cliente'][auth()->user()->role] ?? auth()->user()->role) }}</p>
                 </div>
             </div>
             @endauth
@@ -99,7 +100,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/>
                     </svg>
-                    Sair
+                    {{ __('Sair') }}
                 </button>
             </form>
         </div>
@@ -113,16 +114,17 @@
                 style="background-color:var(--card);border-bottom:1px solid oklch(0.74 0.135 78 / 0.2);">
             <div class="flex items-center gap-3">
                 <button type="button" data-sidebar-toggle class="lg:hidden p-1 rounded-md"
-                        style="color:var(--muted-foreground)" aria-label="Abrir menu">
+                        style="color:var(--muted-foreground)" aria-label="{{ __('Abrir menu') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-5 h-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
                     </svg>
                 </button>
-                <nav class="text-sm" style="color:var(--muted-foreground)" aria-label="Breadcrumb">
+                <nav class="text-sm" style="color:var(--muted-foreground)" aria-label="{{ __('Breadcrumb') }}">
                     {{ $breadcrumb ?? '' }}
                 </nav>
             </div>
+            <x-language-switcher />
         </header>
 
         {{-- Content --}}

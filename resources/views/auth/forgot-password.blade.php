@@ -9,15 +9,15 @@
             <span class="text-3xl font-bold text-slate-800 mt-1">Obra360</span>
         </div>
 
-        <h2 class="text-lg font-semibold text-slate-800 text-center mt-4">Redefinir senha</h2>
+        <h2 class="text-lg font-semibold text-slate-800 text-center mt-4">{{ __('Redefinir senha') }}</h2>
         <p class="text-sm text-gray-500 text-center mt-1">
-            Insira seu e-mail para receber o link de redefinição.
+            {{ __('Insira seu e-mail para receber o link de redefinição.') }}
         </p>
 
         {{-- Success status --}}
         @if (session('status'))
             <div class="mt-4 text-sm text-green-600 bg-green-50 border border-green-200 px-4 py-3 rounded-lg">
-                Link enviado! Verifique seu e-mail.
+                {{ __('Link enviado! Verifique seu e-mail.') }}
             </div>
         @endif
 
@@ -51,14 +51,14 @@
             {{-- Submit button --}}
             <div class="mt-4">
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-                    Enviar link de redefinição
+                    {{ __('Enviar link de redefinição') }}
                 </button>
             </div>
         </form>
 
         <div class="mt-4 text-center">
             <a href="{{ route('login') }}" class="text-sm text-blue-600 hover:text-blue-800">
-                Voltar para o login
+                {{ __('Voltar para o login') }}
             </a>
         </div>
     </div>
