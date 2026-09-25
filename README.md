@@ -98,7 +98,7 @@ Alterações relevantes geram entrada no histórico via `ProjectUpdateObserver`,
 
 ## Segurança
 
-- **Content-Security-Policy** com nonce por requisição. `script-src` não permite script inline; os handlers em linha foram eliminados das telas e há teste que varre os arquivos para impedir que voltem. Em produção começa em **modo de relato** — registra violações sem bloquear — e passa a imposição por variável de ambiente, sem deploy. Há também um interruptor de emergência que remove o cabeçalho
+- **Content-Security-Policy** com nonce por requisição. `script-src` não permite script inline; os handlers em linha foram eliminados das telas e há teste que varre os arquivos para impedir que voltem. A política é **imposta** por omissão em todos os ambientes; `CSP_REPORT_ONLY=true` volta a modo de relato — registra violações sem bloquear — para calibrá-la sem deploy. Há também um interruptor de emergência que remove o cabeçalho
 - `style-src` mantém `'unsafe-inline'` e `script-src` mantém `'unsafe-eval'` (Alpine avalia expressões com `new Function`); ambos documentados no código, com o caminho para apertar
 - Toda a mídia vive no disco privado e sai apenas por rota autenticada. Um registro cujo arquivo não existe responde 404
 - Limite de requisições em todas as escritas, calibrado por custo: 20/min no upload de fotos, 30/min em documentos, 120/min no que grava uma linha
@@ -162,7 +162,7 @@ Além das padrão do Laravel (`APP_*`, `DB_*`, `MAIL_*`):
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Web Push do PWA |
 | `WHATSAPP_PHONE_ID`, `WHATSAPP_TOKEN` | Canal WhatsApp Business API |
 | `CSP_ENABLED` | Interruptor de emergência da política de segurança |
-| `CSP_REPORT_ONLY` | `true` relata sem bloquear; `false` impõe |
+| `CSP_REPORT_ONLY` | omissão `false` (impõe); `true` relata sem bloquear |
 | `CSP_REPORT_URI` | Destino dos relatórios de violação |
 
 Se as variáveis do Reverb não estiverem definidas, o Echo falha em silêncio e o resto do app continua funcionando.
@@ -245,7 +245,7 @@ Alguns testes existem para impedir regressões específicas: um varre as telas a
 1. **Testes & Qualidade** — Pint (`--test`), migrações em SQLite, `php artisan test`, build de assets, `composer audit` e `npm audit`.
 2. **Deploy → HostGator** — apenas em push para `main` e só se o job anterior passar. Constrói assets de produção, instala `vendor` com `--no-dev --optimize-autoloader`, empacota em tar, envia por SCP e roda `migrate --force` + caches (`config`, `route`, `view`, `event`) + `storage:link` via SSH. O VHost é forçado para PHP 8.5 (`ea-php85`) pela API do cPanel.
 
-Segredos necessários no repositório: `SSH_HOST`, `SSH_PORT`, `SSH_USERNAME`, `SSH_PRIVATE_KEY`.
+Segredos necessários no repositório: `SSH_HOST`, `SSH_PORT`, `SSH_USERNAME`, `SSH_PRIVATE_KEY`. Recomenda-se ainda `SSH_KNOWN_HOSTS` — o conteúdo de `known_hosts` com as chaves do servidor, obtido e conferido fora do pipeline. Com ele o deploy falha se a chave do servidor mudar; sem ele o workflow recorre a `ssh-keyscan`, que confia no que o servidor responder na primeira ligação.
 
 ---
 
@@ -256,7 +256,6 @@ Os 83 requisitos v1 estão implementados. Da lista v2, foram entregues antecipad
 Por fazer:
 
 - **Migração para S3.** A arquitetura já está pronta — o Flysystem abstrai e todo o código usa `Storage::disk('local')`, nunca caminhos absolutos. Falta instalar o driver e apontar as credenciais
-- **Passar a política de segurança de relato a imposição**, depois de observar os relatórios em produção
 - **Notificar a outra parte** quando há comentário novo em uma planta (hoje o sinal é ver o comentário ao abrir)
 - **Alinhar a limpeza de arquivos individuais** com a política de exclusão definitiva: excluir uma foto ou documento um a um ainda apaga o arquivo na hora
 - **Multi-empresa (SaaS)** e **app móvel nativo** — escopo v2, ambos projetos à parte

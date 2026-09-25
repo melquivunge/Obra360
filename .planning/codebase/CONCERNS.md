@@ -36,10 +36,10 @@ Este documento lista apenas o que ainda está aberto e é verificável no códig
 
 ## Segurança
 
-**CSP em modo de relato em produção:**
-- Problema: `config/security.php` define `'report_only' => env('CSP_REPORT_ONLY', env('APP_ENV') === 'production')` — em produção o cabeçalho sai como `Content-Security-Policy-Report-Only` e o navegador não bloqueia nada. Em local e nos testes a política é imposta
-- Arquivos: `config/security.php`, `app/Http/Middleware/SecurityHeaders.php`, `app/Http/Controllers/CspReportController.php`, `.env.example` (linhas 50-55)
-- Por fazer: observar os relatórios em `storage/logs` e pôr `CSP_REPORT_ONLY=false`. Até lá a política não protege produção, só a descreve
+**CSP em modo de relato em produção — resolvido:**
+- Era: `'report_only' => env('CSP_REPORT_ONLY', env('APP_ENV') === 'production')` — em produção o cabeçalho saía como `Content-Security-Policy-Report-Only` e o navegador não bloqueava nada
+- Agora: a omissão é impor em todos os ambientes (`filter_var(env('CSP_REPORT_ONLY', false), FILTER_VALIDATE_BOOLEAN)`). Voltar a relato para calibrar é deliberado e explícito: `CSP_REPORT_ONLY=true`
+- Arquivos: `config/security.php`, `app/Http/Middleware/SecurityHeaders.php`, `app/Http/Controllers/CspReportController.php`, `.env.example`
 
 **Cedências dentro da própria política:**
 - `style-src` mantém `'unsafe-inline'`: as vistas da área interna desenham-se com atributos `style=` em todo o lado. Apertá-lo obriga a reescrever as vistas
@@ -77,7 +77,7 @@ Este documento lista apenas o que ainda está aberto e é verificável no códig
 | Limpeza de mídia em soft delete: nada apagava os arquivos de uma obra excluída | `App\Observers\MediaCleanupObserver` em `forceDeleting` de `Project` e `Plan`, mais o comando `obra360:trash:prune` (retenção de 90 dias) agendado às segundas às 04:30. `tests/Feature/PruneTrashedProjectsTest.php` |
 | Apagar mídia em dois discos | As chamadas `Storage::disk('public')->delete()` que seguiam cada exclusão no disco privado foram removidas. Em `app/` só resta uma, no `SettingController`, que apaga a logomarca da empresa — um recurso público de verdade, não mídia legada |
 | Coluna `photos.external_url` sem utilização | Removida por migração (`2026_08_24_100000_drop_external_url_from_photos_table.php`). O endereço externo passou a existir onde tem sentido: `plan_versions.external_url` (PLAN-08), com validação e mensagens próprias |
-| Sem CSP | `SecurityHeaders` passou a emitir a política, com nonce por requisição registado no Vite e lido pelo `@cspNonce`. `config/security.php` controla ligar/desligar, relato/imposição e origens extra; `CspReportController` recebe as violações. `tests/Feature/ContentSecurityPolicyTest.php` e `InlineScriptFreeViewsTest.php`. Falta apenas passar produção a imposição — ver acima |
+| Sem CSP | `SecurityHeaders` passou a emitir a política, com nonce por requisição registado no Vite e lido pelo `@cspNonce`. `config/security.php` controla ligar/desligar, relato/imposição e origens extra; `CspReportController` recebe as violações. `tests/Feature/ContentSecurityPolicyTest.php` e `InlineScriptFreeViewsTest.php`. A omissão passou a ser imposição em todos os ambientes, produção incluída |
 | Listagem de mensagens ordenada em memória | `Admin\MessageController::index()` traz a data da última mensagem numa subconsulta correlacionada, ordena em SQL e pagina (`PROJECTS_PER_PAGE = 20`). `tests/Feature/MessageListPaginationTest.php` |
 | Detalhe da obra carregava relações sem limite | `Admin\ProjectController@show` pagina despesas, cobranças, documentos, histórico, mensagens e fotos, uma consulta por separador (`RECORDS_PER_PAGE = 50`, `MESSAGES_PER_PAGE = 100`, `PHOTOS_PER_PAGE = 60`); os totais vêm de agregações em SQL, não da página visível. `tests/Feature/AdminProjectShowLimitsTest.php` |
 | Limites de consulta em números mágicos | Todos passaram a constantes nomeadas: `ProjectController::{MESSAGES,PHOTOS,RECORDS}_PER_PAGE`, `MessageController::{PROJECTS_PER_PAGE,CONVERSATION_MESSAGE_LIMIT}`, `Client\ProjectController::{SHOW_MESSAGE_LIMIT,SHOW_PHOTO_LIMIT,CONVERSATION_MESSAGE_LIMIT}`, `DashboardController::{RECENT_PROJECTS_LIMIT,RECENT_UPDATES_LIMIT}`, `ClientLayoutComposer::{UNREAD_PREVIEW_LIMIT,RECENT_UPDATES_LIMIT}` |

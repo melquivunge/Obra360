@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\Photo;
 use App\Models\Project;
 use App\Models\ProjectPhase;
@@ -155,5 +156,73 @@ class PhotoGalleryTest extends TestCase
             strpos($html, 'Antiga'),
             'Com ordem "antigas" a foto mais antiga devia aparecer primeiro.'
         );
+    }
+
+    // ── O tipo com que a foto é servida ──────────────────────────────────────
+
+    /**
+     * O `Content-Type` vem de uma lista fechada indexada pela extensão do
+     * caminho que o servidor gerou no `store()`, e não do conteúdo do ficheiro:
+     * media servida com um tipo adivinhado é como um ficheiro antigo se torna
+     * HTML executado na origem do portal.
+     */
+    public function test_a_photo_is_served_with_the_type_from_the_allowlist(): void
+    {
+        Storage::fake('local');
+        $project = Project::factory()->create();
+        $photo = Photo::factory()->create([
+            'project_id' => $project->id,
+            'path' => "projects/{$project->id}/photos/obra.png",
+            'thumbnail_path' => null,
+        ]);
+        Storage::disk('local')->put($photo->path, 'bytes');
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('admin.projects.photos.show', [$project, $photo]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+
+    /** O portal do cliente mostra os vídeos que a equipa enviou. */
+    public function test_the_client_portal_serves_a_video_with_its_own_type(): void
+    {
+        Storage::fake('local');
+        $client = Client::factory()->create();
+        $clientUser = User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'client_id' => $client->id,
+        ]);
+        $project = Project::factory()->create(['client_id' => $client->id]);
+        $photo = Photo::factory()->create([
+            'project_id' => $project->id,
+            'path' => "projects/{$project->id}/photos/obra.mp4",
+            'thumbnail_path' => null,
+            'media_type' => 'video',
+        ]);
+        Storage::disk('local')->put($photo->path, 'bytes');
+
+        $this->actingAs($clientUser)
+            ->get(route('portal.projects.photos.show', [$project, $photo]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'video/mp4')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+
+    /** Fora da lista não há tipo adivinhado — há 404. */
+    public function test_a_photo_with_an_extension_outside_the_allowlist_is_not_served(): void
+    {
+        Storage::fake('local');
+        $project = Project::factory()->create();
+        $photo = Photo::factory()->create([
+            'project_id' => $project->id,
+            'path' => "projects/{$project->id}/photos/obra.svg",
+            'thumbnail_path' => null,
+        ]);
+        Storage::disk('local')->put($photo->path, '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('admin.projects.photos.show', [$project, $photo]))
+            ->assertNotFound();
     }
 }

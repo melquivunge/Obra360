@@ -202,7 +202,7 @@ Expired rows in the `cache` table are only removed when the key is read again. L
 
 ## Content Security Policy
 
-`config/security.php` e `App\Http\Middleware\SecurityHeaders` são referenciados a partir do código para esta secção. Ela existe para responder a três perguntas: o que a política permite, por que permite, e como se passa de relato a imposição.
+`config/security.php` e `App\Http\Middleware\SecurityHeaders` são referenciados a partir do código para esta secção. Ela existe para responder a três perguntas: o que a política permite, por que permite, e como se calibra sem deixar de a impor.
 
 ### O estado atual
 
@@ -213,7 +213,7 @@ Três interruptores, todos em `config/security.php`:
 | Variável | Omissão | O que faz |
 | --- | --- | --- |
 | `CSP_ENABLED` | `true` | Desligar remove o cabeçalho por completo. É o travão de emergência: uma política mal calibrada quebra a aplicação inteira, e o operador tem de a poder desligar sem deploy. |
-| `CSP_REPORT_ONLY` | `true` em produção, `false` fora dela | Em relato o navegador comunica as violações e não bloqueia nada. Local e testes correm com a política **imposta**, para que uma violação nova apareça onde é barata de corrigir. |
+| `CSP_REPORT_ONLY` | `false` | A política é **imposta** em todos os ambientes. Pôr `true` volta a relato: o navegador comunica as violações e não bloqueia nada — útil para calibrar a política sem risco, não para viver assim. |
 | `CSP_REPORT_URI` | `/_csp/report` | Destino dos relatórios. Vazio remove a directiva — o navegador passa a escrever só na consola dele, o que em produção equivale a não observar nada. |
 
 Há ainda `CSP_EXTRA_{SCRIPT,STYLE,IMG,FONT,CONNECT}_SRC`, listas separadas por vírgula, para origens que o ficheiro não pode adivinhar — um CDN novo, um WebSocket noutro domínio — sem obrigar a um deploy de código.
@@ -224,19 +224,21 @@ Há ainda `CSP_EXTRA_{SCRIPT,STYLE,IMG,FONT,CONNECT}_SRC`, listas separadas por 
 
 **`script-src` mantém `'unsafe-eval'`.** O Alpine 3 avalia as expressões dos `x-data` e `x-on` com `new Function`. Sai daqui no dia em que se passar à build CSP do Alpine (`@alpinejs/csp`), que obriga a registar cada componente como objecto em JavaScript em vez de o escrever no atributo — trabalho de vista a vista.
 
-O que **não** é cedido: `script-src` não tem `'unsafe-inline'`. Cada bloco `<script>` legítimo leva o nonce da requisição, incluindo os que o `@vite` gera. Um `<script>` injectado por um atacante não conhece o nonce e não corre. `tests/Feature/InlineScriptFreeViewsTest.php` impede a reintrodução de blocos sem nonce, e `tests/Feature/ContentSecurityPolicyTest.php` cobre a política, o nonce e a alternância entre relato e imposição.
+O que **não** é cedido: `script-src` não tem `'unsafe-inline'`. Cada bloco `<script>` legítimo leva o nonce da requisição, incluindo os que o `@vite` gera. Um `<script>` injectado por um atacante não conhece o nonce e não corre. `tests/Feature/InlineScriptFreeViewsTest.php` impede a reintrodução de blocos sem nonce, e `tests/Feature/ContentSecurityPolicyTest.php` cobre a política, o nonce e a alternância entre imposição e relato.
 
 Duas directivas trazem `blob:` por causa do visualizador 3D: `img-src`, porque o `<model-viewer>` decodifica as texturas do GLB em memória e aponta-lhes URLs blob (sem isto o modelo desenha-se em cinzento), e `worker-src`, porque a geometria é descomprimida num worker criado a partir de um blob. `img-src` deliberadamente **não** tem `data:` — as imagens do navegador vêm todas de rotas autenticadas da própria origem, e as base64 do relatório em PDF são desenhadas pelo DomPDF no servidor, sem passar por um navegador.
 
-### Passar de relato a imposição
+### Calibrar a política sem deixar de a impor
 
-1. Confirmar que produção está a receber relatórios: `CSP_REPORT_URI` não vazia e avisos `CSP violation` a aparecer em `storage/logs/`.
+A omissão passou a ser imposição em todos os ambientes. Um valor por omissão que só se aperta por intervenção manual fica por apertar, e uma política em relato descreve o ataque em vez de o travar.
+
+Se um deploy trouxer violações legítimas, o caminho é:
+
+1. `CSP_REPORT_ONLY=true` no `.env` de produção e limpar a cache de configuração — a política volta a relato enquanto se observa. `CSP_REPORT_URI` tem de estar preenchida ou não há nada para ler.
 2. Deixar correr o tempo suficiente para cobrir os fluxos reais — o portal do cliente, a área interna, o envio de plantas, o visualizador 3D, as mensagens em tempo real.
-3. Ler os relatórios e separar o que é violação legítima (uma origem que falta) do que é injecção. Origens em falta entram por `CSP_EXTRA_*_SRC`, não por alteração de código.
-4. Quando os relatórios pararem de trazer novidades, pôr `CSP_REPORT_ONLY=false` no `.env` e limpar a cache de configuração.
-5. Se algo quebrar, `CSP_ENABLED=false` remove o cabeçalho de imediato, sem deploy.
-
-O passo 4 continua por dar em produção — é o único ponto desta secção que ainda não está fechado.
+3. Ler os avisos `CSP violation` em `storage/logs/` e separar o que é violação legítima (uma origem que falta) do que é injecção. Origens em falta entram por `CSP_EXTRA_*_SRC`, não por alteração de código.
+4. Remover `CSP_REPORT_ONLY` do `.env` para voltar à imposição.
+5. Se algo quebrar de forma grave, `CSP_ENABLED=false` remove o cabeçalho de imediato, sem deploy.
 
 ### Reverb e a directiva `connect-src`
 
