@@ -79,7 +79,10 @@
         {{-- Logout --}}
         <div class="px-2 py-3" style="border-top:1px solid var(--border);">
             @auth
-            <div class="flex items-center gap-2 px-3 py-2 mb-1">
+            <a href="{{ route('profile.edit') }}"
+               class="hover-surface flex items-center gap-2 px-3 py-2 mb-1 rounded-lg no-underline transition-colors"
+               title="{{ __('Meu Perfil') }}"
+               aria-label="{{ __('Meu Perfil') }}: {{ auth()->user()->name }}">
                 <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                      style="background:var(--primary);color:var(--primary-foreground)">
                     {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
@@ -88,7 +91,7 @@
                     <p class="text-xs font-medium truncate" style="color:var(--foreground)">{{ auth()->user()->name }}</p>
                     <p class="text-xs truncate" style="color:var(--muted-foreground)">{{ __(['admin' => 'Administrador', 'manager' => 'Gestor', 'financial' => 'Financeiro', 'client' => 'Cliente'][auth()->user()->role] ?? auth()->user()->role) }}</p>
                 </div>
-            </div>
+            </a>
             @endauth
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
@@ -124,7 +127,19 @@
                     {{ $breadcrumb ?? '' }}
                 </nav>
             </div>
-            <x-language-switcher />
+            @auth
+            <a href="{{ route('profile.edit') }}"
+               class="hover-surface flex items-center gap-2 rounded-lg px-2 py-1.5 no-underline transition-colors"
+               style="color:var(--foreground)"
+               title="{{ __('Meu Perfil') }}"
+               aria-label="{{ __('Meu Perfil') }}: {{ auth()->user()->name }}">
+                <span class="hidden sm:inline text-sm font-medium truncate" style="max-width:12rem;">{{ auth()->user()->name }}</span>
+                <span class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style="background:var(--primary);color:var(--primary-foreground)">
+                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
+                </span>
+            </a>
+            @endauth
         </header>
 
         {{-- Content --}}

@@ -73,7 +73,10 @@
 
         <div class="px-2 py-3" style="border-top: 1px solid var(--color-border);">
             @auth
-            <div class="flex items-center gap-2 px-3 py-2 mb-1">
+            <a href="{{ route('profile.edit') }}"
+               class="hover-surface flex items-center gap-2 px-3 py-2 mb-1 rounded-lg no-underline transition-colors"
+               title="{{ __('Meu Perfil') }}"
+               aria-label="{{ __('Meu Perfil') }}: {{ auth()->user()->name }}">
                 <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                      style="background-color: var(--color-primary); color: var(--color-primary-foreground);">
                     {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
@@ -82,7 +85,7 @@
                     <p class="text-xs font-medium truncate" style="color: var(--color-foreground);">{{ auth()->user()->name }}</p>
                     <p class="text-xs truncate" style="color: var(--color-muted-foreground);">{{ __('Cliente') }}</p>
                 </div>
-            </div>
+            </a>
             @endauth
             <form method="POST" action="/logout">
                 @csrf
@@ -149,7 +152,10 @@
 
         <div class="px-2 py-3" style="border-top: 1px solid var(--color-border);">
             @auth
-            <div class="flex items-center gap-2 px-3 py-2 mb-1">
+            <a href="{{ route('profile.edit') }}"
+               class="hover-surface flex items-center gap-2 px-3 py-2 mb-1 rounded-lg no-underline transition-colors"
+               title="{{ __('Meu Perfil') }}"
+               aria-label="{{ __('Meu Perfil') }}: {{ auth()->user()->name }}">
                 <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                      style="background-color: var(--color-primary); color: var(--color-primary-foreground);">
                     {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
@@ -158,7 +164,7 @@
                     <p class="text-xs font-medium truncate" style="color: var(--color-foreground);">{{ auth()->user()->name }}</p>
                     <p class="text-xs truncate" style="color: var(--color-muted-foreground);">{{ __('Cliente') }}</p>
                 </div>
-            </div>
+            </a>
             @endauth
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
@@ -194,8 +200,6 @@
 
         @auth
         <div class="flex items-center gap-1">
-            <x-language-switcher />
-
             {{-- Mensagens --}}
             <div id="msg-wrapper" style="position:relative;">
                 <button type="button" id="msg-btn"
@@ -305,12 +309,15 @@
 
             <div style="width:1px;height:1.25rem;background-color:var(--color-border);margin:0 0.25rem;"></div>
 
-            <div class="flex items-center gap-2 pl-1">
-                <span class="hidden md:block text-sm" style="color:var(--color-muted-foreground);">{{ auth()->user()->name }}</span>
+            <a href="{{ route('profile.edit') }}"
+               class="hover-surface flex items-center gap-2 pl-1 rounded-lg px-2 py-1 no-underline transition-colors"
+               title="{{ __('Meu Perfil') }}"
+               aria-label="{{ __('Meu Perfil') }}: {{ auth()->user()->name }}">
+                <span class="hidden md:block text-sm font-medium" style="color:var(--color-foreground);">{{ auth()->user()->name }}</span>
                 <div style="width:2rem;height:2rem;border-radius:9999px;background-color:var(--color-primary);color:var(--color-primary-foreground);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;">
                     {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
                 </div>
-            </div>
+            </a>
         </div>
         @endauth
     </header>

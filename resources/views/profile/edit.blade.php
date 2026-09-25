@@ -65,6 +65,13 @@
             </div>
         </div>
 
+        {{-- Idioma --}}
+        <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
+            <h2 style="font-size:0.9375rem;font-weight:700;margin-bottom:0.375rem;">{{ __('Idioma') }}</h2>
+            <p style="font-size:0.8125rem;color:var(--color-muted-foreground);margin-bottom:1.5rem;">{{ __('Escolha o idioma da interface. A preferência fica guardada na sua conta.') }}</p>
+            <x-language-switcher />
+        </div>
+
         {{-- Informações pessoais --}}
         <div style="background-color:var(--color-card);border:1px solid var(--color-border);border-radius:0.875rem;padding:1.5rem;">
             <h2 style="font-size:0.9375rem;font-weight:700;margin-bottom:0.375rem;">{{ __('Informações pessoais') }}</h2>
