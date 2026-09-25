@@ -70,4 +70,22 @@ class PasswordResetTest extends TestCase
             return true;
         });
     }
+
+    /**
+     * O travão do broker é por endereço: pedir de novo para o mesmo email é
+     * recusado durante 60 s, mas varrer endereços diferentes a partir do mesmo
+     * IP passava sem tecto nenhum. O `throttle:5,1` da rota fecha isso.
+     */
+    public function test_requesting_reset_links_for_many_addresses_is_throttled_by_ip(): void
+    {
+        Notification::fake();
+
+        foreach (range(1, 5) as $i) {
+            $this->post('/forgot-password', ['email' => "pessoa{$i}@exemplo.pt"])
+                ->assertStatus(302);
+        }
+
+        $this->post('/forgot-password', ['email' => 'pessoa6@exemplo.pt'])
+            ->assertStatus(429);
+    }
 }

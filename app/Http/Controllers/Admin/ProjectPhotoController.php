@@ -8,13 +8,13 @@ use App\Models\Project;
 use App\Models\ProjectUpdate;
 use App\Support\Thumbnail;
 use App\Traits\AuthorizesProjectAccess;
+use App\Traits\ServesProjectMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProjectPhotoController extends Controller
 {
-    use AuthorizesProjectAccess;
+    use AuthorizesProjectAccess, ServesProjectMedia;
 
     public function store(Request $request, Project $project)
     {
@@ -67,7 +67,7 @@ class ProjectPhotoController extends Controller
         $this->authorizeProjectAccess($project);
         abort_unless($project->cover_image_path, 404);
 
-        return $this->mediaResponse($project->cover_image_path);
+        return $this->coverResponse($project->cover_image_path);
     }
 
     public function show(Request $request, Project $project, Photo $photo)
@@ -75,7 +75,7 @@ class ProjectPhotoController extends Controller
         $this->authorizeProjectAccess($project);
         $this->assertBelongsToProject($project, $photo);
 
-        return $this->mediaResponse($this->photoPath($photo, $request->boolean('thumb')));
+        return $this->photoResponse($this->photoPath($photo, $request->boolean('thumb')));
     }
 
     /**
@@ -88,16 +88,5 @@ class ProjectPhotoController extends Controller
         }
 
         return $photo->path;
-    }
-
-    /**
-     * Media vive só no disco privado. Um registo sem ficheiro é um 404 — sem
-     * isto o `response()` sobre um caminho inexistente devolve 500.
-     */
-    private function mediaResponse(string $path): StreamedResponse
-    {
-        abort_unless(Storage::disk('local')->exists($path), 404);
-
-        return Storage::disk('local')->response($path);
     }
 }

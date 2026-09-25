@@ -199,4 +199,58 @@ class ProjectCoverTest extends TestCase
         $this->assertStringNotContainsString('onerror=', $html);
         $this->assertStringNotContainsString('this.closest(\'[data-capa]\').remove()', $html);
     }
+
+    // ── O tipo com que a capa é servida ──────────────────────────────────────
+
+    /**
+     * O `Content-Type` sai de uma lista fechada, indexada pela extensão do
+     * caminho que o servidor gerou. Adivinhá-lo do conteúdo é como um ficheiro
+     * antigo — ou chegado por outra via — se torna HTML servido na origem do
+     * portal; o `nosniff` fecha a segunda metade do mesmo problema.
+     */
+    public function test_the_cover_is_served_with_the_type_from_the_allowlist(): void
+    {
+        $project = $this->projectWithCover();
+        Storage::disk('local')->put($project->cover_image_path, 'bytes');
+
+        $this->actingAs($this->clientUser)
+            ->get(route('portal.projects.cover', $project))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/jpeg')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+
+    public function test_the_admin_cover_is_served_with_the_same_type(): void
+    {
+        $project = $this->projectWithCover();
+        Storage::disk('local')->put($project->cover_image_path, 'bytes');
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('admin.projects.cover', $project))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/jpeg')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+
+    /**
+     * Um ficheiro fora da lista não é servido com um tipo adivinhado — não é
+     * servido de todo. O `.svg` é o caso que interessa: é uma imagem legítima
+     * para o browser e um documento capaz de correr script.
+     */
+    public function test_a_cover_with_an_extension_outside_the_allowlist_is_not_served(): void
+    {
+        $project = Project::factory()->create([
+            'client_id' => $this->client->id,
+            'cover_image_path' => 'covers/fachada.svg',
+        ]);
+        Storage::disk('local')->put($project->cover_image_path, '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+
+        $this->actingAs($this->clientUser)
+            ->get(route('portal.projects.cover', $project))
+            ->assertNotFound();
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('admin.projects.cover', $project))
+            ->assertNotFound();
+    }
 }

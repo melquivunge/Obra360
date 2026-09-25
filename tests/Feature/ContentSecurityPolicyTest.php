@@ -30,10 +30,16 @@ class ContentSecurityPolicyTest extends TestCase
 
     // ── O cabeçalho ──────────────────────────────────────────────────────────
 
-    public function test_the_policy_is_enforced_outside_production(): void
+    /**
+     * A omissão é impor, em qualquer ambiente. Produção começou em relato e a
+     * passagem a imposição ficou por dar durante meses — um valor por omissão
+     * que só se aperta à mão fica por apertar.
+     */
+    public function test_the_policy_is_enforced_by_default(): void
     {
         $response = $this->get(route('login'));
 
+        $this->assertFalse(config('security.csp.report_only'));
         $response->assertOk();
         $this->assertNotNull($response->headers->get(self::HEADER));
         $this->assertNull($response->headers->get(self::HEADER_REPORT_ONLY));

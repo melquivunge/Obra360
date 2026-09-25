@@ -110,8 +110,28 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Adicionar servidor aos known_hosts
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # O caminho correcto é o pin: o segredo SSH_KNOWN_HOSTS traz as chaves
+          # do servidor verificadas fora do pipeline, e uma troca de chave passa
+          # a falhar o deploy em vez de passar despercebida. O ssh-keyscan é só
+          # arranque para quem ainda não definiu o segredo — aceita o que o
+          # servidor disser na primeira ligação e não protege de um intermediário.
+          if [ -n "$SSH_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+            echo "known_hosts fixado a partir do segredo SSH_KNOWN_HOSTS."
+          else
+            ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+            echo "AVISO: SSH_KNOWN_HOSTS não está definido — as chaves vieram de ssh-keyscan. Defina o segredo para fixar o servidor."
+          fi
+
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -142,7 +162,9 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         run: |
-          COMMON_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=30"
+          # StrictHostKeyChecking=yes: a ligação só avança se a chave do servidor
+          # já constar do known_hosts montado no passo acima.
+          COMMON_OPTS="-o StrictHostKeyChecking=yes -o ConnectTimeout=30"
 
           # scp usa -P (maiúscula) para o porto; ssh usa -p (minúscula)
           scp -P "${SSH_PORT}" $COMMON_OPTS obra360-deploy.tar.gz "${SSH_USERNAME}@${SSH_HOST}:~/obra360app.com/"

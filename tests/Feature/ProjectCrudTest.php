@@ -197,6 +197,69 @@ class ProjectCrudTest extends TestCase
         $this->assertSame('Editada pelo gestor', $project->fresh()->name);
     }
 
+    /**
+     * O gestor edita a obra que é dele, mas não a transfere: mudar o cliente é
+     * mudar quem a vê no portal, e o âmbito do gestor é a obra e não a carteira.
+     * O pedido não é recusado — o valor é simplesmente descartado.
+     */
+    public function test_manager_cannot_move_their_project_to_another_client(): void
+    {
+        $manager = User::factory()->manager()->create();
+        $project = Project::factory()->create(['manager_id' => $manager->id]);
+        $otherClient = Client::factory()->create();
+
+        $this->actingAs($manager)
+            ->put(route('admin.projects.update', $project), $this->payload($project->client, [
+                'client_id' => $otherClient->id,
+                'name' => 'Continua do mesmo cliente',
+            ]))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('projects', [
+            'id' => $project->id,
+            'client_id' => $project->client_id,
+            'name' => 'Continua do mesmo cliente',
+        ]);
+        $this->assertDatabaseMissing('projects', [
+            'id' => $project->id,
+            'client_id' => $otherClient->id,
+        ]);
+    }
+
+    /**
+     * O formulário do gestor não desenha o selector de cliente — mostra o nome
+     * e leva o valor actual escondido. Um campo editável sem efeito é pior do
+     * que campo nenhum.
+     */
+    public function test_the_managers_edit_form_shows_the_client_as_read_only(): void
+    {
+        $manager = User::factory()->manager()->create();
+        $project = Project::factory()->create(['manager_id' => $manager->id]);
+
+        $html = $this->actingAs($manager)
+            ->get(route('admin.projects.edit', $project))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString(
+            '<input type="hidden" name="client_id" value="'.$project->client_id.'">',
+            $html
+        );
+        $this->assertStringNotContainsString('<select name="client_id"', $html);
+    }
+
+    public function test_admin_can_move_a_project_to_another_client(): void
+    {
+        $project = Project::factory()->create();
+        $otherClient = Client::factory()->create();
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->put(route('admin.projects.update', $project), $this->payload($otherClient))
+            ->assertRedirect();
+
+        $this->assertSame($otherClient->id, $project->fresh()->client_id);
+    }
+
     public function test_manager_cannot_open_the_edit_form_of_another_managers_project(): void
     {
         $manager = User::factory()->manager()->create();

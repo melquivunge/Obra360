@@ -22,9 +22,18 @@
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="field-label">Cliente <span style="color:var(--destructive)">*</span></label>
-                    <select name="client_id" required x-model="client" @change="source = ''">
-                        @foreach($clients as $c)<option value="{{ $c->id }}" {{ old('client_id', $project->client_id)==$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach
-                    </select>
+                    @if(auth()->user()->isManager())
+                        {{-- PROJ-05: o gestor não transfere a obra para outro
+                             cliente. O servidor já descarta o valor pedido; o
+                             formulário deixa de o oferecer para não mostrar uma
+                             escolha que não tem efeito nenhum. --}}
+                        <input type="hidden" name="client_id" value="{{ $project->client_id }}">
+                        <input type="text" value="{{ $project->client?->name }}" disabled>
+                    @else
+                        <select name="client_id" required x-model="client" @change="source = ''">
+                            @foreach($clients as $c)<option value="{{ $c->id }}" {{ old('client_id', $project->client_id)==$c->id?'selected':'' }}>{{ $c->name }}</option>@endforeach
+                        </select>
+                    @endif
                     <x-field-error field="client_id" />
                 </div>
                 <div>
